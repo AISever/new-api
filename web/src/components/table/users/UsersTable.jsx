@@ -32,6 +32,7 @@ import DeleteUserModal from './modals/DeleteUserModal';
 import ResetPasskeyModal from './modals/ResetPasskeyModal';
 import ResetTwoFAModal from './modals/ResetTwoFAModal';
 import UserSubscriptionsModal from './modals/UserSubscriptionsModal';
+import TopUpUserModal from './modals/TopUpUserModal';
 
 const UsersTable = (usersData) => {
   const {
@@ -50,6 +51,7 @@ const UsersTable = (usersData) => {
     refresh,
     resetUserPasskey,
     resetUserTwoFA,
+    topUpUser,
     t,
   } = usersData;
 
@@ -64,6 +66,8 @@ const UsersTable = (usersData) => {
   const [showResetTwoFAModal, setShowResetTwoFAModal] = useState(false);
   const [showUserSubscriptionsModal, setShowUserSubscriptionsModal] =
     useState(false);
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [topUpLoading, setTopUpLoading] = useState(false);
 
   // Modal handlers
   const showPromoteUserModal = (user) => {
@@ -102,6 +106,11 @@ const UsersTable = (usersData) => {
     setShowUserSubscriptionsModal(true);
   };
 
+  const showTopUpUserModal = (user) => {
+    setModalUser(user);
+    setShowTopUpModal(true);
+  };
+
   // Modal confirm handlers
   const handlePromoteConfirm = () => {
     manageUser(modalUser.id, 'promote', modalUser);
@@ -128,6 +137,16 @@ const UsersTable = (usersData) => {
     setShowResetTwoFAModal(false);
   };
 
+  const handleTopUpConfirm = async (amount) => {
+    setTopUpLoading(true);
+    try {
+      await topUpUser(modalUser, amount);
+      setShowTopUpModal(false);
+    } finally {
+      setTopUpLoading(false);
+    }
+  };
+
   // Get all columns
   const columns = useMemo(() => {
     return getUsersColumns({
@@ -141,6 +160,7 @@ const UsersTable = (usersData) => {
       showResetPasskeyModal: showResetPasskeyUserModal,
       showResetTwoFAModal: showResetTwoFAUserModal,
       showUserSubscriptionsModal: showUserSubscriptionsUserModal,
+      showTopUpModal: showTopUpUserModal,
     });
   }, [
     t,
@@ -153,6 +173,7 @@ const UsersTable = (usersData) => {
     showResetPasskeyUserModal,
     showResetTwoFAUserModal,
     showUserSubscriptionsUserModal,
+    showTopUpUserModal,
   ]);
 
   // Handle compact mode by removing fixed positioning
@@ -259,6 +280,15 @@ const UsersTable = (usersData) => {
         user={modalUser}
         t={t}
         onSuccess={() => refresh?.()}
+      />
+
+      <TopUpUserModal
+        visible={showTopUpModal}
+        onCancel={() => setShowTopUpModal(false)}
+        onConfirm={handleTopUpConfirm}
+        user={modalUser}
+        loading={topUpLoading}
+        t={t}
       />
     </>
   );

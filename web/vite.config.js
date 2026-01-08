@@ -29,6 +29,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@douyinfe/semi-foundation': path.resolve(__dirname, './node_modules/@douyinfe/semi-foundation'),
+      '@douyinfe/semi-ui/dist/css/semi.css': path.resolve(__dirname, './node_modules/@douyinfe/semi-ui/dist/css/semi.css'),
     },
   },
   plugins: [
@@ -52,7 +54,7 @@ export default defineConfig({
     },
     react(),
     vitePluginSemi({
-      cssLayer: true,
+      cssLayer: false,
     }),
   ],
   optimizeDeps: {
