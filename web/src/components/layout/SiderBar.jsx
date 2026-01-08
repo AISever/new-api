@@ -49,6 +49,7 @@ const routerMap = {
   deployment: '/console/deployment',
   playground: '/console/playground',
   personal: '/console/personal',
+  ratio: '/console/setting?tab=ratio',
 };
 
 const SiderBar = ({ onNavigate = () => {} }) => {
@@ -147,6 +148,12 @@ const SiderBar = ({ onNavigate = () => {} }) => {
 
   const adminItems = useMemo(() => {
     const items = [
+      {
+        text: t('倍率设置'),
+        itemKey: 'ratio',
+        to: '/console/setting?tab=ratio',
+        className: isRoot() ? '' : 'tableHiddle',
+      },
       {
         text: t('渠道管理'),
         itemKey: 'channel',

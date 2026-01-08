@@ -209,6 +209,7 @@ const renderOperations = (
     showResetPasskeyModal,
     showResetTwoFAModal,
     showUserSubscriptionsModal,
+    showTopUpModal,
     t,
   },
 ) => {
@@ -275,6 +276,13 @@ const renderOperations = (
         {t('编辑')}
       </Button>
       <Button
+        type='primary'
+        size='small'
+        onClick={() => showTopUpModal(record)}
+      >
+        {t('充值')}
+      </Button>
+      <Button
         type='warning'
         size='small'
         onClick={() => showPromoteModal(record)}
@@ -309,6 +317,7 @@ export const getUsersColumns = ({
   showResetPasskeyModal,
   showResetTwoFAModal,
   showUserSubscriptionsModal,
+  showTopUpModal,
 }) => {
   return [
     {
@@ -366,6 +375,7 @@ export const getUsersColumns = ({
           showResetPasskeyModal,
           showResetTwoFAModal,
           showUserSubscriptionsModal,
+          showTopUpModal,
           t,
         }),
     },
