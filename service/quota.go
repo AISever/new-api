@@ -288,7 +288,8 @@ func PostClaudeConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, 
 		calculateQuota = modelPrice * common.QuotaPerUnit * groupRatio
 	}
 
-	if modelRatio != 0 && calculateQuota <= 0 {
+	// 只有当 modelRatio 和 groupRatio 都不为 0 时，才强制最小扣费 1
+	if modelRatio != 0 && groupRatio != 0 && calculateQuota <= 0 {
 		calculateQuota = 1
 	}
 

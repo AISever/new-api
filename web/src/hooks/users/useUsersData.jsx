@@ -195,9 +195,14 @@ export const useUsersData = () => {
     }
     try {
       const newQuota = (user.quota || 0) + amount;
+      // 使用完整的用户数据进行更新，避免其他字段被清空
       const res = await API.put('/api/user/', {
         id: user.id,
+        username: user.username,
+        display_name: user.display_name || '',
+        group: user.group || 'default',
         quota: newQuota,
+        remark: user.remark || '',
       });
       const { success, message } = res.data;
       if (success) {
