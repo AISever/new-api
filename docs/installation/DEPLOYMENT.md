@@ -6,7 +6,7 @@
 
 - 目标：生产可用、可持续迭代（允许修改代码后部署）
 - 服务器：腾讯云轻量 `123.206.229.105`
-- 域名：`newapi.alling.online`
+- 域名：`api.aisever.art`
 - 代码仓库（部署用）：`https://github.com/AISever/new-api.git`
 - 固定部署分支：`codex/prod-live`
 - 版本迭代分支示例：`codex/release-v0.11.2-p1`
@@ -107,7 +107,7 @@ docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
 curl -sS http://127.0.0.1:3000/api/status
 
 # 域名检查
-curl -I http://newapi.alling.online/api/status
+curl -I http://api.aisever.art/api/status
 ```
 
 预期：
@@ -118,7 +118,7 @@ curl -I http://newapi.alling.online/api/status
 
 Nginx 站点配置文件：
 
-- `/www/server/panel/vhost/nginx/newapi.alling.online.conf`
+- `/www/server/panel/vhost/nginx/api.aisever.art.conf`
 
 核心逻辑：
 - `80` 端口接入
@@ -127,7 +127,7 @@ Nginx 站点配置文件：
 
 ## 8. HTTPS 现状与处理
 
-当前阻塞点：证书签发时，外部校验流量被 DNSPod `webblock` 页面拦截，导致 `http-01` 失败。
+如果证书签发失败，优先检查外部校验流量是否能直达本站点（常见原因：DNS 未生效 / DNSPod `webblock` 拦截 / 80 端口未放通），导致 `http-01` 失败。
 
 典型报错（`/var/log/letsencrypt/letsencrypt.log`）：
 - `unauthorized`
@@ -137,6 +137,20 @@ Nginx 站点配置文件：
 1. 在 DNSPod 确认 `A` 记录所有线路都指向 `123.206.229.105`
 2. 取消域名拦截/未备案拦截策略（或改用可签发证书的域名）
 3. 再执行证书签发与 443 配置
+
+推荐在服务器执行脚本（含对 `webblock` 的预检）：
+
+```bash
+cd /opt/new-api-src
+./scripts/lighthouse/enable-https-certbot.sh api.aisever.art
+```
+
+如需设置邮箱（推荐，用于证书过期提醒）：
+
+```bash
+cd /opt/new-api-src
+CERTBOT_EMAIL=admin@example.com ./scripts/lighthouse/enable-https-certbot.sh api.aisever.art
+```
 
 ## 9. 常见问题
 
@@ -160,3 +174,109 @@ Nginx 站点配置文件：
 处理：
 - 确保宿主机挂载目录存在：`/opt/new-api-src/data`、`/opt/new-api-src/logs`
 - 然后执行：`docker compose -p new-api up -d`
+
+## 10. 与官方版本保持同步（Git 策略）
+
+目标：在可改代码的前提下，尽可能减少与官方差异，便于后续持续升级。
+
+### 10.1 官方如何发布版本
+
+- 官方以 Git tag 作为版本：稳定版 `vX.Y.Z`，预览版 `vX.Y.Z-alpha.N`
+- GitHub Release 构建会忽略 `*-alpha*` tag（只对稳定版发布 Release）：`.github/workflows/release.yml:5`
+- Docker 镜像 `latest` 会随 tag 构建流水线推进（可能跟随 alpha），生产建议固定使用具体 tag 或自建镜像：`.github/workflows/docker-image-arm64.yml:3`
+
+### 10.2 提交代码的原则（保证同步/兼容的关键）
+
+- `main` 只做官方镜像：永远不在 `main` 上提交自定义改动（否则后续升级成本指数上升）
+- 自定义改动只放在 `codex/*` 分支，且尽量“少而独立”（一个功能/修复一组提交，避免把大量改动揉成一次提交）
+- `codex/prod-live` 只做部署入口：只允许 fast-forward 合并发布分支（保持线上历史线性、可追溯）
+
+### 10.3 同步官方 `main`（镜像）
+
+> 约束：`main` 必须保持与官方 `upstream/main` 一致。
+
+```bash
+git fetch upstream --tags
+git switch main
+git pull --ff-only upstream main
+git push origin main
+```
+
+### 10.4 以官方稳定 tag 为基线创建发布分支
+
+```bash
+# 示例：从 v0.11.2 创建发布分支
+git fetch upstream --tags
+git switch -c codex/release-v0.11.2-p1 v0.11.2
+git push -u origin codex/release-v0.11.2-p1
+```
+
+### 10.5 升级到新版本（把自定义提交“搬到新 tag 上”）
+
+```bash
+# 示例：从 v0.11.3 新建发布分支
+git fetch upstream --tags
+git switch -c codex/release-v0.11.3-p1 v0.11.3
+
+# 把旧发布分支相对旧 tag 的提交整体 cherry-pick 过去
+git cherry-pick v0.11.2..codex/release-v0.11.2-p1
+git push -u origin codex/release-v0.11.3-p1
+```
+
+说明：
+- 若 cherry-pick 冲突：解决冲突后执行 `git cherry-pick --continue`
+- 升级/新功能必须先在测试环境验证通过，再合并到 `codex/prod-live` 并部署到生产
+
+## 11. 源生产 → 轻量 数据备份与恢复
+
+> 场景：老生产环境短期不能下线，需要周期性把“数据/配置/数据库”同步到腾讯云轻量新生产环境。
+> 注意：恢复会停止新生产环境的容器（有短暂停机），请在低峰操作。
+
+### 11.1 准备本地配置（仅本机保存，不要提交）
+
+1) 复制示例文件：
+
+```bash
+cp .tencent/.env.lighthouse.example .tencent/.env.lighthouse
+```
+
+2) 编辑 `.tencent/.env.lighthouse`，填写 `IP_1`、`HOSTNAME`（以及可选的 `LIGHTHOUSE_SSH_KEY`）。
+
+### 11.2 执行备份（本地 → 上传到轻量）
+
+在本机仓库目录执行：
+
+```bash
+export ORIGIN_SSH_HOST=202.140.142.149
+export ORIGIN_SSH_USER=root
+export ORIGIN_SSH_PASS='***'   # 或改用 ORIGIN_SSH_KEY
+
+./scripts/migration/backup-origin-to-lighthouse.sh
+```
+
+输出为轻量服务器上的备份目录，例如：
+
+- `/opt/new-api-src/backups/origin/20260305-164125`
+
+### 11.3 执行恢复（在轻量服务器上）
+
+SSH 到轻量服务器：
+
+```bash
+ssh -i .tencent/lighthouse-shanghai.pem root@123.206.229.105
+```
+
+恢复并同步新域名（会写入数据库 options.ServerAddress）：
+
+```bash
+cd /opt/new-api-src
+SERVER_ADDRESS=https://api.aisever.art \
+  ./scripts/migration/restore-lighthouse-from-backup.sh /opt/new-api-src/backups/origin/<timestamp>
+```
+
+验证：
+
+```bash
+curl -sS http://127.0.0.1:3000/api/status | head
+curl -I http://api.aisever.art/api/status
+```

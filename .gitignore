@@ -20,6 +20,8 @@ tiktoken_cache
 .cache
 web/bun.lock
 plans
+.tencent/*
+!.tencent/.env.lighthouse.example
 
 electron/node_modules
 electron/dist
