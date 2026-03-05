@@ -46,13 +46,17 @@ PROJECT_NAME="new-api"
 
 cd "$REPO_DIR"
 
-timeout 180 git fetch origin --prune
+if ! timeout 180 git fetch --depth 1 --no-tags origin "$BRANCH"; then
+  echo "WARN: git fetch timeout, use local branch code" >&2
+fi
 if git show-ref --verify --quiet "refs/heads/${BRANCH}"; then
   git checkout "$BRANCH"
 else
   git checkout -b "$BRANCH" "origin/$BRANCH"
 fi
-timeout 180 git pull --ff-only origin "$BRANCH"
+if git rev-parse --verify -q FETCH_HEAD >/dev/null; then
+  git reset --hard FETCH_HEAD
+fi
 
 SHA="$(git rev-parse --short HEAD)"
 VERSION_VALUE="${BRANCH}+${SHA}"
@@ -144,6 +148,10 @@ Nginx 站点配置文件：
 - 增加 swap（服务器已有 `/www/swap` + `/www/swap2`）
 - 构建命令加 `--memory 5g`
 - 前端构建限制内存：`NODE_OPTIONS=--max-old-space-size=2048`
+
+说明：
+- 目前 `docker compose` 在 BuildKit 下可能提示 `--memory ... will be ignored`
+- 如仍频繁 OOM，建议优先升级服务器内存，或改为 CI/本地构建镜像后再推送到服务器拉取
 
 ### 9.2 容器 `unhealthy` 且健康检查执行失败
 
