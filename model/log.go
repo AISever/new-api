@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -69,6 +71,33 @@ func GetLogByTokenId(tokenId int) (logs []*Log, err error) {
 	err = LOG_DB.Model(&Log{}).Where("token_id = ?", tokenId).Order("id desc").Limit(common.MaxRecentItems).Find(&logs).Error
 	formatUserLogs(logs, 0)
 	return logs, err
+}
+
+func GetLogByKeyPaginated(key string, offset int, limit int) (logs []*Log, total int64, err error) {
+	key = strings.TrimPrefix(key, "sk-")
+	if os.Getenv("LOG_SQL_DSN") != "" {
+		var tk Token
+		if err = DB.Model(&Token{}).Where(logKeyCol+"=?", key).First(&tk).Error; err != nil {
+			return nil, 0, err
+		}
+		err = LOG_DB.Model(&Log{}).Where("token_id=?", tk.Id).Count(&total).Error
+		if err != nil {
+			return nil, 0, err
+		}
+		err = LOG_DB.Model(&Log{}).Where("token_id=?", tk.Id).Order("id desc").Offset(offset).Limit(limit).Find(&logs).Error
+	} else {
+		var tk Token
+		if err = DB.Model(&Token{}).Where(logKeyCol+"=?", key).First(&tk).Error; err != nil {
+			return nil, 0, err
+		}
+		err = LOG_DB.Model(&Log{}).Where("token_id=?", tk.Id).Count(&total).Error
+		if err != nil {
+			return nil, 0, err
+		}
+		err = LOG_DB.Model(&Log{}).Where("token_id=?", tk.Id).Order("id desc").Offset(offset).Limit(limit).Find(&logs).Error
+	}
+	formatUserLogs(logs, offset)
+	return logs, total, err
 }
 
 func RecordLog(userId int, logType int, content string) {

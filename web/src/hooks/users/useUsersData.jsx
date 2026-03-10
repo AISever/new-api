@@ -188,6 +188,41 @@ export const useUsersData = () => {
     }
   };
 
+  // Top up user quota
+  const topUpUser = async (user, amount) => {
+    if (!user || amount <= 0) {
+      return;
+    }
+    try {
+      const newQuota = (user.quota || 0) + amount;
+      // 使用完整的用户数据进行更新，避免其他字段被清空
+      const res = await API.put('/api/user/', {
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name || '',
+        group: user.group || 'default',
+        quota: newQuota,
+        remark: user.remark || '',
+      });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess(t('充值成功'));
+        // Update local user data
+        const newUsers = users.map((u) => {
+          if (u.id === user.id) {
+            return { ...u, quota: newQuota };
+          }
+          return u;
+        });
+        setUsers(newUsers);
+      } else {
+        showError(message || t('充值失败，请重试'));
+      }
+    } catch (error) {
+      showError(t('充值失败，请重试'));
+    }
+  };
+
   // Handle page change
   const handlePageChange = (page) => {
     setActivePage(page);
@@ -307,6 +342,7 @@ export const useUsersData = () => {
     manageUser,
     resetUserPasskey,
     resetUserTwoFA,
+    topUpUser,
     handlePageChange,
     handlePageSizeChange,
     handleRow,

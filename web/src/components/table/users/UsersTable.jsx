@@ -31,6 +31,7 @@ import EnableDisableUserModal from './modals/EnableDisableUserModal';
 import DeleteUserModal from './modals/DeleteUserModal';
 import ResetPasskeyModal from './modals/ResetPasskeyModal';
 import ResetTwoFAModal from './modals/ResetTwoFAModal';
+import TopUpUserModal from './modals/TopUpUserModal';
 import UserSubscriptionsModal from './modals/UserSubscriptionsModal';
 
 const UsersTable = (usersData) => {
@@ -50,6 +51,7 @@ const UsersTable = (usersData) => {
     refresh,
     resetUserPasskey,
     resetUserTwoFA,
+    topUpUser,
     t,
   } = usersData;
 
@@ -62,6 +64,8 @@ const UsersTable = (usersData) => {
   const [enableDisableAction, setEnableDisableAction] = useState('');
   const [showResetPasskeyModal, setShowResetPasskeyModal] = useState(false);
   const [showResetTwoFAModal, setShowResetTwoFAModal] = useState(false);
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [topUpLoading, setTopUpLoading] = useState(false);
   const [showUserSubscriptionsModal, setShowUserSubscriptionsModal] =
     useState(false);
 
@@ -97,6 +101,11 @@ const UsersTable = (usersData) => {
     setShowResetTwoFAModal(true);
   };
 
+  const showTopUpUserModal = (user) => {
+    setModalUser(user);
+    setShowTopUpModal(true);
+  };
+
   const showUserSubscriptionsUserModal = (user) => {
     setModalUser(user);
     setShowUserSubscriptionsModal(true);
@@ -128,6 +137,16 @@ const UsersTable = (usersData) => {
     setShowResetTwoFAModal(false);
   };
 
+  const handleTopUpConfirm = async (amount) => {
+    setTopUpLoading(true);
+    try {
+      await topUpUser(modalUser, amount);
+      setShowTopUpModal(false);
+    } finally {
+      setTopUpLoading(false);
+    }
+  };
+
   // Get all columns
   const columns = useMemo(() => {
     return getUsersColumns({
@@ -140,6 +159,7 @@ const UsersTable = (usersData) => {
       showDeleteModal: showDeleteUserModal,
       showResetPasskeyModal: showResetPasskeyUserModal,
       showResetTwoFAModal: showResetTwoFAUserModal,
+      showTopUpModal: showTopUpUserModal,
       showUserSubscriptionsModal: showUserSubscriptionsUserModal,
     });
   }, [
@@ -152,6 +172,7 @@ const UsersTable = (usersData) => {
     showDeleteUserModal,
     showResetPasskeyUserModal,
     showResetTwoFAUserModal,
+    showTopUpUserModal,
     showUserSubscriptionsUserModal,
   ]);
 
@@ -250,6 +271,15 @@ const UsersTable = (usersData) => {
         onCancel={() => setShowResetTwoFAModal(false)}
         onConfirm={handleResetTwoFAConfirm}
         user={modalUser}
+        t={t}
+      />
+
+      <TopUpUserModal
+        visible={showTopUpModal}
+        onCancel={() => setShowTopUpModal(false)}
+        onConfirm={handleTopUpConfirm}
+        user={modalUser}
+        loading={topUpLoading}
         t={t}
       />
 

@@ -518,25 +518,29 @@ func (user *User) Edit(updatePassword bool) error {
 		}
 	}
 
-	newUser := *user
 	updates := map[string]interface{}{
-		"username":     newUser.Username,
-		"display_name": newUser.DisplayName,
-		"group":        newUser.Group,
-		"quota":        newUser.Quota,
-		"remark":       newUser.Remark,
+		"username":     user.Username,
+		"display_name": user.DisplayName,
+		"group":        user.Group,
+		"quota":        user.Quota,
+		"remark":       user.Remark,
 	}
 	if updatePassword {
-		updates["password"] = newUser.Password
+		updates["password"] = user.Password
 	}
 
-	DB.First(&user, user.Id)
-	if err = DB.Model(user).Updates(updates).Error; err != nil {
+	if err = DB.Model(&User{Id: user.Id}).Updates(updates).Error; err != nil {
 		return err
 	}
 
-	// Update cache
-	return updateUserCache(*user)
+	// Fetch the complete user data from DB to update cache with all fields
+	var updatedUser User
+	if err = DB.First(&updatedUser, user.Id).Error; err != nil {
+		return err
+	}
+
+	// Update cache with complete user data
+	return updateUserCache(updatedUser)
 }
 
 func (user *User) ClearBinding(bindingType string) error {

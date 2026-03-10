@@ -29,7 +29,17 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Workaround for package "exports" restricting deep imports
+      '@douyinfe/semi-foundation': path.resolve(
+        __dirname,
+        './node_modules/@douyinfe/semi-foundation',
+      ),
+      '@douyinfe/semi-ui/dist/css/semi.css': path.resolve(
+        __dirname,
+        './node_modules/@douyinfe/semi-ui/dist/css/semi.css',
+      ),
     },
+    dedupe: ['@douyinfe/semi-ui', '@douyinfe/semi-foundation', '@douyinfe/semi-icons'],
   },
   plugins: [
     codeInspectorPlugin({

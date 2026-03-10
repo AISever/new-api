@@ -26,6 +26,7 @@ export const useNavigation = (t, docsLink, headerNavModules) => {
       home: true,
       console: true,
       pricing: true,
+      query: true,
       docs: true,
       about: true,
     };
@@ -48,6 +49,11 @@ export const useNavigation = (t, docsLink, headerNavModules) => {
         text: t('模型广场'),
         itemKey: 'pricing',
         to: '/pricing',
+      },
+      {
+        text: t('查询'),
+        itemKey: 'query',
+        to: '/query',
       },
       ...(docsLink
         ? [
@@ -76,6 +82,10 @@ export const useNavigation = (t, docsLink, headerNavModules) => {
         return typeof modules.pricing === 'object'
           ? modules.pricing.enabled
           : modules.pricing;
+      }
+      if (link.itemKey === 'query') {
+        // 兼容旧配置：缺省视为启用
+        return modules.query !== false;
       }
       return modules[link.itemKey] === true;
     });

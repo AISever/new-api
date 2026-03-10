@@ -9,9 +9,16 @@ build
 logs
 web/dist
 .env
+.env.local
 one-api
 new-api
 /__debug_bin*
+.kiro/
+
+# local/untracked assets
+web/public/WeChat-qun.jpg
+web/public/favicon1.ico
+web/public/logo-my.png
 .DS_Store
 tiktoken_cache
 .eslintcache
