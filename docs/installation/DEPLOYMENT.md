@@ -210,14 +210,10 @@ git push -u origin codex/release-v0.11.3-p1
 
 ### 11.1 准备本地配置（仅本机保存，不要提交）
 
-1) 创建本地配置文件（仓库默认不提供示例文件）：
+1) 复制示例文件：
 
 ```bash
-cat > .tencent/.env.lighthouse <<'EOF'
-IP_1=123.206.229.105
-HOSTNAME=api.aisever.art
-LIGHTHOUSE_SSH_KEY=.tencent/lighthouse-shanghai.pem
-EOF
+cp .tencent/.env.lighthouse.example .tencent/.env.lighthouse
 ```
 
 2) 编辑 `.tencent/.env.lighthouse`，填写 `IP_1`、`HOSTNAME`（以及可选的 `LIGHTHOUSE_SSH_KEY`）。

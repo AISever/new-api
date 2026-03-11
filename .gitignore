@@ -29,3 +29,7 @@ data/
 .gomodcache/
 .gocache-temp
 .gopath
+.env.local
+.kiro/
+.tencent/*
+!.tencent/.env.lighthouse.example
