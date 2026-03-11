@@ -1,0 +1,62 @@
+# New-API kkidc 生产环境部署配置
+#
+# 使用方法:
+#   1. 复制 .env.example 为 .env.local 并修改配置
+#   2. docker compose -f ops/compose/kkidc-production.yml up -d
+#   3. 访问 http://localhost:3000
+#
+# 默认管理员账号: root / 123456 (首次登录后请立即修改)
+
+version: '3.4'
+
+services:
+  new-api:
+    image: calciumion/new-api:latest
+    container_name: new-api-local
+    restart: always
+    command: --log-dir /app/logs
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+      - ./logs:/app/logs
+    environment:
+      - SQL_DSN=postgresql://newapi:${DB_PASSWORD:-NewApi2024Secure}@postgres:5432/new-api
+      - REDIS_CONN_STRING=redis://redis
+      - TZ=Asia/Shanghai
+      - SESSION_SECRET=${SESSION_SECRET:-ChangeThisToRandomString2024}
+      - CRYPTO_SECRET=${CRYPTO_SECRET:-ChangeThisToAnotherRandomString2024}
+      - ERROR_LOG_ENABLED=true
+      - BATCH_UPDATE_ENABLED=true
+      - MEMORY_CACHE_ENABLED=true
+    depends_on:
+      - redis
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:latest
+    container_name: new-api-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:15
+    container_name: new-api-postgres
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: newapi
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-NewApi2024Secure}
+      POSTGRES_DB: new-api
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
