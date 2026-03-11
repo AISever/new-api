@@ -1,0 +1,4 @@
+interface:
+  display_name: "new-api Release Workflow"
+  short_description: "Handle new-api upgrade and release flow"
+  default_prompt: "Use $new-api-release-workflow to handle official version selection, private patch migration, release branching, validation, and deployment decisions for this new-api repo."

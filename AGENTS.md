@@ -13,6 +13,28 @@ This is an AI API gateway/proxy built with Go. It aggregates 40+ upstream AI pro
 - **Auth**: JWT, WebAuthn/Passkeys, OAuth (GitHub, Discord, OIDC, etc.)
 - **Frontend package manager**: Bun (preferred over npm/yarn/pnpm)
 
+## Deployment Environments
+
+Use `ops/README.md` as the operations entry point before doing any deployment, migration, or verification work.
+
+| 环境 | 状态 | 地址 | 说明 |
+| --- | --- | --- | --- |
+| `kkidc` 生产环境 | 当前启用 | `http://202.140.142.149:3000` | 当前真实生产流量 |
+| `kkidc` 测试环境 | 当前启用 | `http://202.140.142.149:3001` | 新功能验证 |
+| `tencent` 测试环境 | 已部署可用 | `http://123.206.229.105:3001` | `tencent` 服务器候选分支验证 |
+| `tencent` 预备生产环境 | 已部署未启用 | `http://123.206.229.105:3000` / `https://api.aisever.art` | 切换目标环境，当前不是生产流量入口 |
+
+Deployment workflow reminders:
+- Read `ops/environments/README.md` first.
+- Use `ops/checklists/` for routine test / production / cutover operations.
+- If the task touches `tencent` test deployment, also read `docs/installation/TENCENT_TEST.md`.
+- If the task touches `tencent` standby deployment or cutover, also read `docs/installation/DEPLOYMENT.md`.
+- Do not confuse `tencent` test with `tencent` standby; the standby environment is still non-production.
+
+## Project Skills
+
+- `new-api-release-workflow`: Use for official version selection, stable-vs-alpha判断, `codex/release-*` 升级分支创建, 私有补丁迁移, 以及测试/生产/腾讯云待切流环境的发布流程分析。Skill file: `.codex/skills/new-api-release-workflow/SKILL.md`
+
 ## Architecture
 
 Layered architecture: Router -> Controller -> Service -> Model
