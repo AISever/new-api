@@ -2,7 +2,7 @@
 
 本文档用于沉淀 `tencent` 服务器的部署流程，便于后续 AI Agent 和运维人员直接执行，避免重复排障。
 
-> 重要：本手册**只对应 `tencent` 预备生产环境**。当前真实生产流量仍在 `kkidc` 生产环境 `http://202.140.142.149:3000`。环境总览请先看 `ops/environments/README.md`，日常运维入口请先看 `ops/README.md`。
+> 重要：本手册**只对应 `tencent` 预备生产环境**。当前真实生产流量在新 `kkidc` 生产环境 `https://api.aisever.cn`。环境总览请先看 `ops/environments/README.md`，日常运维入口请先看 `ops/README.md`。
 
 如需部署 `tencent` 测试环境，请改看 `docs/installation/TENCENT_TEST.md`。
 
