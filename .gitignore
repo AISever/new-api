@@ -31,5 +31,7 @@ data/
 .gopath
 .env.local
 .kiro/
+.kkidc/*
+!.kkidc/.env.lighthouse.example
 .tencent/*
 !.tencent/.env.lighthouse.example

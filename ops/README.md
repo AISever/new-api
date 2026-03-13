@@ -11,8 +11,9 @@
 
 ## 1. 当前环境口径
 
-- `kkidc` 生产环境：`http://202.140.142.149:3000`
+- `kkidc` 生产环境：`https://api.aisever.cn`
 - `kkidc` 测试环境：`http://202.140.142.149:3001`
+- `kkidc` 旧生产主机：`http://202.140.142.149:3000`（暂保留，作为迁移回退与数据源）
 - `tencent` 测试环境：`http://123.206.229.105:3001`
 - `tencent` 预备生产环境：`http://123.206.229.105:3000` / 规划域名 `https://api.aisever.art`
 
@@ -36,6 +37,7 @@
 - 本地构建并上传到 `tencent`（可选）：`ops/scripts/tencent-local-build-upload-deploy.sh`
 - `kkidc` 生产部署：`ops/scripts/kkidc-production-deploy.sh`
 - `kkidc` 测试部署：`ops/scripts/kkidc-test-deploy.sh`
+- `kkidc` 新服务器统一部署：`ops/scripts/kkidc-host-deploy.sh production|test`
 - `tencent` 从 `kkidc` 备份导入：`ops/scripts/tencent-backup-from-kkidc.sh`
 - `tencent` 预备生产部署：`ops/scripts/tencent-standby-deploy.sh`
 - `tencent` 测试部署：`ops/scripts/tencent-test-deploy.sh`
@@ -53,8 +55,8 @@
 ## 5. 推荐流程
 
 1. 新功能或修复先在 `kkidc` 测试环境验证。
-2. 如需验证 `tencent` 服务器行为，再部署到 `tencent` 测试环境。
-3. 验证通过后再部署到 `kkidc` 生产环境。
+2. 验证通过后再部署到新 `kkidc` 生产环境（`https://api.aisever.cn`）。
+3. 如需验证 `tencent` 服务器行为，再部署到 `tencent` 测试环境。
 4. `tencent` 预备生产环境当前只做数据同步、部署验证、域名/HTTPS 切换准备。
 5. 未完成切流前，**不要**把 `tencent` 预备生产环境视为真实生产。
 
@@ -62,6 +64,7 @@
 
 - `kkidc` 与 `tencent` **不是同一套部署拓扑**，不要强行共用一个脚本入口。
 - `kkidc` 体系仍基于历史 `rsync` / `docker run` / 共享基础容器网络的方式运行。
+- `kkidc` 新服务器使用 `ops/scripts/kkidc-host-deploy.sh` 统一处理 `production` / `test`，并且只打包当前分支已提交的 `HEAD`，不带本地未提交改动。
 - `tencent` 体系基于“服务器上保留 git 仓库、切分支、`docker compose build/up`”运行。
 - 因此这里只抽取 `tencent` 内部公共核心：`ops/scripts/deploy-from-branch.sh`。
 - `tencent` 测试与 `tencent` 预备生产只在目录、端口、数据库、compose 生成方式上有差异，其余分支切换、构建、版本注入逻辑保持一致。
