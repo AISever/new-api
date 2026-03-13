@@ -5,14 +5,12 @@
 
 ## 1. 当前口径（2026-03-13）
 
-> 重要：**当前真实对外生产环境是新 `kkidc` 主机 `114.66.47.192` 上的 `https://api.aisever.cn`**。旧 `kkidc` 主机 `202.140.142.149` 仍保留，作为迁移回退与补采数据来源。`tencent` 服务器仍未启用对外生产流量。
+> 重要：**当前真实对外生产环境是新 `kkidc` 主机 `114.66.47.192` 上的 `https://api.aisever.cn`**。`tencent` 服务器仍未启用对外生产流量。
 
 | 环境 | 当前状态 | 访问地址 | 服务器 | 容器 | 数据库 | 用途 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `kkidc` 生产环境 | **启用中** | `https://api.aisever.cn` | `114.66.47.192` | `new-api-local` | `new-api` | 当前真实生产流量 |
-| `kkidc` 测试环境 | **启用中** | `http://202.140.142.149:3001` | `202.140.142.149` | `new-api-test` | `new-api-test` | 新功能测试验证 |
-| `kkidc` 新服务器（统一入口） | **已启用** | `https://api.aisever.cn` / `https://newapi.aisever.cn` / `http://114.66.47.192:3001` | `114.66.47.192` | `new-api-local` / `new-api-test` | `new-api` / `new-api-test` | 新 `kkidc` 主机，使用统一脚本管理生产/测试 |
-| `kkidc` 旧生产主机 | **保留中** | `http://202.140.142.149:3000` | `202.140.142.149` | `new-api-local` | `new-api` | 历史生产主机，暂不下线 |
+| `kkidc` 生产环境 | **启用中** | `https://api.aisever.cn` / `https://newapi.aisever.cn` | `114.66.47.192` | `new-api-local` | `new-api` | 当前真实生产流量 |
+| `kkidc` 测试环境 | **启用中** | `http://114.66.47.192:3001` | `114.66.47.192` | `new-api-test` | `new-api-test` | 新功能测试验证 |
 | `tencent` 测试环境 | **已部署可用** | `http://123.206.229.105:3001` | `123.206.229.105` | `new-api-test` | `new-api-test` | `tencent` 服务器候选分支验证 |
 | `tencent` 预备生产环境 | **已部署，未启用** | `http://123.206.229.105:3000` / 规划域名 `https://api.aisever.art` | `123.206.229.105` | `new-api`（compose 项目） | 迁移后数据 | 未来生产切换目标 |
 
