@@ -23,6 +23,7 @@
 
 ## 2. 日常操作入口
 
+- 最小运维手册：`ops/RUNBOOK.md`
 - `kkidc` 测试发布：`ops/checklists/kkidc-test-release.md`
 - `kkidc` 生产发布：`ops/checklists/kkidc-production-release.md`
 - `tencent` 测试发布：`ops/checklists/tencent-test-release.md`
