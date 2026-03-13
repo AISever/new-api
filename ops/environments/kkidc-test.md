@@ -24,4 +24,5 @@
 - 该环境与 `kkidc` 生产环境同机部署，但数据、端口、Redis 库相互隔离。
 - 该环境的历史资料主要来自 `main-bak` 中的部署说明与环境约定。
 - 对应部署脚本：`ops/scripts/kkidc-test-deploy.sh`
+- 新 `kkidc` 服务器统一脚本：`ops/scripts/kkidc-host-deploy.sh test`
 - 对应 compose：`ops/compose/kkidc-test.yml`
