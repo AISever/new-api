@@ -151,7 +151,7 @@ if ! printf '%s\n' "$TEST_OUTPUT" | grep -q '^redis_conn_string=redis://new-api-
   exit 1
 fi
 
-if ! printf '%s\n' "$TEST_OUTPUT" | grep -q '^server_address=http://api.aisever.cn:3001$'; then
+if ! printf '%s\n' "$TEST_OUTPUT" | grep -q '^server_address=http://114.66.47.192:3001$'; then
   echo "FAIL: test server address mismatch" >&2
   exit 1
 fi

@@ -21,6 +21,8 @@
 - 登录后台并检查关键页面是否可访问。
 - 验证本次改动对应的主流程。
 - 检查错误日志、使用日志、计费日志是否正常写入。
+- 验证结束后执行：`bash ops/scripts/kkidc-host-deploy.sh test-stop`
+- 再次确认 `:3001` 已停止，但 `https://api.aisever.cn` 生产环境不受影响。
 
 ## 回滚
 

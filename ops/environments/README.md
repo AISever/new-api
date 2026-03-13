@@ -10,8 +10,8 @@
 | 环境 | 当前状态 | 访问地址 | 服务器 | 容器 | 数据库 | 用途 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `kkidc` 生产环境 | **启用中** | `https://api.aisever.cn` / `https://newapi.aisever.cn` | `114.66.47.192` | `new-api-local` | `new-api` | 当前真实生产流量 |
-| `kkidc` 测试环境 | **启用中** | `http://114.66.47.192:3001` | `114.66.47.192` | `new-api-test` | `new-api-test` | 新功能测试验证 |
-| `tencent` 测试环境 | **已部署可用** | `http://123.206.229.105:3001` | `123.206.229.105` | `new-api-test` | `new-api-test` | `tencent` 服务器候选分支验证 |
+| `kkidc` 测试环境 | **按需启动** | `http://114.66.47.192:3001` | `114.66.47.192` | `new-api-test` | `new-api-test` | 新功能测试验证，结束后关闭 |
+| `tencent` 测试环境 | **按需启动** | `http://123.206.229.105:3001` | `123.206.229.105` | `new-api-test` | `new-api-test` | `tencent` 服务器候选分支验证，结束后关闭 |
 | `tencent` 预备生产环境 | **已部署，未启用** | `http://123.206.229.105:3000` / 规划域名 `https://api.aisever.art` | `123.206.229.105` | `new-api`（compose 项目） | 迁移后数据 | 未来生产切换目标 |
 
 ## 2. 信息来源（本次已核对的本地分支）
@@ -45,3 +45,4 @@
 3. **部署前先看本目录**：需要判断“该操作到底影响哪个环境”时，先读本目录，再进入对应环境文档。
 4. **`tencent` 相关操作**：涉及 `api.aisever.art`、`/opt/new-api-src`、`codex/prod-live` 时，再继续阅读 `docs/installation/DEPLOYMENT.md`。
 5. **新 `kkidc` 服务器**：使用 `ops/scripts/kkidc-host-deploy.sh production|test`，默认读取 `.kkidc/.env.lighthouse` 和 `.env.local`，并只部署当前分支已提交的 `HEAD`。
+6. **测试环境收尾**：`kkidc` 用 `ops/scripts/kkidc-host-deploy.sh test-stop`，`tencent` 用 `ops/scripts/tencent-test-stop.sh`；两者都只停测试应用，不清空测试数据。
