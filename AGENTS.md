@@ -19,8 +19,8 @@ Use `ops/README.md` as the operations entry point before doing any deployment, m
 
 | 环境 | 状态 | 地址 | 说明 |
 | --- | --- | --- | --- |
-| `kkidc` 生产环境 | 当前启用 | `http://202.140.142.149:3000` | 当前真实生产流量 |
-| `kkidc` 测试环境 | 当前启用 | `http://202.140.142.149:3001` | 新功能验证 |
+| `kkidc` 生产环境 | 当前启用 | `https://api.aisever.cn` | 当前真实生产流量 |
+| `kkidc` 测试环境 | 当前启用 | `http://114.66.47.192:3001` | 新功能验证 |
 | `tencent` 测试环境 | 已部署可用 | `http://123.206.229.105:3001` | `tencent` 服务器候选分支验证 |
 | `tencent` 预备生产环境 | 已部署未启用 | `http://123.206.229.105:3000` / `https://api.aisever.art` | 切换目标环境，当前不是生产流量入口 |
 
