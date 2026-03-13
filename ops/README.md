@@ -38,6 +38,7 @@
 - `tencent` 从 `kkidc` 备份导入：`ops/scripts/tencent-backup-from-kkidc.sh`
 - `tencent` 预备生产部署：`ops/scripts/tencent-standby-deploy.sh`
 - `tencent` 测试部署：`ops/scripts/tencent-test-deploy.sh`
+- `tencent` 测试关闭：`ops/scripts/tencent-test-stop.sh`
 - `tencent` 测试从备份恢复：`ops/scripts/tencent-test-restore-from-backup.sh`
 - `tencent` 从备份恢复：`ops/scripts/tencent-restore-from-backup.sh`
 - `tencent` 启用 HTTPS：`ops/scripts/tencent-enable-https-certbot.sh`
@@ -54,12 +55,15 @@
 3. 如需验证 `tencent` 服务器行为，再部署到 `tencent` 测试环境。
 4. `tencent` 预备生产环境当前只做数据同步、部署验证、域名/HTTPS 切换准备。
 5. 未完成切流前，**不要**把 `tencent` 预备生产环境视为真实生产。
+6. `kkidc` / `tencent` 测试环境默认不常驻，验证结束后必须执行 stop 关闭测试应用。
 
 ## 6. 部署脚本抽象边界
 
 - `kkidc` 与 `tencent` **不是同一套部署拓扑**，不要强行共用一个脚本入口。
 - `kkidc` 新服务器使用 `ops/scripts/kkidc-host-deploy.sh` 统一处理 `production` / `test`，并且只打包当前分支已提交的 `HEAD`，不带本地未提交改动。
+- `kkidc` 测试环境关闭入口：`ops/scripts/kkidc-host-deploy.sh test-stop`，只停 `new-api-test`，保留测试数据。
 - `tencent` 体系基于“服务器上保留 git 仓库、切分支、`docker compose build/up`”运行。
+- `tencent` 测试环境关闭入口：`ops/scripts/tencent-test-stop.sh`，只停 `new-api-test`，保留测试数据。
 - 因此这里只抽取 `tencent` 内部公共核心：`ops/scripts/deploy-from-branch.sh`。
 - `tencent` 测试与 `tencent` 预备生产只在目录、端口、数据库、compose 生成方式上有差异，其余分支切换、构建、版本注入逻辑保持一致。
 

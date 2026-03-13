@@ -2,7 +2,7 @@
 
 本文档用于沉淀 `tencent` 测试环境的部署流程，便于在同一台 `tencent` 服务器上验证候选版本。
 
-> 重要：该环境是 `tencent` 测试环境，当前访问端口为 `3001`，和 `tencent` 预备生产环境 `:3000` 分离。
+> 重要：该环境是 `tencent` 测试环境，当前访问端口为 `3001`，和 `tencent` 预备生产环境 `:3000` 分离。测试环境默认不常驻，验证完成后应执行 stop。
 
 ## 1. 适用范围
 
@@ -38,6 +38,15 @@ cd /opt/new-api-test-src
 - 端口：`3001`
 - 数据库：`new-api-test`
 - 共享部署核心：`ops/scripts/deploy-from-branch.sh`
+
+部署完成后，如测试窗口结束，请执行：
+
+```bash
+cd /opt/new-api-test-src
+./ops/scripts/tencent-test-stop.sh
+```
+
+该命令只停止 `new-api-test` 应用容器，保留 `postgres-test`、`redis-test` 和测试数据。
 
 ## 3.1 可选：本地构建并上传镜像（低内存服务器推荐）
 
@@ -84,3 +93,16 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 - `new-api-test` 容器为 `healthy`
 - `/api/status` 返回 `success=true`
 - 版本信息对应候选分支与提交 SHA
+
+## 6. 测试结束后关闭
+
+```bash
+cd /opt/new-api-test-src
+./ops/scripts/tencent-test-stop.sh
+```
+
+预期：
+
+- `new-api-test` 容器已停止
+- `postgres-test` / `redis-test` 继续保留
+- 下次测试前再重新执行 `./ops/scripts/tencent-test-deploy.sh <branch>`

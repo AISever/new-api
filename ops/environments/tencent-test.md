@@ -2,7 +2,7 @@
 
 ## 1. 环境定位
 
-- 状态：**已部署可用**
+- 状态：**按需启动**
 - 服务器：`123.206.229.105`
 - 访问地址：`http://123.206.229.105:3001`
 - 说明：该环境用于在 `tencent` 服务器上验证候选发布分支，和 `tencent` 预备生产环境分离运行。
@@ -26,7 +26,9 @@
 - 该环境用于验证 `codex/release-*` 等候选分支在 `tencent` 服务器上的真实运行情况。
 - 该环境与 `tencent` 预备生产环境使用同一台服务器，但目录、容器名、端口、数据库全部隔离。
 - 对应部署脚本：`ops/scripts/tencent-test-deploy.sh`
+- 对应关闭脚本：`ops/scripts/tencent-test-stop.sh`
 - 共享部署核心：`ops/scripts/deploy-from-branch.sh`
 - 对应恢复脚本：`ops/scripts/tencent-test-restore-from-backup.sh`
 - 对应 compose 模板：`ops/compose/tencent-test.yml`
 - 详细部署说明：`docs/installation/TENCENT_TEST.md`
+- 测试完成后必须执行 stop，默认不常驻运行。
