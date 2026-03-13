@@ -11,6 +11,7 @@ FRONTEND_BUILD_NODE_OPTIONS="${FRONTEND_BUILD_NODE_OPTIONS:---max-old-space-size
 BUILD_STRATEGY_REQUESTED="${BUILD_STRATEGY:-auto}"
 
 TARGET_ENV=""
+ACTION="deploy"
 DRY_RUN="false"
 KEEP_STAGE_DIR="false"
 SKIP_BUILD="false"
@@ -22,6 +23,7 @@ REMOTE_USER=""
 REMOTE_PASSWORD=""
 PUBLIC_HOSTNAME=""
 PUBLIC_HOSTNAME_ALIASES=""
+TEST_HOSTNAME=""
 PUBLIC_HOSTNAME_LIST=""
 PUBLIC_CADDY_SITE_ADDRESSES=""
 LEGACY_BUILD_HOST=""
@@ -58,7 +60,7 @@ usage() {
 Deploy the new kkidc host using clean committed source only.
 
 Usage:
-  $(basename "$0") production|test [options]
+  $(basename "$0") production|test|test-stop [options]
 
 Options:
   --config PATH         host config file (default: .kkidc/.env.lighthouse)
@@ -103,6 +105,10 @@ parse_args() {
       ;;
     test)
       TARGET_ENV="test"
+      ;;
+    test-stop)
+      TARGET_ENV="test"
+      ACTION="stop"
       ;;
     --help|-h)
       usage
@@ -171,6 +177,7 @@ load_host_config() {
   REMOTE_PASSWORD="${SSH_password:-${SERVER_PASSWORD:-}}"
   PUBLIC_HOSTNAME="${HOSTNAME:-}"
   PUBLIC_HOSTNAME_ALIASES="${HOSTNAME_ALIASES:-}"
+  TEST_HOSTNAME="${TEST_HOSTNAME:-}"
 
   [ -n "$REMOTE_HOST" ] || die "missing IP_1 in $CONFIG_FILE"
   [ -n "$REMOTE_USER" ] || die "missing SSH_user in $CONFIG_FILE"
@@ -236,8 +243,8 @@ resolve_target_settings() {
     LOG_DIR="/opt/new-api-test/logs"
     REMOTE_BUILD_DIR="/opt/new-api-build-test"
     IMAGE_NAME="new-api:kkidc-test-${SHA}"
-    if [ -n "$PUBLIC_HOSTNAME" ]; then
-      SERVER_ADDRESS="http://${PUBLIC_HOSTNAME}:${APP_PORT}"
+    if [ -n "$TEST_HOSTNAME" ]; then
+      SERVER_ADDRESS="http://${TEST_HOSTNAME}:${APP_PORT}"
     else
       SERVER_ADDRESS="http://${REMOTE_HOST}:${APP_PORT}"
     fi
@@ -293,6 +300,7 @@ stage_clean_repo() {
 
 print_dry_run() {
   cat <<EOF
+action=${ACTION}
 target_env=${TARGET_ENV}
 remote_host=${REMOTE_HOST}
 remote_user=${REMOTE_USER}
@@ -316,8 +324,12 @@ EOF
 }
 
 check_dependencies() {
-  command -v git >/dev/null 2>&1 || die "git is required"
   command -v sshpass >/dev/null 2>&1 || die "sshpass is required"
+  if [ "$ACTION" = "stop" ]; then
+    return
+  fi
+
+  command -v git >/dev/null 2>&1 || die "git is required"
   command -v tar >/dev/null 2>&1 || die "tar is required"
   if [ "$BUILD_STRATEGY_RESOLVED" = "local" ] && ! local_docker_available; then
     die "local docker is unavailable for build strategy=local"
@@ -545,6 +557,32 @@ clear_remote_cache() {
   remote_cmd "docker exec '${REDIS_CONTAINER}' redis-cli -n '${REDIS_DB_INDEX}' FLUSHDB >/dev/null"
 }
 
+stop_test_app() {
+  local already_stopped="false"
+  local stopped_container="${APP_CONTAINER}"
+
+  if remote_cmd "docker container inspect '${APP_CONTAINER}' >/dev/null 2>&1"; then
+    remote_cmd "docker rm -f '${APP_CONTAINER}' >/dev/null"
+  else
+    already_stopped="true"
+    stopped_container=""
+  fi
+
+  cat <<EOF
+action=test-stop
+target_env=${TARGET_ENV}
+remote_host=${REMOTE_HOST}
+remote_user=${REMOTE_USER}
+app_container=${APP_CONTAINER}
+already_stopped=${already_stopped}
+stopped_container=${stopped_container}
+retained_data_dir=${DATA_DIR}
+retained_log_dir=${LOG_DIR}
+retained_pg_db=${PG_DB}
+retained_redis_db=${REDIS_DB_INDEX}
+EOF
+}
+
 sync_production_data_from_legacy() {
   if [ "$SYNC_PROD_DATA_FROM_LEGACY" != "true" ]; then
     return 0
@@ -606,9 +644,21 @@ EOF
 main() {
   parse_args "$@"
   load_host_config
+  resolve_target_settings
+
+  if [ "$ACTION" = "stop" ]; then
+    if [ "$DRY_RUN" = "true" ]; then
+      print_dry_run
+      exit 0
+    fi
+
+    check_dependencies
+    stop_test_app
+    exit 0
+  fi
+
   load_app_env
   resolve_git_version
-  resolve_target_settings
   stage_clean_repo
   resolve_build_strategy
   validate_requested_operation
