@@ -178,6 +178,14 @@ func SetApiRouter(router *gin.Engine) {
 			externalShopAdminRoute.POST("/orders/:local_trade_no/refresh", controller.AdminRefreshExternalShopOrder)
 		}
 
+		gptTeamPlanRoute := apiRouter.Group("/gptteamplan")
+		gptTeamPlanRoute.Use(middleware.UserAuth())
+		{
+			gptTeamPlanRoute.GET("/status", controller.GetGPTTeamPlanStatus)
+			gptTeamPlanRoute.POST("/redeem", middleware.GPTTeamPlanRateLimit(), controller.RedeemGPTTeamPlan)
+			gptTeamPlanRoute.POST("/warranty/check", middleware.GPTTeamPlanRateLimit(), controller.CheckGPTTeamPlanWarranty)
+		}
+
 		// Subscription payment callbacks (no auth)
 		apiRouter.POST("/subscription/epay/notify", controller.SubscriptionEpayNotify)
 		apiRouter.GET("/subscription/epay/notify", controller.SubscriptionEpayNotify)

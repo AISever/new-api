@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -29,7 +29,9 @@ import {
   Select,
   Space,
   Spin,
+  TabPane,
   Table,
+  Tabs,
   Tag,
   Typography,
 } from '@douyinfe/semi-ui';
@@ -49,6 +51,8 @@ import {
   parseExternalShopDeliveryCards,
   shouldShowDescriptionToggle,
 } from './shopUtils';
+import GptTeamPlanTab from './GptTeamPlanTab';
+import { normalizeShopTabKey } from './gptTeamPlanUtils';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -65,9 +69,13 @@ const statusColorMap = {
 export default function Shop() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [goods, setGoods] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [gptTeamEnabled, setGptTeamEnabled] = useState(false);
+  const [gptTeamStatusLoaded, setGptTeamStatusLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState('goods');
   const [orderTotal, setOrderTotal] = useState(0);
   const [createLoading, setCreateLoading] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
@@ -88,6 +96,23 @@ export default function Shop() {
       throw new Error(res.data.message || t('获取商品失败'));
     }
     setGoods(res.data.data || []);
+  };
+
+  const loadGPTTeamStatus = async () => {
+    try {
+      const res = await API.get('/api/gptteamplan/status', {
+        skipErrorHandler: true,
+      });
+      if (res?.data?.success) {
+        setGptTeamEnabled(Boolean(res.data.data?.enabled));
+        setGptTeamStatusLoaded(true);
+        return;
+      }
+    } catch {
+      // Keep the existing shop tab available even if the GPT Team status endpoint is unavailable.
+    }
+    setGptTeamEnabled(false);
+    setGptTeamStatusLoaded(true);
   };
 
   const loadOrders = async (options = {}) => {
@@ -132,6 +157,7 @@ export default function Shop() {
         await Promise.all([
           loadGoods(),
           loadOrders({ page: 1, pageSize: orderPageSize, sort: orderSort }),
+          loadGPTTeamStatus(),
         ]);
       } catch (error) {
         showError(error.message || t('加载失败'));
@@ -141,6 +167,21 @@ export default function Shop() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (!gptTeamStatusLoaded) {
+      return;
+    }
+    const searchParams = new URLSearchParams(location.search);
+    const nextTab = normalizeShopTabKey(
+      searchParams.get('tab'),
+      gptTeamEnabled,
+    );
+    setActiveTab(nextTab);
+    if (searchParams.get('tab') !== nextTab) {
+      navigate(`${location.pathname}?tab=${nextTab}`, { replace: true });
+    }
+  }, [gptTeamEnabled, gptTeamStatusLoaded, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (loading) {
@@ -388,7 +429,7 @@ export default function Shop() {
     );
   }
 
-  return (
+  const renderExternalShopContent = () => (
     <div className='px-4 pb-6 pt-8 md:px-6 md:pb-6 md:pt-10 space-y-6'>
       <div style={{ scrollMarginTop: 96 }}>
         <Title heading={4}>{t('商品商城')}</Title>
@@ -598,6 +639,29 @@ export default function Shop() {
           />
         </Space>
       </Modal>
+    </div>
+  );
+
+  return (
+    <div className='px-4 pb-6 pt-8 md:px-6 md:pb-6 md:pt-10'>
+      <Tabs
+        type='card'
+        activeKey={activeTab}
+        onChange={(key) => {
+          const nextTab = normalizeShopTabKey(key, gptTeamEnabled);
+          setActiveTab(nextTab);
+          navigate(`${location.pathname}?tab=${nextTab}`, { replace: true });
+        }}
+      >
+        <TabPane itemKey='goods' tab={t('商品商城')}>
+          {activeTab === 'goods' ? renderExternalShopContent() : null}
+        </TabPane>
+        {gptTeamEnabled ? (
+          <TabPane itemKey='gpt-team' tab={t('GPT Team 兑换')}>
+            {activeTab === 'gpt-team' ? <GptTeamPlanTab /> : null}
+          </TabPane>
+        ) : null}
+      </Tabs>
     </div>
   );
 }

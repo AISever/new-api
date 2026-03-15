@@ -100,6 +100,8 @@ func InitOptionMap() {
 	common.OptionMap["external_shop.ldxp.shop_token"] = ""
 	common.OptionMap["external_shop.ldxp.allowed_category_ids"] = ""
 	common.OptionMap["external_shop.ldxp.allowed_goods_keys"] = ""
+	common.OptionMap["gptteamplan.enabled"] = "false"
+	common.OptionMap["gptteamplan.base_url"] = "http://gptteamplan.tech"
 	common.OptionMap["GitHubClientId"] = ""
 	common.OptionMap["GitHubClientSecret"] = ""
 	common.OptionMap["TelegramBotToken"] = ""

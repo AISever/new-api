@@ -17,6 +17,8 @@ var inMemoryRateLimiter common.InMemoryRateLimiter
 const (
 	externalShopRefreshRateLimitNum      = 6
 	externalShopRefreshRateLimitDuration = 60
+	gptTeamPlanRateLimitNum              = 10
+	gptTeamPlanRateLimitDuration         = 60
 )
 
 var defNext = func(c *gin.Context) {
@@ -210,4 +212,10 @@ func SearchRateLimit() func(c *gin.Context) {
 // so payment polling stays usable without leaving the upstream query endpoint open.
 func ExternalShopRefreshRateLimit() func(c *gin.Context) {
 	return userRateLimitFactory(externalShopRefreshRateLimitNum, externalShopRefreshRateLimitDuration, "ESR")
+}
+
+// GPTTeamPlanRateLimit keeps redeem and warranty queries usable while still
+// preventing abuse of the upstream public endpoints.
+func GPTTeamPlanRateLimit() func(c *gin.Context) {
+	return userRateLimitFactory(gptTeamPlanRateLimitNum, gptTeamPlanRateLimitDuration, "GTP")
 }

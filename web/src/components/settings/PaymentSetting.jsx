@@ -24,6 +24,7 @@ import SettingsPaymentGateway from '../../pages/Setting/Payment/SettingsPaymentG
 import SettingsPaymentGatewayStripe from '../../pages/Setting/Payment/SettingsPaymentGatewayStripe';
 import SettingsPaymentGatewayCreem from '../../pages/Setting/Payment/SettingsPaymentGatewayCreem';
 import SettingsExternalShopLDXP from '../../pages/Setting/Payment/SettingsExternalShopLDXP';
+import SettingsGPTTeamPlan from '../../pages/Setting/Payment/SettingsGPTTeamPlan';
 import { API, showError, toBoolean } from '../../helpers';
 import { useTranslation } from 'react-i18next';
 
@@ -149,6 +150,9 @@ const PaymentSetting = () => {
         </Card>
         <Card style={{ marginTop: '10px' }}>
           <SettingsExternalShopLDXP options={inputs} refresh={onRefresh} />
+        </Card>
+        <Card style={{ marginTop: '10px' }}>
+          <SettingsGPTTeamPlan options={inputs} refresh={onRefresh} />
         </Card>
       </Spin>
     </>
