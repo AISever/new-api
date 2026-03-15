@@ -90,6 +90,9 @@ export default function OrderPay() {
     useState(false);
   const [iframeVersion, setIframeVersion] = useState(0);
   const [showFullContact, setShowFullContact] = useState(false);
+  const [documentVisible, setDocumentVisible] = useState(() =>
+    typeof document === 'undefined' ? true : document.visibilityState === 'visible',
+  );
   const orderRef = useRef(null);
   const pollingBlockedUntilRef = useRef(0);
   const lastRemoteRefreshAtRef = useRef(0);
@@ -182,6 +185,19 @@ export default function OrderPay() {
   }, [order]);
 
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
+    const handleVisibilityChange = () => {
+      setDocumentVisible(document.visibilityState === 'visible');
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
     setShowFullContact(false);
   }, [localTradeNo]);
 
@@ -236,11 +252,14 @@ export default function OrderPay() {
     if (!pollingActive) {
       return undefined;
     }
-    if (!isPayPagePollingEnabled(showIframe, orderRef.current)) {
+    if (!isPayPagePollingEnabled(showIframe, orderRef.current, documentVisible)) {
       setPollingActive(false);
       return undefined;
     }
     const syncOrder = async (forceRemoteRefresh = false) => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return;
+      }
       const now = Date.now();
       if (shouldBackoffPolling(now, pollingBlockedUntilRef.current)) {
         return;
@@ -310,6 +329,7 @@ export default function OrderPay() {
     pollingActive,
     recordPayDebugEvent,
     showIframe,
+    documentVisible,
     t,
   ]);
 
@@ -365,6 +385,8 @@ export default function OrderPay() {
     try {
       const res = await API.post(
         `/api/external-shop/orders/${encodeURIComponent(localTradeNo)}/refresh`,
+        null,
+        { skipErrorHandler: true },
       );
       if (!res.data.success) {
         throw new Error(res.data.message || t('刷新订单失败'));
@@ -463,7 +485,7 @@ export default function OrderPay() {
 
   if (loading) {
     return (
-      <div className='p-6 flex justify-center'>
+      <div className='p-6 flex justify-center max-w-5xl mx-auto'>
         <Spin size='large' />
       </div>
     );
@@ -471,8 +493,8 @@ export default function OrderPay() {
 
   if (!order) {
     return (
-      <div className='p-6'>
-        <Card>
+      <div className='p-4 md:p-6 max-w-5xl mx-auto'>
+        <Card className='!rounded-2xl shadow-sm border-0'>
           <Text>{t('订单不存在或已无法访问')}</Text>
         </Card>
       </div>
@@ -480,8 +502,8 @@ export default function OrderPay() {
   }
 
   return (
-    <div className='p-4 md:p-6 space-y-4'>
-      <Card>
+    <div className='p-4 md:p-6 space-y-4 max-w-5xl mx-auto'>
+      <Card className='!rounded-2xl shadow-sm border-0'>
         <Space vertical align='start' style={{ width: '100%' }}>
           <Title heading={4}>{t('订单支付')}</Title>
           <Banner
@@ -615,6 +637,7 @@ export default function OrderPay() {
                     }}
                   >
                     <Card
+                      className='!rounded-2xl shadow-sm border-0'
                       bodyStyle={{ padding: 24 }}
                       style={{ width: '100%', maxWidth: 720 }}
                     >

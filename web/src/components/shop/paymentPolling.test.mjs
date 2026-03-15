@@ -59,14 +59,21 @@ test('polling intervals stay within expected values', () => {
 
 test('pay page polling stops once the embedded pay page is hidden', () => {
   assert.equal(
-    isPayPagePollingEnabled(true, { status: 'pending_payment' }),
+    isPayPagePollingEnabled(true, { status: 'pending_payment' }, true),
     true,
   );
   assert.equal(
-    isPayPagePollingEnabled(false, { status: 'pending_payment' }),
+    isPayPagePollingEnabled(false, { status: 'pending_payment' }, true),
     false,
   );
-  assert.equal(isPayPagePollingEnabled(true, { status: 'delivered' }), false);
+  assert.equal(
+    isPayPagePollingEnabled(true, { status: 'pending_payment' }, false),
+    false,
+  );
+  assert.equal(
+    isPayPagePollingEnabled(true, { status: 'delivered' }, true),
+    false,
+  );
 });
 
 test('polling backs off while a recent rate limit window is still active', () => {

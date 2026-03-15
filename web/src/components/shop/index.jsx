@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { IconSearch } from '@douyinfe/semi-icons';
 import {
   Button,
   Card,
@@ -42,14 +43,19 @@ import {
   buildExternalShopOrderPayPath,
   isExternalShopOrderPayable,
 } from './orderPaths';
+import { useActualTheme } from '../../context/Theme';
 import {
   AUTO_REFRESH_INTERVAL_MS,
+  buildExternalShopCategoryCards,
+  filterExternalShopGoods,
+  getExternalShopDescriptionDetail,
   getExternalShopDeliverySummary,
+  getExternalShopFulfillmentLabel,
+  getExternalShopPurchaseLimitLabel,
+  getExternalShopStockLabel,
   getExternalShopStatusLabel,
   getAutoRefreshOrderTradeNos,
-  normalizeExternalShopDescription,
   parseExternalShopDeliveryCards,
-  shouldShowDescriptionToggle,
 } from './shopUtils';
 import GptTeamPlanTab from './GptTeamPlanTab';
 import { normalizeShopTabKey } from './gptTeamPlanUtils';
@@ -68,6 +74,8 @@ const statusColorMap = {
 
 export default function Shop() {
   const { t } = useTranslation();
+  const actualTheme = useActualTheme();
+  const isDark = actualTheme === 'dark';
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -80,9 +88,13 @@ export default function Shop() {
   const [createLoading, setCreateLoading] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
   const [selectedGood, setSelectedGood] = useState(null);
+  const [selectedDetailGood, setSelectedDetailGood] = useState(null);
   const [contact, setContact] = useState('');
-  const [expandedGoods, setExpandedGoods] = useState({});
+  const [paymentChannels, setPaymentChannels] = useState([]);
+  const [selectedChannelId, setSelectedChannelId] = useState(0);
   const [revealedDeliveries, setRevealedDeliveries] = useState({});
+  const [activeGoodsCategory, setActiveGoodsCategory] = useState('all');
+  const [goodsSearch, setGoodsSearch] = useState('');
   const [goodsSort, setGoodsSort] = useState('default');
   const [goodsPage, setGoodsPage] = useState(1);
   const [goodsPageSize, setGoodsPageSize] = useState(4);
@@ -113,6 +125,14 @@ export default function Shop() {
     }
     setGptTeamEnabled(false);
     setGptTeamStatusLoaded(true);
+  };
+
+  const loadPaymentChannels = async () => {
+    const res = await API.get('/api/external-shop/channels');
+    if (!res.data.success) {
+      throw new Error(res.data.message || t('获取支付方式失败'));
+    }
+    setPaymentChannels(res.data.data || []);
   };
 
   const loadOrders = async (options = {}) => {
@@ -159,6 +179,7 @@ export default function Shop() {
           loadOrders({ page: 1, pageSize: orderPageSize, sort: orderSort }),
           loadGPTTeamStatus(),
         ]);
+        await loadPaymentChannels();
       } catch (error) {
         showError(error.message || t('加载失败'));
       } finally {
@@ -223,6 +244,18 @@ export default function Shop() {
     return () => clearInterval(timer);
   }, [orderPage, orderPageSize, orderSort, orders]);
 
+  useEffect(() => {
+    if (paymentChannels.length === 0) {
+      setSelectedChannelId(0);
+      return;
+    }
+    setSelectedChannelId((current) =>
+      paymentChannels.some((channel) => channel.id === current)
+        ? current
+        : paymentChannels[0].id,
+    );
+  }, [paymentChannels]);
+
   const openOrderModal = (good) => {
     setSelectedGood(good);
     setContact('');
@@ -240,7 +273,7 @@ export default function Shop() {
         goods_key: selectedGood.goods_key,
         quantity: 1,
         contact: contact.trim(),
-        channel_id: 0,
+        channel_id: selectedChannelId || 0,
       });
       if (!res.data.success) {
         throw new Error(res.data.message || t('创建订单失败'));
@@ -251,7 +284,8 @@ export default function Shop() {
       setOrderPage(1);
       await loadOrders({ page: 1, pageSize: orderPageSize, sort: orderSort });
       if (data.local_trade_no) {
-        navigate(buildExternalShopOrderPayPath(data.local_trade_no));
+        const nextPath = buildExternalShopOrderPayPath(data.local_trade_no);
+        navigate(nextPath);
       }
     } catch (error) {
       showError(error.message || t('创建订单失败'));
@@ -264,6 +298,8 @@ export default function Shop() {
     try {
       const res = await API.post(
         `/api/external-shop/orders/${record.local_trade_no}/refresh`,
+        null,
+        { skipErrorHandler: true },
       );
       if (!res.data.success) {
         throw new Error(res.data.message || t('刷新订单失败'));
@@ -279,13 +315,6 @@ export default function Shop() {
     }
   };
 
-  const toggleGoodDescription = (goodsKey) => {
-    setExpandedGoods((current) => ({
-      ...current,
-      [goodsKey]: !current[goodsKey],
-    }));
-  };
-
   const toggleDeliveryVisibility = (localTradeNo) => {
     setRevealedDeliveries((current) => ({
       ...current,
@@ -293,8 +322,22 @@ export default function Shop() {
     }));
   };
 
+  const goodsCategoryCards = useMemo(
+    () => buildExternalShopCategoryCards(goods),
+    [goods],
+  );
+
+  const filteredGoods = useMemo(
+    () =>
+      filterExternalShopGoods(goods, {
+        categoryKey: activeGoodsCategory,
+        searchTerm: goodsSearch,
+      }),
+    [activeGoodsCategory, goods, goodsSearch],
+  );
+
   const sortedGoods = useMemo(() => {
-    const nextGoods = [...(goods || [])];
+    const nextGoods = [...filteredGoods];
     switch (goodsSort) {
       case 'price:asc':
         nextGoods.sort(
@@ -324,12 +367,22 @@ export default function Shop() {
         break;
     }
     return nextGoods;
-  }, [goods, goodsSort]);
+  }, [filteredGoods, goodsSort]);
 
   const paginatedGoods = useMemo(() => {
     const start = (goodsPage - 1) * goodsPageSize;
     return sortedGoods.slice(start, start + goodsPageSize);
   }, [goodsPage, goodsPageSize, sortedGoods]);
+
+  const selectedDetailDescription = useMemo(
+    () => getExternalShopDescriptionDetail(selectedDetailGood?.description),
+    [selectedDetailGood],
+  );
+
+  const selectedGoodFullDescription = useMemo(
+    () => getExternalShopDescriptionDetail(selectedGood?.description),
+    [selectedGood],
+  );
 
   const columns = useMemo(
     () => [
@@ -430,7 +483,7 @@ export default function Shop() {
   }
 
   const renderExternalShopContent = () => (
-    <div className='px-4 pb-6 pt-8 md:px-6 md:pb-6 md:pt-10 space-y-6'>
+    <div className='space-y-6'>
       <div style={{ scrollMarginTop: 96 }}>
         <Title heading={4}>{t('商品商城')}</Title>
         <Text type='tertiary'>
@@ -438,137 +491,271 @@ export default function Shop() {
         </Text>
       </div>
 
-      <Card>
-        <Space wrap style={{ width: '100%', justifyContent: 'space-between' }}>
-          <Text type='tertiary'>
-            {t('可按价格、库存或名称排序，并分页查看商品。')}
-          </Text>
-          <Space wrap>
-            <Select
-              value={goodsSort}
-              onChange={(value) => {
-                setGoodsSort(value);
-                setGoodsPage(1);
-              }}
-              style={{ width: 180 }}
-            >
-              <Select.Option value='default'>{t('默认排序')}</Select.Option>
-              <Select.Option value='price:asc'>
-                {t('价格从低到高')}
-              </Select.Option>
-              <Select.Option value='price:desc'>
-                {t('价格从高到低')}
-              </Select.Option>
-              <Select.Option value='stock:desc'>
-                {t('库存从高到低')}
-              </Select.Option>
-              <Select.Option value='name:asc'>{t('名称排序')}</Select.Option>
-            </Select>
-          </Space>
-        </Space>
+      <Card
+        className='!rounded-[28px] border-0 shadow-sm overflow-hidden'
+        bodyStyle={{ padding: 0 }}
+      >
+        <div
+          className='relative overflow-hidden rounded-[28px] p-4 sm:p-6'
+          style={{
+            background: isDark
+              ? 'radial-gradient(circle at top left, rgba(37,99,235,0.18), transparent 28%), radial-gradient(circle at bottom right, rgba(8,145,178,0.18), transparent 26%), linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(15,23,42,0.96) 100%)'
+              : 'radial-gradient(circle at top left, rgba(59,130,246,0.14), transparent 28%), radial-gradient(circle at bottom right, rgba(125,211,252,0.16), transparent 26%), linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)',
+          }}
+        >
+          <div
+            className='relative space-y-5 rounded-[24px] p-4 backdrop-blur sm:p-6'
+            style={{
+              background: isDark ? 'rgba(2, 6, 23, 0.72)' : 'rgba(255, 255, 255, 0.9)',
+              boxShadow: isDark
+                ? '0 24px 48px rgba(2, 6, 23, 0.45)'
+                : '0 18px 40px rgba(148, 163, 184, 0.12)',
+            }}
+          >
+            <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
+              <div>
+                <Text
+                  strong
+                  style={{ fontSize: 16, color: 'var(--semi-color-text-0)' }}
+                >
+                  {t('选择商品')}
+                </Text>
+              </div>
+              <div className='flex w-full flex-col gap-3 sm:flex-row xl:w-auto'>
+                <Input
+                  value={goodsSearch}
+                  onChange={(value) => {
+                    setGoodsSearch(value);
+                    setGoodsPage(1);
+                  }}
+                  prefix={<IconSearch />}
+                  showClear
+                  placeholder={t('搜索商品')}
+                  style={{ width: '100%', maxWidth: 280 }}
+                />
+                <Select
+                  value={goodsSort}
+                  onChange={(value) => {
+                    setGoodsSort(value);
+                    setGoodsPage(1);
+                  }}
+                  style={{ width: 180 }}
+                >
+                  <Select.Option value='default'>{t('默认排序')}</Select.Option>
+                  <Select.Option value='price:asc'>
+                    {t('价格从低到高')}
+                  </Select.Option>
+                  <Select.Option value='price:desc'>
+                    {t('价格从高到低')}
+                  </Select.Option>
+                  <Select.Option value='stock:desc'>
+                    {t('库存从高到低')}
+                  </Select.Option>
+                  <Select.Option value='name:asc'>{t('名称排序')}</Select.Option>
+                </Select>
+              </div>
+            </div>
+
+            <div className='flex gap-3 overflow-x-auto pb-1'>
+              {goodsCategoryCards.map((category) => {
+                const selected = activeGoodsCategory === category.key;
+
+                return (
+                  <button
+                    key={category.key}
+                    type='button'
+                    className={`min-w-[170px] rounded-2xl border px-4 py-4 text-left transition ${
+                      selected
+                        ? 'border-blue-400 bg-[linear-gradient(135deg,_#3b82f6_0%,_#2563eb_100%)] text-white shadow-[0_16px_30px_rgba(37,99,235,0.28)] dark:border-cyan-400/60 dark:bg-[linear-gradient(135deg,_rgba(37,99,235,0.92)_0%,_rgba(8,145,178,0.88)_100%)] dark:shadow-[0_16px_36px_rgba(8,145,178,0.2)]'
+                        : 'border-slate-200 bg-white text-slate-700 shadow-sm hover:border-blue-200 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100 dark:hover:border-cyan-500/50 dark:hover:bg-slate-900'
+                    }`}
+                    style={
+                      selected
+                        ? undefined
+                        : {
+                            borderColor: isDark
+                              ? 'rgba(71, 85, 105, 0.9)'
+                              : undefined,
+                            background: isDark ? 'rgba(15, 23, 42, 0.92)' : undefined,
+                            color: isDark ? '#e2e8f0' : undefined,
+                          }
+                    }
+                    onClick={() => {
+                      setActiveGoodsCategory(category.key);
+                      setGoodsPage(1);
+                    }}
+                  >
+                    <div className='text-sm font-semibold'>
+                      {category.key === 'all' ? t(category.name) : category.name}
+                    </div>
+                    <div
+                      className={`mt-2 text-sm ${
+                        selected
+                          ? 'text-blue-50 dark:text-cyan-50'
+                          : 'text-slate-400 dark:text-slate-400'
+                      }`}
+                    >
+                      {`${category.count}${t('种商品')}`}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div>
+              <Text
+                strong
+                style={{ fontSize: 16, color: 'var(--semi-color-text-1)' }}
+              >
+                {t('选择商品')}
+              </Text>
+
+              <div className='mt-4 sm:mt-5'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5'>
+                  {paginatedGoods.map((good) => (
+                    <div
+                      key={good.goods_key}
+                      className='group flex h-full cursor-pointer flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_14px_32px_rgba(148,163,184,0.12)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(59,130,246,0.18)] dark:bg-slate-950 dark:shadow-[0_16px_34px_rgba(2,6,23,0.3)] dark:hover:shadow-[0_22px_42px_rgba(8,145,178,0.18)]'
+                      style={{
+                        background: isDark
+                          ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(2, 6, 23, 0.98) 100%)'
+                          : '#ffffff',
+                        boxShadow: isDark
+                          ? '0 18px 40px rgba(2, 6, 23, 0.32)'
+                          : '0 18px 40px rgba(148, 163, 184, 0.12)',
+                      }}
+                      onClick={() => setSelectedDetailGood(good)}
+                    >
+                      <div className='relative h-48 overflow-hidden bg-[linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] dark:bg-[linear-gradient(180deg,_rgba(15,23,42,1)_0%,_rgba(30,41,59,1)_100%)]'>
+                        {good.image ? (
+                          <img
+                            src={good.image}
+                            alt={good.name}
+                            className='h-48 w-full object-cover transition duration-300 group-hover:scale-[1.03]'
+                          />
+                        ) : (
+                          <div className='flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,_#2563eb_0%,_#60a5fa_60%,_#bfdbfe_100%)] p-6 text-center text-white dark:bg-[linear-gradient(135deg,_rgba(30,64,175,0.96)_0%,_rgba(14,116,144,0.92)_60%,_rgba(15,23,42,0.88)_100%)]'>
+                            <div>
+                              <div className='text-sm uppercase tracking-[0.28em] text-blue-100'>
+                                {good.category_name || t('商品')}
+                              </div>
+                              <div className='mt-4 text-xl font-semibold leading-snug'>
+                                {good.name}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div className='absolute left-3 top-3 flex gap-2'>
+                          {good.category_name ? (
+                            <Tag color='blue' size='small'>
+                              {good.category_name}
+                            </Tag>
+                          ) : null}
+                          {Number(good.stock_count || 0) <= 0 ? (
+                            <Tag color='red' size='small'>
+                              {t('缺货')}
+                            </Tag>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className='flex flex-1 flex-col gap-3 p-3.5'>
+                        <div>
+                          <div className='line-clamp-2 text-base font-semibold leading-6 text-slate-900 dark:text-slate-100'>
+                            {good.name}
+                          </div>
+                        </div>
+
+                        <div className='mt-auto space-y-2.5'>
+                          <div className='flex items-end justify-between gap-3'>
+                            <div className='flex items-baseline gap-2'>
+                              <Text
+                                strong
+                                style={{
+                                  fontSize: 18,
+                                  lineHeight: '22px',
+                                  color: 'var(--semi-color-primary)',
+                                }}
+                              >
+                                {`￥${Number(good.price || 0).toFixed(2)}`}
+                              </Text>
+                              {Number(good.market_price || 0) >
+                              Number(good.price || 0) ? (
+                                <Text
+                                  type='quaternary'
+                                  className='dark:!text-slate-500'
+                                  delete
+                                >{`￥${Number(good.market_price || 0).toFixed(2)}`}</Text>
+                              ) : null}
+                            </div>
+                            <Tag
+                              color={
+                                Number(good.stock_count || 0) <= 0
+                                  ? 'red'
+                                  : Number(good.stock_count || 0) <= 5
+                                    ? 'orange'
+                                    : 'blue'
+                              }
+                            >
+                              {t(getExternalShopStockLabel(good))}
+                            </Tag>
+                          </div>
+
+                          <Text type='tertiary' className='dark:!text-slate-400'>{`${t('库存')}: ${good.stock_count}`}</Text>
+
+                          <Button
+                            block
+                            theme='solid'
+                            type='primary'
+                            disabled={Number(good.stock_count || 0) <= 0}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openOrderModal(good);
+                            }}
+                          >
+                            {Number(good.stock_count || 0) <= 0
+                              ? t('暂时缺货')
+                              : t('立即购买')}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {sortedGoods.length === 0 ? (
+                  <Empty
+                    description={
+                      goodsSearch || activeGoodsCategory !== 'all'
+                        ? t('没有找到匹配的商品')
+                        : t('暂无商品')
+                    }
+                  />
+                ) : null}
+
+                {sortedGoods.length > 0 ? (
+                  <div className='mt-5 flex justify-center lg:justify-end'>
+                    <Pagination
+                      currentPage={goodsPage}
+                      pageSize={goodsPageSize}
+                      total={sortedGoods.length}
+                      pageSizeOpts={[4, 8, 12]}
+                      showSizeChanger
+                      onPageChange={setGoodsPage}
+                      onPageSizeChange={(size) => {
+                        setGoodsPageSize(size);
+                        setGoodsPage(1);
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
       </Card>
 
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-        {paginatedGoods.map((good) => (
-          <Card
-            key={good.goods_key}
-            title={good.name}
-            headerExtraContent={
-              <Space>
-                <Tag color='blue'>{good.category_name}</Tag>
-                {Number(good.stock_count || 0) <= 0 ? (
-                  <Tag color='red'>{t('缺货')}</Tag>
-                ) : null}
-              </Space>
-            }
-          >
-            <Space vertical align='start' style={{ width: '100%' }}>
-              <Text strong>{`￥${Number(good.price || 0).toFixed(2)}`}</Text>
-              {(() => {
-                const normalizedDescription = normalizeExternalShopDescription(
-                  good.description,
-                );
-                const expanded = Boolean(expandedGoods[good.goods_key]);
-                const canToggle = shouldShowDescriptionToggle(
-                  normalizedDescription,
-                );
-                return (
-                  <Space
-                    vertical
-                    align='start'
-                    spacing={4}
-                    style={{ width: '100%' }}
-                  >
-                    {normalizedDescription ? (
-                      <Paragraph
-                        style={{
-                          width: '100%',
-                          marginBottom: 0,
-                          whiteSpace: 'pre-wrap',
-                          ...(expanded
-                            ? {}
-                            : {
-                                display: '-webkit-box',
-                                WebkitLineClamp: 4,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                              }),
-                        }}
-                      >
-                        {normalizedDescription}
-                      </Paragraph>
-                    ) : null}
-                    {normalizedDescription && canToggle ? (
-                      <Button
-                        size='small'
-                        theme='borderless'
-                        type='tertiary'
-                        onClick={() => toggleGoodDescription(good.goods_key)}
-                      >
-                        {expanded ? t('收起') : t('展开')}
-                      </Button>
-                    ) : null}
-                  </Space>
-                );
-              })()}
-              <Text type='tertiary'>{`${t('库存')}: ${good.stock_count}`}</Text>
-              <Button
-                theme='solid'
-                type='primary'
-                disabled={Number(good.stock_count || 0) <= 0}
-                onClick={() => openOrderModal(good)}
-              >
-                {Number(good.stock_count || 0) <= 0
-                  ? t('暂时缺货')
-                  : t('立即购买')}
-              </Button>
-            </Space>
-          </Card>
-        ))}
-      </div>
-
-      {(goods || []).length === 0 ? (
-        <Empty description={t('暂无商品')} />
-      ) : null}
-
-      {(goods || []).length > 0 ? (
-        <div className='flex justify-end'>
-          <Pagination
-            currentPage={goodsPage}
-            pageSize={goodsPageSize}
-            total={sortedGoods.length}
-            pageSizeOpts={[4, 8, 12]}
-            showSizeChanger
-            onPageChange={setGoodsPage}
-            onPageSizeChange={(size) => {
-              setGoodsPageSize(size);
-              setGoodsPage(1);
-            }}
-          />
-        </div>
-      ) : null}
-
-      <Card title={t('我的订单')}>
+      <Card className='!rounded-2xl shadow-sm border-0' title={t('我的订单')}>
         <Space
           wrap
           style={{
@@ -624,26 +811,188 @@ export default function Shop() {
       </Card>
 
       <Modal
-        title={selectedGood?.name || t('创建订单')}
+        title={t('订单确认')}
         visible={!!selectedGood}
         onCancel={() => setSelectedGood(null)}
-        onOk={createOrder}
-        confirmLoading={createLoading}
+        footer={null}
+        width={480}
       >
-        <Space vertical style={{ width: '100%' }}>
-          <Text>{`${t('商品价格')}: ￥${Number(selectedGood?.price || 0).toFixed(2)}`}</Text>
-          <Input
-            value={contact}
-            onChange={setContact}
-            placeholder={t('请输入联系方式')}
-          />
+        <div className='space-y-4'>
+          <div className='space-y-1'>
+            <Text strong style={{ fontSize: 16 }}>
+              {selectedGood?.name || '-'}
+            </Text>
+            <Text type='tertiary'>x1</Text>
+          </div>
+
+          <Paragraph
+            style={{
+              width: '100%',
+              marginBottom: 0,
+              maxHeight: '32vh',
+              overflowY: 'auto',
+              whiteSpace: 'pre-wrap',
+              lineHeight: 1.75,
+            }}
+          >
+            {selectedGoodFullDescription || t('暂无商品详情')}
+          </Paragraph>
+
+          <div className='flex flex-wrap gap-2'>
+            {selectedGood ? (
+              <Tag color='green'>
+                {t(getExternalShopFulfillmentLabel(selectedGood))}
+              </Tag>
+            ) : null}
+            {selectedGood ? (
+              <Tag color='blue'>
+                {t(getExternalShopPurchaseLimitLabel(selectedGood))}
+              </Tag>
+            ) : null}
+            {selectedGood?.category_name ? (
+              <Tag color='grey'>{selectedGood.category_name}</Tag>
+            ) : null}
+          </div>
+
+          <div className='space-y-1.5'>
+            <Text strong>{t('联系方式')}</Text>
+            <Input
+              value={contact}
+              onChange={setContact}
+              placeholder={t('请输入联系方式方便查询订单')}
+            />
+            <Text type='tertiary'>
+              {t('【建议】填写手机号，如填邮箱，卡密也会同步发送至邮箱。')}
+            </Text>
+          </div>
+
+          <div className='flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/70 sm:flex-row sm:items-end sm:justify-between'>
+            <div className='space-y-1.5'>
+              <Text strong>{t('商品价格')}</Text>
+              <div className='flex items-baseline gap-2'>
+                <Text
+                  strong
+                  style={{
+                    fontSize: 20,
+                    lineHeight: '24px',
+                    color: 'var(--semi-color-primary)',
+                  }}
+                >
+                  {`￥${Number(selectedGood?.price || 0).toFixed(2)}`}
+                </Text>
+                {Number(selectedGood?.market_price || 0) >
+                Number(selectedGood?.price || 0) ? (
+                  <Text type='quaternary' delete>{`￥${Number(
+                    selectedGood?.market_price || 0,
+                  ).toFixed(2)}`}</Text>
+                ) : null}
+              </div>
+            </div>
+
+            <div className='space-y-1.5'>
+              <Text strong>{t('购买数量')}</Text>
+              <div className='flex items-center gap-2'>
+                <Button disabled>-</Button>
+                <Input value='1' readOnly style={{ width: 72 }} />
+                <Button disabled>+</Button>
+              </div>
+              <Text type='tertiary'>{t('当前仅支持单件下单')}</Text>
+            </div>
+          </div>
+
+          <div className='space-y-3'>
+            <Text strong>{t('支付方式')}</Text>
+            <div className='grid gap-3 sm:grid-cols-2'>
+              {paymentChannels.map((channel) => {
+                const active = selectedChannelId === channel.id;
+
+                return (
+                  <button
+                    key={channel.id}
+                    type='button'
+                    className={`rounded-2xl border px-4 py-3 text-left transition ${
+                      active
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-cyan-400 dark:bg-cyan-500/10 dark:text-cyan-100'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200'
+                    }`}
+                    onClick={() => setSelectedChannelId(channel.id)}
+                  >
+                    <div className='flex items-center justify-between gap-3'>
+                      <div>
+                        <div className='text-sm font-semibold'>
+                          {channel.show_name || channel.name}
+                        </div>
+                        <div className='mt-1 text-xs text-slate-400 dark:text-slate-500'>
+                          {channel.paytype?.name || t('支付页确认')}
+                        </div>
+                      </div>
+                      {channel.paytype?.icon ? (
+                        <img
+                          src={channel.paytype.icon}
+                          alt={channel.show_name || channel.name}
+                          className='h-7 w-7 rounded-full object-contain'
+                        />
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {paymentChannels.length === 0 ? (
+              <Text type='tertiary'>{t('支付方式将在下一步确认')}</Text>
+            ) : null}
+          </div>
+
+          <div className='flex justify-end gap-3 pt-3'>
+            <Button onClick={() => setSelectedGood(null)}>{t('取消')}</Button>
+            <Button
+              theme='solid'
+              type='primary'
+              loading={createLoading}
+              disabled={
+                Number(selectedGood?.stock_count || 0) <= 0 || !contact.trim()
+              }
+              onClick={createOrder}
+            >
+              {t('去支付')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        title={selectedDetailGood?.name || t('商品详情')}
+        visible={!!selectedDetailGood}
+        onCancel={() => setSelectedDetailGood(null)}
+        footer={
+          <Button onClick={() => setSelectedDetailGood(null)}>{t('关闭')}</Button>
+        }
+      >
+        <Space vertical align='start' style={{ width: '100%' }}>
+          {selectedDetailGood ? (
+            <Text strong>{`￥${Number(selectedDetailGood.price || 0).toFixed(2)}`}</Text>
+          ) : null}
+          {selectedDetailGood?.category_name ? (
+            <Tag color='blue'>{selectedDetailGood.category_name}</Tag>
+          ) : null}
+          <Paragraph
+            style={{
+              width: '100%',
+              marginBottom: 0,
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {selectedDetailDescription || t('暂无商品详情')}
+          </Paragraph>
         </Space>
       </Modal>
     </div>
   );
 
   return (
-    <div className='px-4 pb-6 pt-8 md:px-6 md:pb-6 md:pt-10'>
+    <div className='px-4 pb-6 pt-0 md:px-6 md:pb-6 md:pt-10 max-w-7xl mx-auto'>
       <Tabs
         type='card'
         activeKey={activeTab}

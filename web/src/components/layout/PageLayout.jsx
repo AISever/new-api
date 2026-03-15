@@ -149,6 +149,7 @@ const PageLayout = () => {
           overflow: isMobile ? 'visible' : 'auto',
           display: 'flex',
           flexDirection: 'column',
+          paddingTop: isConsoleRoute ? '64px' : undefined,
         }}
       >
         {showSider && (

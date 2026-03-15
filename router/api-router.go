@@ -163,6 +163,7 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			externalShopRoute.GET("/goods", controller.GetExternalShopGoods)
 			externalShopRoute.GET("/goods/:goods_key", controller.GetExternalShopGood)
+			externalShopRoute.GET("/channels", controller.GetExternalShopChannels)
 			externalShopRoute.POST("/orders", middleware.CriticalRateLimit(), controller.CreateExternalShopOrder)
 			externalShopRoute.GET("/orders", controller.GetExternalShopOrders)
 			externalShopRoute.GET("/orders/:local_trade_no", controller.GetExternalShopOrder)

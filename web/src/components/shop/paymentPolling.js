@@ -27,8 +27,16 @@ export function shouldNavigateFromPayPage(order) {
   return status === 'paid_waiting_delivery' || status === 'delivered';
 }
 
-export function isPayPagePollingEnabled(showIframe, order) {
-  return showIframe && isExternalShopOrderPaymentActive(order);
+export function isPayPagePollingEnabled(
+  showIframe,
+  order,
+  isDocumentVisible = true,
+) {
+  return (
+    Boolean(isDocumentVisible) &&
+    Boolean(showIframe) &&
+    isExternalShopOrderPaymentActive(order)
+  );
 }
 
 export function shouldBackoffPolling(nowMs, blockedUntilMs) {

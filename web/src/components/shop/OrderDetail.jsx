@@ -169,7 +169,7 @@ export default function OrderDetail() {
 
   if (loading) {
     return (
-      <div className='p-6 flex justify-center'>
+      <div className='p-6 flex justify-center max-w-5xl mx-auto'>
         <Spin size='large' />
       </div>
     );
@@ -177,8 +177,8 @@ export default function OrderDetail() {
 
   if (!order) {
     return (
-      <div className='p-6'>
-        <Card>
+      <div className='p-4 md:p-6 max-w-5xl mx-auto'>
+        <Card className='!rounded-2xl shadow-sm border-0'>
           <Empty description={t('订单不存在')} />
         </Card>
       </div>
@@ -186,8 +186,8 @@ export default function OrderDetail() {
   }
 
   return (
-    <div className='p-4 md:p-6 space-y-4'>
-      <Card>
+    <div className='p-4 md:p-6 space-y-4 max-w-5xl mx-auto'>
+      <Card className='!rounded-2xl shadow-sm border-0'>
         <Space vertical align='start' style={{ width: '100%' }}>
           <Title heading={4}>{t('订单详情')}</Title>
           <Descriptions
@@ -232,7 +232,7 @@ export default function OrderDetail() {
         </Space>
       </Card>
 
-      <Card title={t('交付结果')}>
+      <Card className='!rounded-2xl shadow-sm border-0' title={t('交付结果')}>
         {deliveryCards.length > 0 ? (
           <Space vertical align='start' style={{ width: '100%' }}>
             {deliveryCards.map((card, index) => (
@@ -253,7 +253,7 @@ export default function OrderDetail() {
       </Card>
 
       {order.last_error ? (
-        <Card title={t('最近错误')}>
+        <Card className='!rounded-2xl shadow-sm border-0' title={t('最近错误')}>
           <Paragraph type='danger' style={{ marginBottom: 0 }}>
             {order.last_error}
           </Paragraph>

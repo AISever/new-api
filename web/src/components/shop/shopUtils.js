@@ -8,6 +8,22 @@ const namedEntities = {
   '#39': "'",
 };
 
+function decodeHtmlEntity(entity) {
+  const normalized = String(entity || '').toLowerCase();
+  if (namedEntities[normalized]) {
+    return namedEntities[normalized];
+  }
+  if (normalized.startsWith('#x')) {
+    const codePoint = Number.parseInt(normalized.slice(2), 16);
+    return Number.isNaN(codePoint) ? ' ' : String.fromCodePoint(codePoint);
+  }
+  if (normalized.startsWith('#')) {
+    const codePoint = Number.parseInt(normalized.slice(1), 10);
+    return Number.isNaN(codePoint) ? ' ' : String.fromCodePoint(codePoint);
+  }
+  return ' ';
+}
+
 const refreshableStatuses = new Set([
   'created',
   'pending_payment',
@@ -112,19 +128,7 @@ export function normalizeExternalShopDescription(value) {
   const sanitized = rawValue
     .replace(/<[^>]+>/g, ' ')
     .replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (_, entity) => {
-      const normalized = entity.toLowerCase();
-      if (namedEntities[normalized]) {
-        return namedEntities[normalized];
-      }
-      if (normalized.startsWith('#x')) {
-        const codePoint = Number.parseInt(normalized.slice(2), 16);
-        return Number.isNaN(codePoint) ? ' ' : String.fromCodePoint(codePoint);
-      }
-      if (normalized.startsWith('#')) {
-        const codePoint = Number.parseInt(normalized.slice(1), 10);
-        return Number.isNaN(codePoint) ? ' ' : String.fromCodePoint(codePoint);
-      }
-      return ' ';
+      return decodeHtmlEntity(entity);
     })
     .replace(/\bhttps?:\/\/[^\s]+/gi, ' ')
     .replace(/\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/gi, ' ')
@@ -179,6 +183,102 @@ export function normalizeExternalShopDescription(value) {
     return '成品账号商品';
   }
   return '';
+}
+
+export function getExternalShopDescriptionDetail(value) {
+  const detail = String(value || '')
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\/p\s*>/gi, '\n\n')
+    .replace(/<\/div\s*>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '- ')
+    .replace(/<\/li\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (_, entity) =>
+      decodeHtmlEntity(entity),
+    )
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return detail || normalizeExternalShopDescription(value);
+}
+
+export function buildExternalShopCategoryCards(goods) {
+  const categories = new Map();
+
+  for (const good of goods || []) {
+    const categoryName = String(good?.category_name || '').trim() || '未分类';
+    categories.set(categoryName, (categories.get(categoryName) || 0) + 1);
+  }
+
+  return [
+    {
+      key: 'all',
+      name: '全部商品',
+      count: Array.isArray(goods) ? goods.length : 0,
+    },
+    ...Array.from(categories.entries()).map(([name, count]) => ({
+      key: name,
+      name,
+      count,
+    })),
+  ];
+}
+
+export function filterExternalShopGoods(
+  goods,
+  { categoryKey = 'all', searchTerm = '' } = {},
+) {
+  const normalizedSearchTerm = String(searchTerm || '').trim().toLowerCase();
+
+  return (goods || []).filter((good) => {
+    const categoryName = String(good?.category_name || '').trim() || '未分类';
+    if (categoryKey && categoryKey !== 'all' && categoryName !== categoryKey) {
+      return false;
+    }
+
+    if (!normalizedSearchTerm) {
+      return true;
+    }
+
+    const searchHaystack = [
+      good?.name,
+      categoryName,
+      normalizeExternalShopDescription(good?.description),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return searchHaystack.includes(normalizedSearchTerm);
+  });
+}
+
+export function getExternalShopStockLabel(good) {
+  const stockCount = Number(good?.stock_count || 0);
+
+  if (stockCount <= 0) {
+    return '暂时缺货';
+  }
+  if (stockCount <= 5) {
+    return '库存一般';
+  }
+  return '库存充足';
+}
+
+export function getExternalShopFulfillmentLabel(good) {
+  return Number(good?.send_order || 0) === 0 ? '自动发货' : '人工处理';
+}
+
+export function getExternalShopPurchaseLimitLabel(good) {
+  const limitCount = Number(good?.limit_count || 0);
+  if (limitCount > 1) {
+    return `${limitCount}件起购`;
+  }
+  return '1件起购';
 }
 
 export function getMaskedExternalShopContact(value) {

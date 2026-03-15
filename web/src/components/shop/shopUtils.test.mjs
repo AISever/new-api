@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   AUTO_REFRESH_INTERVAL_MS,
+  buildExternalShopCategoryCards,
+  filterExternalShopGoods,
   getExternalShopDeliverySummary,
+  getExternalShopDescriptionDetail,
+  getExternalShopFulfillmentLabel,
+  getExternalShopPurchaseLimitLabel,
+  getExternalShopStockLabel,
   getMaskedExternalShopContact,
   parseExternalShopDeliveryCards,
   getExternalShopStatusLabel,
@@ -68,6 +74,67 @@ test('normalizeExternalShopDescription keeps concise product-facing summary text
   );
 
   assert.equal(output, '微软邮箱成品号，长效微软邮箱');
+});
+
+test('getExternalShopDescriptionDetail preserves full decoded product content', () => {
+  const output = getExternalShopDescriptionDetail(
+    '<p><strong>完整说明</strong><br>教程：https://example.com/help<br>联系邮箱：help@example.com</p><p>第二段&nbsp;内容</p>',
+  );
+
+  assert.equal(output.includes('完整说明'), true);
+  assert.equal(output.includes('教程：https://example.com/help'), true);
+  assert.equal(output.includes('联系邮箱：help@example.com'), true);
+  assert.equal(output.includes('第二段 内容'), true);
+});
+
+test('buildExternalShopCategoryCards groups goods into source-style category summaries', () => {
+  const output = buildExternalShopCategoryCards([
+    { category_name: 'ChatGPT', goods_key: '1' },
+    { category_name: 'ChatGPT', goods_key: '2' },
+    { category_name: 'Gemini', goods_key: '3' },
+  ]);
+
+  assert.deepEqual(output, [
+    { key: 'all', name: '全部商品', count: 3 },
+    { key: 'ChatGPT', name: 'ChatGPT', count: 2 },
+    { key: 'Gemini', name: 'Gemini', count: 1 },
+  ]);
+});
+
+test('filterExternalShopGoods applies category and keyword search together', () => {
+  const output = filterExternalShopGoods(
+    [
+      {
+        goods_key: 'chatgpt-team',
+        category_name: 'ChatGPT',
+        name: 'ChatGPT Team 自动拉车',
+        description: '<p>兑换码商品</p>',
+      },
+      {
+        goods_key: 'gemini-pro',
+        category_name: 'Gemini',
+        name: 'Gemini Pro 一年',
+        description: '<p>学生方案</p>',
+      },
+    ],
+    { categoryKey: 'ChatGPT', searchTerm: '拉车' },
+  );
+
+  assert.deepEqual(output.map((item) => item.goods_key), ['chatgpt-team']);
+});
+
+test('getExternalShopStockLabel matches source-style inventory wording', () => {
+  assert.equal(getExternalShopStockLabel({ stock_count: 0 }), '暂时缺货');
+  assert.equal(getExternalShopStockLabel({ stock_count: 2 }), '库存一般');
+  assert.equal(getExternalShopStockLabel({ stock_count: 20 }), '库存充足');
+});
+
+test('order confirmation helpers match source-style fulfillment and purchase limit copy', () => {
+  assert.equal(getExternalShopFulfillmentLabel({ send_order: 0 }), '自动发货');
+  assert.equal(getExternalShopFulfillmentLabel({ send_order: 1 }), '人工处理');
+  assert.equal(getExternalShopPurchaseLimitLabel({ limit_count: 0 }), '1件起购');
+  assert.equal(getExternalShopPurchaseLimitLabel({ limit_count: 1 }), '1件起购');
+  assert.equal(getExternalShopPurchaseLimitLabel({ limit_count: 3 }), '3件起购');
 });
 
 test('getMaskedExternalShopContact masks email and fallback strings', () => {

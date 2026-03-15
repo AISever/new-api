@@ -57,6 +57,29 @@ func GetExternalShopGood(c *gin.Context) {
 	common.ApiSuccess(c, good)
 }
 
+func GetExternalShopChannels(c *gin.Context) {
+	cfg := externalshop.GetConfig()
+	if !cfg.IsReady() {
+		common.ApiErrorMsg(c, "商城未配置")
+		return
+	}
+	client, _, err := externalshop.NewConfiguredClient()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	resp, err := client.ListChannels(c.Request.Context())
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if resp.Code != 1 {
+		common.ApiErrorMsg(c, strings.TrimSpace(resp.Msg))
+		return
+	}
+	common.ApiSuccess(c, resp.Data)
+}
+
 func CreateExternalShopOrder(c *gin.Context) {
 	var req ExternalShopCreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

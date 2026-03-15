@@ -31,7 +31,7 @@ test('OrderPay keeps polling off the whole order object dependency to avoid requ
 
   assert.equal(source.includes('orderRef.current'), true);
   assert.equal(
-    /\[\s*localTradeNo,\s*navigate,\s*order\?\.status,\s*pollingActive,\s*recordPayDebugEvent,\s*showIframe,\s*t,\s*\]/.test(
+    /\[\s*localTradeNo,\s*navigate,\s*order\?\.status,\s*pollingActive,\s*recordPayDebugEvent,\s*showIframe,\s*documentVisible,\s*t,\s*\]/.test(
       source,
     ),
     true,

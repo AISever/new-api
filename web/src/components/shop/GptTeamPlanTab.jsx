@@ -183,14 +183,16 @@ export default function GptTeamPlanTab() {
         </Text>
       </div>
 
-      <Banner
-        type='info'
-        description={t('兑换成功后会显示团队信息和到期信息，质保查询仅展示当前账号需要的字段。')}
-        closeIcon={null}
-      />
+      <Card className='!rounded-2xl shadow-sm border-0'>
+        <Banner
+          type='info'
+          description={t('兑换成功后会显示团队信息和到期信息，质保查询仅展示当前账号需要的字段。')}
+          closeIcon={null}
+        />
+      </Card>
 
       <div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
-        <Card title={t('兑换账号')}>
+        <Card className='!rounded-2xl shadow-sm border-0 h-full' title={t('兑换账号')}>
           <Space vertical align='start' style={{ width: '100%' }}>
             <Input
               value={redeemEmail}
@@ -249,7 +251,7 @@ export default function GptTeamPlanTab() {
           </Space>
         </Card>
 
-        <Card title={t('质保查询')}>
+        <Card className='!rounded-2xl shadow-sm border-0 h-full' title={t('质保查询')}>
           <Space vertical align='start' style={{ width: '100%' }}>
             <Input
               value={warrantyCode}
