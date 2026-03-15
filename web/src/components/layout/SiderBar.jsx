@@ -34,6 +34,7 @@ const routerMap = {
   home: '/',
   channel: '/console/channel',
   token: '/console/token',
+  shop: '/console/shop',
   redemption: '/console/redemption',
   topup: '/console/topup',
   user: '/console/user',
@@ -125,6 +126,11 @@ const SiderBar = ({ onNavigate = () => {} }) => {
 
   const financeItems = useMemo(() => {
     const items = [
+      {
+        text: t('商品商城'),
+        itemKey: 'shop',
+        to: '/shop',
+      },
       {
         text: t('钱包管理'),
         itemKey: 'topup',

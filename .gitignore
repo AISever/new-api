@@ -29,6 +29,7 @@ data/
 .gopath
 .env.local
 .kiro/
+.playwright-mcp/
 .kkidc/*
 !.kkidc/.env.lighthouse.example
 .tencent/*

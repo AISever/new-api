@@ -35,6 +35,9 @@ import Channel from './pages/Channel';
 import Token from './pages/Token';
 import Redemption from './pages/Redemption';
 import TopUp from './pages/TopUp';
+import Shop from './pages/Shop';
+import ShopOrderPay from './pages/ShopOrderPay';
+import ShopOrderDetail from './pages/ShopOrderDetail';
 import Log from './pages/Log';
 import Chat from './pages/Chat';
 import Chat2Link from './pages/Chat2Link';
@@ -275,6 +278,30 @@ function App() {
               <Suspense fallback={<Loading></Loading>} key={location.pathname}>
                 <TopUp />
               </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/shop'
+          element={
+            <PrivateRoute>
+              <Shop />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/shop/orders/:local_trade_no/pay'
+          element={
+            <PrivateRoute>
+              <ShopOrderPay />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/shop/orders/:local_trade_no'
+          element={
+            <PrivateRoute>
+              <ShopOrderDetail />
             </PrivateRoute>
           }
         />

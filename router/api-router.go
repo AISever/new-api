@@ -158,6 +158,26 @@ func SetApiRouter(router *gin.Engine) {
 			subscriptionAdminRoute.DELETE("/user_subscriptions/:id", controller.AdminDeleteUserSubscription)
 		}
 
+		externalShopRoute := apiRouter.Group("/external-shop")
+		externalShopRoute.Use(middleware.UserAuth())
+		{
+			externalShopRoute.GET("/goods", controller.GetExternalShopGoods)
+			externalShopRoute.GET("/goods/:goods_key", controller.GetExternalShopGood)
+			externalShopRoute.POST("/orders", middleware.CriticalRateLimit(), controller.CreateExternalShopOrder)
+			externalShopRoute.GET("/orders", controller.GetExternalShopOrders)
+			externalShopRoute.GET("/orders/:local_trade_no", controller.GetExternalShopOrder)
+			externalShopRoute.POST("/orders/:local_trade_no/refresh", middleware.ExternalShopRefreshRateLimit(), controller.RefreshExternalShopOrder)
+		}
+
+		externalShopAdminRoute := apiRouter.Group("/external-shop/admin")
+		externalShopAdminRoute.Use(middleware.AdminAuth())
+		{
+			externalShopAdminRoute.POST("/sync", controller.AdminSyncExternalShopCatalog)
+			externalShopAdminRoute.GET("/orders", controller.AdminListExternalShopOrders)
+			externalShopAdminRoute.POST("/orders/sync-pending", controller.AdminSyncPendingExternalShopOrders)
+			externalShopAdminRoute.POST("/orders/:local_trade_no/refresh", controller.AdminRefreshExternalShopOrder)
+		}
+
 		// Subscription payment callbacks (no auth)
 		apiRouter.POST("/subscription/epay/notify", controller.SubscriptionEpayNotify)
 		apiRouter.GET("/subscription/epay/notify", controller.SubscriptionEpayNotify)

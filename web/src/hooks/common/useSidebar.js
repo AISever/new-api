@@ -41,6 +41,7 @@ export const DEFAULT_ADMIN_CONFIG = {
   },
   personal: {
     enabled: true,
+    shop: true,
     topup: true,
     personal: true,
   },

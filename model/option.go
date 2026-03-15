@@ -94,6 +94,12 @@ func InitOptionMap() {
 	common.OptionMap["AutoGroups"] = setting.AutoGroups2JsonString()
 	common.OptionMap["DefaultUseAutoGroup"] = strconv.FormatBool(setting.DefaultUseAutoGroup)
 	common.OptionMap["PayMethods"] = operation_setting.PayMethods2JsonString()
+	common.OptionMap["external_shop.ldxp.enabled"] = "false"
+	common.OptionMap["external_shop.ldxp.base_url"] = "https://pay.ldxp.cn"
+	common.OptionMap["external_shop.ldxp.shop_name"] = ""
+	common.OptionMap["external_shop.ldxp.shop_token"] = ""
+	common.OptionMap["external_shop.ldxp.allowed_category_ids"] = ""
+	common.OptionMap["external_shop.ldxp.allowed_goods_keys"] = ""
 	common.OptionMap["GitHubClientId"] = ""
 	common.OptionMap["GitHubClientSecret"] = ""
 	common.OptionMap["TelegramBotToken"] = ""

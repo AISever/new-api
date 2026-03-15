@@ -14,6 +14,11 @@ var timeFormat = "2006-01-02T15:04:05.000Z"
 
 var inMemoryRateLimiter common.InMemoryRateLimiter
 
+const (
+	externalShopRefreshRateLimitNum      = 6
+	externalShopRefreshRateLimitDuration = 60
+)
+
 var defNext = func(c *gin.Context) {
 	c.Next()
 }
@@ -199,4 +204,10 @@ func userRedisRateLimiter(c *gin.Context, maxRequestNum int, duration int64, key
 // 10 requests per 60 seconds per user (by user ID, not IP).
 func SearchRateLimit() func(c *gin.Context) {
 	return userRateLimitFactory(common.SearchRateLimitNum, common.SearchRateLimitDuration, "SR")
+}
+
+// ExternalShopRefreshRateLimit limits user-triggered order refresh requests
+// so payment polling stays usable without leaving the upstream query endpoint open.
+func ExternalShopRefreshRateLimit() func(c *gin.Context) {
+	return userRateLimitFactory(externalShopRefreshRateLimitNum, externalShopRefreshRateLimitDuration, "ESR")
 }
