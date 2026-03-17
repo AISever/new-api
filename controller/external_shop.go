@@ -13,11 +13,32 @@ import (
 	"gorm.io/gorm"
 )
 
+var ensureExternalShopCatalogFresh = externalshop.EnsureCatalogFresh
+var refreshExternalShopCatalogAsync = externalshop.RefreshCatalogAsync
+var listCachedExternalShopChannels = externalshop.ListCachedChannels
+var fetchExternalShopChannels = externalshop.FetchChannels
+var refreshExternalShopChannelsAsync = externalshop.RefreshChannelsAsync
+var refreshExternalShopOrders = externalshop.RefreshUserOrders
+var refreshExternalShopOrdersAsync = externalshop.RefreshUserOrdersAsync
+
 type ExternalShopCreateOrderRequest struct {
 	GoodsKey  string `json:"goods_key"`
 	Quantity  int    `json:"quantity"`
 	Contact   string `json:"contact"`
 	ChannelId int    `json:"channel_id"`
+}
+
+func GetExternalShopStatus(c *gin.Context) {
+	externalShopCfg := externalshop.GetConfig()
+
+	common.ApiSuccess(c, gin.H{
+		"external_shop": gin.H{
+			"enabled":   externalShopCfg.Enabled,
+			"ready":     externalShopCfg.IsReady(),
+			"shop_name": externalShopCfg.ShopName,
+		},
+		"gptteamplan": buildGPTTeamPlanStatusSnapshot(),
+	})
 }
 
 func GetExternalShopGoods(c *gin.Context) {
@@ -26,12 +47,42 @@ func GetExternalShopGoods(c *gin.Context) {
 		common.ApiErrorMsg(c, "商城未配置")
 		return
 	}
+	if c.Query("refresh") == "1" {
+		if err := ensureExternalShopCatalogFresh(c.Request.Context()); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	} else {
+		refreshExternalShopCatalogAsync()
+	}
 	goods, err := model.ListExternalShopGoods(externalshop.ProviderLDXP, cfg.ShopToken, true)
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
 	common.ApiSuccess(c, goods)
+}
+
+func GetExternalShopCategories(c *gin.Context) {
+	cfg := externalshop.GetConfig()
+	if !cfg.IsReady() {
+		common.ApiErrorMsg(c, "商城未配置")
+		return
+	}
+	if c.Query("refresh") == "1" {
+		if err := ensureExternalShopCatalogFresh(c.Request.Context()); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	} else {
+		refreshExternalShopCatalogAsync()
+	}
+	categories, err := externalshop.ListCatalogCategories(c.Request.Context())
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, categories)
 }
 
 func GetExternalShopGood(c *gin.Context) {
@@ -63,21 +114,17 @@ func GetExternalShopChannels(c *gin.Context) {
 		common.ApiErrorMsg(c, "商城未配置")
 		return
 	}
-	client, _, err := externalshop.NewConfiguredClient()
-	if err != nil {
-		common.ApiError(c, err)
+	if c.Query("refresh") == "1" {
+		channels, err := fetchExternalShopChannels(c.Request.Context())
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		common.ApiSuccess(c, channels)
 		return
 	}
-	resp, err := client.ListChannels(c.Request.Context())
-	if err != nil {
-		common.ApiError(c, err)
-		return
-	}
-	if resp.Code != 1 {
-		common.ApiErrorMsg(c, strings.TrimSpace(resp.Msg))
-		return
-	}
-	common.ApiSuccess(c, resp.Data)
+	refreshExternalShopChannelsAsync()
+	common.ApiSuccess(c, listCachedExternalShopChannels())
 }
 
 func CreateExternalShopOrder(c *gin.Context) {
@@ -106,16 +153,41 @@ func GetExternalShopOrders(c *gin.Context) {
 	pageInfo := common.GetPageQuery(c)
 	sortBy := strings.TrimSpace(c.Query("sort_by"))
 	sortOrder := strings.TrimSpace(c.Query("sort_order"))
-	orders, total, err := model.ListExternalShopOrdersByUser(userId, pageInfo, sortBy, sortOrder)
+	loadOrders := func() ([]model.ExternalShopOrder, int64, error) {
+		orders, total, err := model.ListExternalShopOrdersByUser(userId, pageInfo, sortBy, sortOrder)
+		if err != nil {
+			return nil, 0, err
+		}
+		now := time.Now()
+		for i := range orders {
+			if externalshop.ExpireLocalOrderIfTimedOut(&orders[i], now) {
+				_ = orders[i].Update()
+			}
+		}
+		return orders, total, nil
+	}
+
+	orders, total, err := loadOrders()
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
-	now := time.Now()
-	for i := range orders {
-		if externalshop.ExpireLocalOrderIfTimedOut(&orders[i], now) {
-			_ = orders[i].Update()
+	localTradeNos := make([]string, 0, len(orders))
+	for _, order := range orders {
+		if strings.TrimSpace(order.LocalTradeNo) == "" {
+			continue
 		}
+		localTradeNos = append(localTradeNos, order.LocalTradeNo)
+	}
+	if c.Query("refresh") == "1" {
+		refreshExternalShopOrders(c.Request.Context(), userId, localTradeNos)
+		orders, total, err = loadOrders()
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	} else {
+		refreshExternalShopOrdersAsync(userId, localTradeNos)
 	}
 	pageInfo.Total = int(total)
 	pageInfo.Items = orders
@@ -168,7 +240,37 @@ func RefreshExternalShopOrder(c *gin.Context) {
 	common.ApiSuccess(c, order)
 }
 
+func DeleteExternalShopOrder(c *gin.Context) {
+	userId := c.GetInt("id")
+	localTradeNo := strings.TrimSpace(c.Param("local_trade_no"))
+	order, err := model.GetExternalShopOrderByLocalTradeNo(localTradeNo)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			common.ApiErrorMsg(c, "订单不存在")
+			return
+		}
+		common.ApiError(c, err)
+		return
+	}
+	if order.UserId != userId {
+		common.ApiErrorMsg(c, "无权删除该订单")
+		return
+	}
+	if err := order.Delete(); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, gin.H{
+		"local_trade_no": localTradeNo,
+	})
+}
+
 func AdminSyncExternalShopCatalog(c *gin.Context) {
+	cfg := externalshop.GetConfig()
+	if !cfg.IsReady() {
+		common.ApiErrorMsg(c, "商城未配置")
+		return
+	}
 	summary, err := externalshop.SyncCatalog(c.Request.Context())
 	if err != nil {
 		common.ApiError(c, err)
@@ -222,6 +324,11 @@ func AdminRefreshExternalShopOrder(c *gin.Context) {
 }
 
 func AdminSyncPendingExternalShopOrders(c *gin.Context) {
+	cfg := externalshop.GetConfig()
+	if !cfg.IsReady() {
+		common.ApiErrorMsg(c, "商城未配置")
+		return
+	}
 	summary, err := externalshop.RunExternalShopOrderAutoSyncOnce()
 	if err != nil {
 		common.ApiError(c, err)

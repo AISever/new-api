@@ -1049,22 +1049,22 @@ export function renderNumberWithPoint(num) {
 }
 
 export function getQuotaPerUnit() {
-  let quotaPerUnit = localStorage.getItem('quota_per_unit');
-  quotaPerUnit = parseFloat(quotaPerUnit);
-  return quotaPerUnit;
+  const quotaPerUnit = parseFloat(localStorage.getItem('quota_per_unit') || '1');
+  return Number.isFinite(quotaPerUnit) && quotaPerUnit > 0 ? quotaPerUnit : 1;
 }
 
 export function renderUnitWithQuota(quota) {
-  let quotaPerUnit = localStorage.getItem('quota_per_unit');
-  quotaPerUnit = parseFloat(quotaPerUnit);
-  quota = parseFloat(quota);
-  return quotaPerUnit * quota;
+  const quotaPerUnit = getQuotaPerUnit();
+  const quotaValue = Number(quota);
+  return quotaPerUnit * (Number.isFinite(quotaValue) ? quotaValue : 0);
 }
 
 export function getQuotaWithUnit(quota, digits = 6) {
-  let quotaPerUnit = localStorage.getItem('quota_per_unit');
-  quotaPerUnit = parseFloat(quotaPerUnit);
-  return (quota / quotaPerUnit).toFixed(digits);
+  const quotaPerUnit = getQuotaPerUnit();
+  const quotaValue = Number(quota);
+  return ((Number.isFinite(quotaValue) ? quotaValue : 0) / quotaPerUnit).toFixed(
+    digits,
+  );
 }
 
 export function renderQuotaWithAmount(amount) {
@@ -1133,13 +1133,14 @@ export function convertUSDToCurrency(usdAmount, digits = 2) {
 }
 
 export function renderQuota(quota, digits = 2) {
-  let quotaPerUnit = localStorage.getItem('quota_per_unit');
+  const quotaValue = Number(quota);
+  const safeQuota = Number.isFinite(quotaValue) ? quotaValue : 0;
+  const quotaPerUnit = getQuotaPerUnit();
   const quotaDisplayType = localStorage.getItem('quota_display_type') || 'USD';
-  quotaPerUnit = parseFloat(quotaPerUnit);
   if (quotaDisplayType === 'TOKENS') {
-    return renderNumber(quota);
+    return renderNumber(safeQuota);
   }
-  const resultUSD = quota / quotaPerUnit;
+  const resultUSD = safeQuota / quotaPerUnit;
   let symbol = '$';
   let value = resultUSD;
   if (quotaDisplayType === 'CNY') {
@@ -1168,7 +1169,7 @@ export function renderQuota(quota, digits = 2) {
     symbol = symbolCustom;
   }
   const fixedResult = value.toFixed(digits);
-  if (parseFloat(fixedResult) === 0 && quota > 0 && value > 0) {
+  if (parseFloat(fixedResult) === 0 && safeQuota > 0 && value > 0) {
     const minValue = Math.pow(10, -digits);
     return symbol + minValue.toFixed(digits);
   }

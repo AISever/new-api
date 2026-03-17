@@ -280,6 +280,8 @@ func migrateDB() error {
 		&SubscriptionPreConsumeRecord{},
 		&CustomOAuthProvider{},
 		&UserOAuthBinding{},
+		&ExternalShopChannelSnapshot{},
+		&ExternalShopCategory{},
 		&ExternalShopGood{},
 		&ExternalShopOrder{},
 	)
@@ -330,6 +332,8 @@ func migrateDBFast() error {
 		{&SubscriptionPreConsumeRecord{}, "SubscriptionPreConsumeRecord"},
 		{&CustomOAuthProvider{}, "CustomOAuthProvider"},
 		{&UserOAuthBinding{}, "UserOAuthBinding"},
+		{&ExternalShopChannelSnapshot{}, "ExternalShopChannelSnapshot"},
+		{&ExternalShopCategory{}, "ExternalShopCategory"},
 		{&ExternalShopGood{}, "ExternalShopGood"},
 		{&ExternalShopOrder{}, "ExternalShopOrder"},
 	}

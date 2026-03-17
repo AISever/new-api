@@ -73,6 +73,9 @@ const statusColorMap = {
   manual_review: 'pink',
 };
 
+const isMissingOrderMessage = (message) =>
+  ['订单不存在', '无权访问该订单'].includes(String(message || '').trim());
+
 export default function OrderPay() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -160,13 +163,17 @@ export default function OrderPay() {
       try {
         const res = await API.get(
           `/api/external-shop/orders/${encodeURIComponent(localTradeNo)}`,
+          { skipErrorHandler: true },
         );
         if (!res.data.success) {
           throw new Error(res.data.message || t('获取订单失败'));
         }
         setOrder(res.data.data || null);
       } catch (error) {
-        showError(error.message || t('获取订单失败'));
+        setOrder(null);
+        if (!isMissingOrderMessage(error.message)) {
+          showError(error);
+        }
       } finally {
         if (showLoading) {
           setLoading(false);

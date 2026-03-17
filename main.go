@@ -115,6 +115,7 @@ func main() {
 
 	// External shop pending order auto-sync task
 	externalshop.StartExternalShopOrderAutoSyncTask()
+	externalshop.PrewarmChannelCache()
 
 	// Wire task polling adaptor factory (breaks service -> relay import cycle)
 	service.GetTaskAdaptorFunc = func(platform constant.TaskPlatform) service.TaskPollingAdaptor {

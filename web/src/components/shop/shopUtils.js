@@ -206,10 +206,43 @@ export function getExternalShopDescriptionDetail(value) {
   return detail || normalizeExternalShopDescription(value);
 }
 
-export function buildExternalShopCategoryCards(goods) {
-  const categories = new Map();
+export function buildExternalShopCategoryCards(goods, sourceCategories = []) {
+  const normalizedGoods = Array.isArray(goods) ? goods : [];
+  const normalizedCategories = Array.isArray(sourceCategories)
+    ? sourceCategories
+    : [];
 
-  for (const good of goods || []) {
+  if (normalizedCategories.length > 0) {
+    const categoryCounts = new Map();
+    for (const good of normalizedGoods) {
+      const categoryId = String(good?.category_id || '').trim();
+      if (!categoryId) {
+        continue;
+      }
+      categoryCounts.set(categoryId, (categoryCounts.get(categoryId) || 0) + 1);
+    }
+
+    return [
+      {
+        key: 'all',
+        name: '全部商品',
+        count: normalizedGoods.length,
+      },
+      ...normalizedCategories.map((category) => {
+        const categoryId = String(category?.id || '').trim();
+        return {
+          key: categoryId || String(category?.name || '').trim() || '未分类',
+          name: String(category?.name || '').trim() || '未分类',
+          count:
+            categoryCounts.get(categoryId) ??
+            Number(category?.goods_count || 0),
+        };
+      }),
+    ];
+  }
+
+  const categories = new Map();
+  for (const good of normalizedGoods) {
     const categoryName = String(good?.category_name || '').trim() || '未分类';
     categories.set(categoryName, (categories.get(categoryName) || 0) + 1);
   }
@@ -218,7 +251,7 @@ export function buildExternalShopCategoryCards(goods) {
     {
       key: 'all',
       name: '全部商品',
-      count: Array.isArray(goods) ? goods.length : 0,
+      count: normalizedGoods.length,
     },
     ...Array.from(categories.entries()).map(([name, count]) => ({
       key: name,
@@ -236,7 +269,13 @@ export function filterExternalShopGoods(
 
   return (goods || []).filter((good) => {
     const categoryName = String(good?.category_name || '').trim() || '未分类';
-    if (categoryKey && categoryKey !== 'all' && categoryName !== categoryKey) {
+    const categoryId = String(good?.category_id || '').trim();
+    if (
+      categoryKey &&
+      categoryKey !== 'all' &&
+      categoryName !== categoryKey &&
+      categoryId !== String(categoryKey)
+    ) {
       return false;
     }
 
@@ -274,11 +313,11 @@ export function getExternalShopFulfillmentLabel(good) {
 }
 
 export function getExternalShopPurchaseLimitLabel(good) {
-  const limitCount = Number(good?.limit_count || 0);
-  if (limitCount > 1) {
-    return `${limitCount}件起购`;
+  const stockCount = Number(good?.stock_count || 0);
+  if (stockCount <= 1) {
+    return `仅剩${Math.max(stockCount, 0)}件`;
   }
-  return '1件起购';
+  return `最多${stockCount}件`;
 }
 
 export function getMaskedExternalShopContact(value) {

@@ -20,11 +20,11 @@ test('GptTeamPlanTab uses user-readable datetime formatting for result fields', 
     true,
   );
   assert.equal(
-    source.includes('formatGPTTeamPlanDateTime(\n                      redeemResult.warranty_expires_at,'),
+    source.includes('redeemResult.warranty_expires_at'),
     true,
   );
   assert.equal(
-    source.includes('formatGPTTeamPlanDateTime(\n                      warrantyResult.warranty_expires_at,'),
+    source.includes('warrantyResult.warranty_expires_at'),
     true,
   );
 });
@@ -33,4 +33,44 @@ test('GptTeamPlanTab uses distinct placeholders for redeem and warranty inputs',
   assert.equal(source.includes("placeholder={t('请输入兑换邮箱')}"), true);
   assert.equal(source.includes("placeholder={t('请输入待兑换的兑换码')}"), true);
   assert.equal(source.includes("placeholder={t('请输入需要查询的兑换码')}"), true);
+});
+
+test('GptTeamPlanTab bypasses the global error interceptor when rendering inline failure states', () => {
+  assert.equal(
+    source.includes("'/api/gptteamplan/redeem'"),
+    true,
+  );
+  assert.equal(
+    source.includes("'/api/gptteamplan/warranty/check'"),
+    true,
+  );
+  assert.equal(source.includes('skipErrorHandler: true'), true);
+});
+
+test('GptTeamPlanTab keeps remaining seat details in redeem results', () => {
+  assert.equal(source.includes("{t('剩余车位')}"), true);
+  assert.equal(source.includes('redeemResult.remaining_seats'), true);
+  assert.equal(source.includes('redeemResult.warranty_expires_at || redeemResult.expires_at'), true);
+});
+
+test('GptTeamPlanTab renders the entry remaining seats from parent status data', () => {
+  assert.equal(
+    source.includes(
+      'export default function GptTeamPlanTab({ remainingSeats: initialRemainingSeats = null })',
+    ),
+    true,
+  );
+  assert.equal(source.includes('const currentRemainingSeats ='), true);
+  assert.equal(source.includes('remainingSeatsDisplay'), true);
+});
+
+test('GptTeamPlanTab follows source-site warranty fallback rendering', () => {
+  assert.equal(source.includes('getGPTTeamWarrantyRecordTeamName(value)'), true);
+  assert.equal(source.includes("title: t('兑换时间')"), true);
+  assert.equal(source.includes('getGPTTeamWarrantyRecordExpiry(record)'), true);
+  assert.equal(source.includes('formatGPTTeamWarrantyExpiry('), true);
+  assert.equal(
+    source.includes('warrantyResult.records.length === 0'),
+    true,
+  );
 });

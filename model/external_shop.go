@@ -22,6 +22,8 @@ type ExternalShopGood struct {
 	Image        string `json:"image" gorm:"type:text"`
 	CategoryId   int    `json:"category_id" gorm:"index"`
 	CategoryName string `json:"category_name" gorm:"type:varchar(128);default:''"`
+	CategorySort int    `json:"category_sort" gorm:"default:0"`
+	SortIndex    int    `json:"sort_index" gorm:"default:0"`
 
 	Price       float64 `json:"price" gorm:"type:decimal(10,6);not null;default:0"`
 	MarketPrice float64 `json:"market_price" gorm:"type:decimal(10,6);not null;default:0"`
@@ -41,10 +43,74 @@ type ExternalShopGood struct {
 	UpdatedAt int64 `json:"updated_at" gorm:"bigint"`
 }
 
+type ExternalShopCategory struct {
+	Id int `json:"id"`
+
+	Provider   string `json:"provider" gorm:"type:varchar(32);not null;index:idx_external_shop_categories_provider_token_key,priority:1"`
+	ShopToken  string `json:"shop_token" gorm:"type:varchar(64);not null;index:idx_external_shop_categories_provider_token_key,priority:2"`
+	CategoryId int    `json:"category_id" gorm:"not null;index:idx_external_shop_categories_provider_token_key,priority:3"`
+
+	Name       string `json:"name" gorm:"type:varchar(128);default:''"`
+	Image      string `json:"image" gorm:"type:text"`
+	GoodsCount int    `json:"goods_count" gorm:"default:0"`
+	SortIndex  int    `json:"sort_index" gorm:"default:0"`
+	Enabled    bool   `json:"enabled" gorm:"default:true;index"`
+	SyncedAt   int64  `json:"synced_at" gorm:"bigint;index"`
+
+	CreatedAt int64 `json:"created_at" gorm:"bigint"`
+	UpdatedAt int64 `json:"updated_at" gorm:"bigint"`
+}
+
+type ExternalShopChannelSnapshot struct {
+	Id int `json:"id"`
+
+	Provider     string  `json:"provider" gorm:"type:varchar(32);not null;index:idx_external_shop_channels_provider_token_key,priority:1"`
+	ShopToken    string  `json:"shop_token" gorm:"type:varchar(64);not null;index:idx_external_shop_channels_provider_token_key,priority:2"`
+	ChannelId    int     `json:"channel_id" gorm:"not null;index:idx_external_shop_channels_provider_token_key,priority:3"`
+	Name         string  `json:"name" gorm:"type:varchar(128);default:''"`
+	Code         string  `json:"code" gorm:"type:varchar(64);default:''"`
+	ShowName     string  `json:"show_name" gorm:"type:varchar(128);default:''"`
+	Status       int     `json:"status" gorm:"default:0"`
+	CustomStatus int     `json:"custom_status" gorm:"default:0"`
+	Rate         float64 `json:"rate" gorm:"type:decimal(10,6);default:0"`
+	PayTypeName  string  `json:"pay_type_name" gorm:"type:varchar(128);default:''"`
+	PayTypeIcon  string  `json:"pay_type_icon" gorm:"type:text"`
+	Enabled      bool    `json:"enabled" gorm:"default:true;index"`
+	RawPayload   string  `json:"raw_payload" gorm:"type:text"`
+	SyncedAt     int64   `json:"synced_at" gorm:"bigint;index"`
+
+	CreatedAt int64 `json:"created_at" gorm:"bigint"`
+	UpdatedAt int64 `json:"updated_at" gorm:"bigint"`
+}
+
 func (g *ExternalShopGood) BeforeCreate(tx *gorm.DB) error {
 	now := time.Now().Unix()
 	g.CreatedAt = now
 	g.UpdatedAt = now
+	return nil
+}
+
+func (c *ExternalShopCategory) BeforeCreate(tx *gorm.DB) error {
+	now := time.Now().Unix()
+	c.CreatedAt = now
+	c.UpdatedAt = now
+	return nil
+}
+
+func (c *ExternalShopChannelSnapshot) BeforeCreate(tx *gorm.DB) error {
+	now := time.Now().Unix()
+	c.CreatedAt = now
+	c.UpdatedAt = now
+	return nil
+}
+
+func (c *ExternalShopCategory) BeforeUpdate(tx *gorm.DB) error {
+	c.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (c *ExternalShopChannelSnapshot) BeforeUpdate(tx *gorm.DB) error {
+	c.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
@@ -58,12 +124,12 @@ func UpsertExternalShopGood(good *ExternalShopGood) error {
 		return errors.New("external shop good is nil")
 	}
 	var existing ExternalShopGood
-	err := DB.Where("provider = ? AND shop_token = ? AND goods_key = ?", good.Provider, good.ShopToken, good.GoodsKey).First(&existing).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return DB.Create(good).Error
-		}
-		return err
+	result := DB.Where("provider = ? AND shop_token = ? AND goods_key = ?", good.Provider, good.ShopToken, good.GoodsKey).Limit(1).Find(&existing)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return DB.Create(good).Error
 	}
 	good.Id = existing.Id
 	return DB.Model(&existing).Updates(map[string]interface{}{
@@ -73,6 +139,8 @@ func UpsertExternalShopGood(good *ExternalShopGood) error {
 		"image":                 good.Image,
 		"category_id":           good.CategoryId,
 		"category_name":         good.CategoryName,
+		"category_sort":         good.CategorySort,
+		"sort_index":            good.SortIndex,
 		"price":                 good.Price,
 		"market_price":          good.MarketPrice,
 		"coupon_status":         good.CouponStatus,
@@ -88,14 +156,161 @@ func UpsertExternalShopGood(good *ExternalShopGood) error {
 	}).Error
 }
 
+func UpsertExternalShopCategory(category *ExternalShopCategory) error {
+	if category == nil {
+		return errors.New("external shop category is nil")
+	}
+	var existing ExternalShopCategory
+	result := DB.Where(
+		"provider = ? AND shop_token = ? AND category_id = ?",
+		category.Provider,
+		category.ShopToken,
+		category.CategoryId,
+	).Limit(1).Find(&existing)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return DB.Create(category).Error
+	}
+	category.Id = existing.Id
+	return DB.Model(&existing).Updates(map[string]interface{}{
+		"name":        category.Name,
+		"image":       category.Image,
+		"goods_count": category.GoodsCount,
+		"sort_index":  category.SortIndex,
+		"enabled":     category.Enabled,
+		"synced_at":   category.SyncedAt,
+		"updated_at":  time.Now().Unix(),
+	}).Error
+}
+
+func UpsertExternalShopChannelSnapshot(channel *ExternalShopChannelSnapshot) error {
+	if channel == nil {
+		return errors.New("external shop channel snapshot is nil")
+	}
+	var existing ExternalShopChannelSnapshot
+	result := DB.Where(
+		"provider = ? AND shop_token = ? AND channel_id = ?",
+		channel.Provider,
+		channel.ShopToken,
+		channel.ChannelId,
+	).Limit(1).Find(&existing)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return DB.Create(channel).Error
+	}
+	channel.Id = existing.Id
+	return DB.Model(&existing).Updates(map[string]interface{}{
+		"name":          channel.Name,
+		"code":          channel.Code,
+		"show_name":     channel.ShowName,
+		"status":        channel.Status,
+		"custom_status": channel.CustomStatus,
+		"rate":          channel.Rate,
+		"pay_type_name": channel.PayTypeName,
+		"pay_type_icon": channel.PayTypeIcon,
+		"enabled":       channel.Enabled,
+		"raw_payload":   channel.RawPayload,
+		"synced_at":     channel.SyncedAt,
+		"updated_at":    time.Now().Unix(),
+	}).Error
+}
+
 func ListExternalShopGoods(provider string, shopToken string, enabledOnly bool) ([]ExternalShopGood, error) {
 	query := DB.Model(&ExternalShopGood{}).Where("provider = ? AND shop_token = ?", provider, shopToken)
 	if enabledOnly {
 		query = query.Where("enabled = ?", true)
 	}
 	var goods []ExternalShopGood
-	err := query.Order("category_id asc, id desc").Find(&goods).Error
+	err := query.Order("category_sort asc, sort_index asc, id asc").Find(&goods).Error
 	return goods, err
+}
+
+func ListExternalShopChannelSnapshots(provider string, shopToken string, enabledOnly bool) ([]ExternalShopChannelSnapshot, error) {
+	query := DB.Model(&ExternalShopChannelSnapshot{}).Where("provider = ? AND shop_token = ?", provider, shopToken)
+	if enabledOnly {
+		query = query.Where("enabled = ?", true)
+	}
+	var channels []ExternalShopChannelSnapshot
+	err := query.Order("channel_id asc, id asc").Find(&channels).Error
+	return channels, err
+}
+
+func GetExternalShopCatalogSyncState(provider string, shopToken string) (int64, int64, error) {
+	var count int64
+	if err := DB.Model(&ExternalShopGood{}).
+		Where("provider = ? AND shop_token = ?", provider, shopToken).
+		Count(&count).Error; err != nil {
+		return 0, 0, err
+	}
+	if count == 0 {
+		return 0, 0, nil
+	}
+	var latest ExternalShopGood
+	if err := DB.Model(&ExternalShopGood{}).
+		Where("provider = ? AND shop_token = ?", provider, shopToken).
+		Order("synced_at desc, updated_at desc, id desc").
+		First(&latest).Error; err != nil {
+		return 0, 0, err
+	}
+	return count, latest.SyncedAt, nil
+}
+
+func GetExternalShopChannelSyncState(provider string, shopToken string) (int64, int64, error) {
+	var count int64
+	if err := DB.Model(&ExternalShopChannelSnapshot{}).
+		Where("provider = ? AND shop_token = ? AND enabled = ?", provider, shopToken, true).
+		Count(&count).Error; err != nil {
+		return 0, 0, err
+	}
+	if count == 0 {
+		return 0, 0, nil
+	}
+	var latest ExternalShopChannelSnapshot
+	if err := DB.Model(&ExternalShopChannelSnapshot{}).
+		Where("provider = ? AND shop_token = ?", provider, shopToken).
+		Order("synced_at desc, updated_at desc, id desc").
+		First(&latest).Error; err != nil {
+		return 0, 0, err
+	}
+	return count, latest.SyncedAt, nil
+}
+
+func ListExternalShopCategories(provider string, shopToken string, enabledOnly bool) ([]ExternalShopCategory, error) {
+	query := DB.Model(&ExternalShopCategory{}).Where("provider = ? AND shop_token = ?", provider, shopToken)
+	if enabledOnly {
+		query = query.Where("enabled = ?", true)
+	}
+	var categories []ExternalShopCategory
+	err := query.Order("sort_index asc, id asc").Find(&categories).Error
+	return categories, err
+}
+
+func DisableMissingExternalShopChannelSnapshots(provider string, shopToken string, keepChannelIDs []int) (int64, error) {
+	query := DB.Model(&ExternalShopChannelSnapshot{}).Where("provider = ? AND shop_token = ?", provider, shopToken)
+	if len(keepChannelIDs) > 0 {
+		query = query.Where("channel_id NOT IN ?", keepChannelIDs)
+	}
+	result := query.Updates(map[string]interface{}{
+		"enabled":    false,
+		"updated_at": time.Now().Unix(),
+	})
+	return result.RowsAffected, result.Error
+}
+
+func DisableMissingExternalShopCategories(provider string, shopToken string, keepCategoryIDs []int) (int64, error) {
+	query := DB.Model(&ExternalShopCategory{}).Where("provider = ? AND shop_token = ?", provider, shopToken)
+	if len(keepCategoryIDs) > 0 {
+		query = query.Where("category_id NOT IN ?", keepCategoryIDs)
+	}
+	result := query.Updates(map[string]interface{}{
+		"enabled":    false,
+		"updated_at": time.Now().Unix(),
+	})
+	return result.RowsAffected, result.Error
 }
 
 func GetExternalShopGoodByGoodsKey(provider string, shopToken string, goodsKey string) (*ExternalShopGood, error) {
@@ -188,18 +403,24 @@ func (o *ExternalShopOrder) Delete() error {
 
 func GetExternalShopOrderByLocalTradeNo(localTradeNo string) (*ExternalShopOrder, error) {
 	var order ExternalShopOrder
-	err := DB.Where("local_trade_no = ?", localTradeNo).First(&order).Error
-	if err != nil {
-		return nil, err
+	result := DB.Where("local_trade_no = ?", localTradeNo).Limit(1).Find(&order)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return &order, nil
 }
 
 func GetExternalShopOrderByUpstreamTradeNo(upstreamTradeNo string) (*ExternalShopOrder, error) {
 	var order ExternalShopOrder
-	err := DB.Where("upstream_trade_no = ?", upstreamTradeNo).First(&order).Error
-	if err != nil {
-		return nil, err
+	result := DB.Where("upstream_trade_no = ?", upstreamTradeNo).Limit(1).Find(&order)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return &order, nil
 }

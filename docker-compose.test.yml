@@ -1,0 +1,54 @@
+# Docker Compose for Testing
+# This is a simplified configuration for local testing with the locally built image.
+#
+# Usage:
+#   1. Build local image: docker build -t new-api:local .
+#   2. Start services: docker-compose -f docker-compose.test.yml up -d
+#   3. Run tests...
+#   4. Clean up: docker-compose -f docker-compose.test.yml down -v
+
+services:
+  new-api:
+    image: new-api:local  # Use locally built image
+    container_name: new-api-test
+    restart: always
+    command: --log-dir /app/logs
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./data:/data
+      - ./logs:/app/logs
+    environment:
+      - SQL_DSN=postgresql://root:123456@postgres:5432/new-api
+      - REDIS_CONN_STRING=redis://redis
+      - SESSION_SECRET=local-docker-test-session-secret-20260316
+      - TZ=Asia/Shanghai
+      - ERROR_LOG_ENABLED=true
+      - BATCH_UPDATE_ENABLED=true
+    depends_on:
+      - redis
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:latest
+    container_name: redis-test
+    restart: always
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-test
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: new-api
+    volumes:
+      - pg_data_test:/var/lib/postgresql/data
+
+volumes:
+  pg_data_test:

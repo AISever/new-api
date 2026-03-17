@@ -44,12 +44,12 @@ func GetTwoFAByUserId(userId int) (*TwoFA, error) {
 	}
 
 	var twoFA TwoFA
-	err := DB.Where("user_id = ?", userId).First(&twoFA).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // 返回nil表示未设置2FA
-		}
-		return nil, err
+	result := DB.Where("user_id = ?", userId).Limit(1).Find(&twoFA)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, nil // 返回nil表示未设置2FA
 	}
 
 	return &twoFA, nil

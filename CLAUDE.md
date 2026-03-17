@@ -130,3 +130,37 @@ For request structs that are parsed from client JSON and then re-marshaled to up
   - field absent in client JSON => `nil` => omitted on marshal;
   - field explicitly set to zero/false => non-`nil` pointer => must still be sent upstream.
 - Avoid using non-pointer scalars with `omitempty` for optional request parameters, because zero values (`0`, `0.0`, `false`) will be silently dropped during marshal.
+
+### Rule 7: Docker Testing — Mandatory Multi-Database Testing
+
+Before submitting any code changes, you MUST test in a local Docker environment with all three supported databases.
+
+**Testing Requirements:**
+- Test with PostgreSQL (default configuration)
+- Test with MySQL (switch database in docker-compose.yml)
+- Test with SQLite (remove SQL_DSN from docker-compose.yml)
+- Verify no errors in logs (`docker-compose logs new-api | grep -i error`)
+- Confirm API health check passes (`curl http://localhost:3000/api/status`)
+
+**Quick Start:**
+```bash
+# Build and test
+docker build -t new-api:local .
+docker-compose up -d
+curl http://localhost:3000/api/status
+
+# Clean up after testing
+docker-compose down -v
+```
+
+**Documentation:**
+- Full deployment guide: `docs/DOCKER_TESTING.md`
+- Claude Code skill: `/docker-test` (use this to quickly reference deployment procedures)
+
+**This is mandatory for:**
+- Any database-related code changes (models, migrations, queries)
+- Backend API changes that interact with the database
+- Frontend changes that affect data persistence
+- New feature implementations
+
+Skipping multi-database testing may result in production failures. See `docs/DOCKER_TESTING.md` for detailed procedures.

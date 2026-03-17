@@ -161,12 +161,15 @@ func SetApiRouter(router *gin.Engine) {
 		externalShopRoute := apiRouter.Group("/external-shop")
 		externalShopRoute.Use(middleware.UserAuth())
 		{
+			externalShopRoute.GET("/status", controller.GetExternalShopStatus)
+			externalShopRoute.GET("/categories", controller.GetExternalShopCategories)
 			externalShopRoute.GET("/goods", controller.GetExternalShopGoods)
 			externalShopRoute.GET("/goods/:goods_key", controller.GetExternalShopGood)
 			externalShopRoute.GET("/channels", controller.GetExternalShopChannels)
 			externalShopRoute.POST("/orders", middleware.CriticalRateLimit(), controller.CreateExternalShopOrder)
 			externalShopRoute.GET("/orders", controller.GetExternalShopOrders)
 			externalShopRoute.GET("/orders/:local_trade_no", controller.GetExternalShopOrder)
+			externalShopRoute.DELETE("/orders/:local_trade_no", controller.DeleteExternalShopOrder)
 			externalShopRoute.POST("/orders/:local_trade_no/refresh", middleware.ExternalShopRefreshRateLimit(), controller.RefreshExternalShopOrder)
 		}
 

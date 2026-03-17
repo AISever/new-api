@@ -83,9 +83,18 @@ func TestSyncCatalogWithClientPaginatesAndCountsDisabledGoods(t *testing.T) {
 			ShopToken: "shop-token",
 		},
 		2,
+		func(category *model.ExternalShopCategory) error {
+			return nil
+		},
 		func(good *model.ExternalShopGood) error {
 			upserted = append(upserted, good.GoodsKey)
 			return nil
+		},
+		func(provider string, shopToken string, keepCategoryIDs []int) (int64, error) {
+			require.Equal(t, ProviderLDXP, provider)
+			require.Equal(t, "shop-token", shopToken)
+			require.ElementsMatch(t, []int{1}, keepCategoryIDs)
+			return 0, nil
 		},
 		func(provider string, shopToken string, keepGoodsKeys []string) (int64, error) {
 			require.Equal(t, ProviderLDXP, provider)

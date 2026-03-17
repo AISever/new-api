@@ -76,7 +76,8 @@ func TestValidatePurchasableGood(t *testing.T) {
 
 	require.EqualError(t, validatePurchasableGood(nil, 1), "goods not found")
 	require.EqualError(t, validatePurchasableGood(&model.ExternalShopGood{StockCount: 0}, 1), "goods is out of stock")
-	require.EqualError(t, validatePurchasableGood(&model.ExternalShopGood{StockCount: 2, LimitCount: 1}, 2), "quantity exceeds limit 1")
+	require.EqualError(t, validatePurchasableGood(&model.ExternalShopGood{StockCount: 2}, 3), "quantity exceeds stock 2")
+	require.NoError(t, validatePurchasableGood(&model.ExternalShopGood{StockCount: 2, LimitCount: 1}, 2))
 	require.NoError(t, validatePurchasableGood(&model.ExternalShopGood{StockCount: 2, LimitCount: 2}, 2))
 }
 

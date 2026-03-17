@@ -101,6 +101,32 @@ test('buildExternalShopCategoryCards groups goods into source-style category sum
   ]);
 });
 
+test('buildExternalShopCategoryCards preserves source category order and zero-count categories', () => {
+  const output = buildExternalShopCategoryCards(
+    [
+      { category_id: 20746, category_name: 'ChatGPT', goods_key: '1' },
+      { category_id: 20746, category_name: 'ChatGPT', goods_key: '2' },
+      {
+        category_id: 22645,
+        category_name: 'Google/gemini/反重力',
+        goods_key: '3',
+      },
+    ],
+    [
+      { id: 20746, name: 'ChatGPT', goods_count: 4 },
+      { id: 22645, name: 'Google/gemini/反重力', goods_count: 1 },
+      { id: 21722, name: 'AI IDE账号', goods_count: 0 },
+    ],
+  );
+
+  assert.deepEqual(output, [
+    { key: 'all', name: '全部商品', count: 3 },
+    { key: '20746', name: 'ChatGPT', count: 2 },
+    { key: '22645', name: 'Google/gemini/反重力', count: 1 },
+    { key: '21722', name: 'AI IDE账号', count: 0 },
+  ]);
+});
+
 test('filterExternalShopGoods applies category and keyword search together', () => {
   const output = filterExternalShopGoods(
     [
@@ -132,9 +158,9 @@ test('getExternalShopStockLabel matches source-style inventory wording', () => {
 test('order confirmation helpers match source-style fulfillment and purchase limit copy', () => {
   assert.equal(getExternalShopFulfillmentLabel({ send_order: 0 }), '自动发货');
   assert.equal(getExternalShopFulfillmentLabel({ send_order: 1 }), '人工处理');
-  assert.equal(getExternalShopPurchaseLimitLabel({ limit_count: 0 }), '1件起购');
-  assert.equal(getExternalShopPurchaseLimitLabel({ limit_count: 1 }), '1件起购');
-  assert.equal(getExternalShopPurchaseLimitLabel({ limit_count: 3 }), '3件起购');
+  assert.equal(getExternalShopPurchaseLimitLabel({ stock_count: 0 }), '仅剩0件');
+  assert.equal(getExternalShopPurchaseLimitLabel({ stock_count: 1 }), '仅剩1件');
+  assert.equal(getExternalShopPurchaseLimitLabel({ stock_count: 3 }), '最多3件');
 });
 
 test('getMaskedExternalShopContact masks email and fallback strings', () => {

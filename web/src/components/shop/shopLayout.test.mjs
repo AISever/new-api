@@ -75,11 +75,18 @@ test('shop goods typography stays aligned with the console module scale', () => 
   assert.equal(source.includes("text-[17px]"), false);
   assert.equal(source.includes('fontSize: 28,'), false);
   assert.equal(source.includes('fontSize: 30,'), false);
-  assert.equal(source.includes("style={{ fontSize: 16, color: 'var(--semi-color-text-0)' }}"), true);
-  assert.equal(source.includes('text-base font-semibold leading-6'), true);
+  assert.equal(source.includes('fontSize: 16,'), false);
+  assert.equal(source.includes('fontSize: 15,'), true);
+  assert.equal(source.includes("color: 'var(--semi-color-text-0)'"), true);
+  assert.equal(source.includes('line-clamp-2 text-base font-semibold leading-6'), false);
+  assert.equal(source.includes('text-sm font-semibold leading-5'), true);
+  assert.equal(source.includes('line-clamp-2 text-sm font-semibold leading-6'), true);
   assert.equal(source.includes('fontSize: 24,'), false);
   assert.equal(source.includes('fontSize: 20,'), true);
   assert.equal(source.includes('fontSize: 18,'), true);
+  assert.equal(source.includes("mt-1 text-xs leading-5"), true);
+  assert.equal(source.includes("uppercase tracking-[0.28em]"), false);
+  assert.equal(source.includes("text-xs font-medium leading-5 tracking-[0.08em]"), true);
 });
 
 test('shop order confirmation follows the source storefront modal flow', () => {
@@ -89,11 +96,15 @@ test('shop order confirmation follows the source storefront modal flow', () => {
     .at(1)
     ?.split("<Modal")[0];
 
-  assert.equal(source.includes("API.get('/api/external-shop/channels')"), true);
+  assert.equal(source.includes("'/api/external-shop/channels?refresh=1'"), true);
+  assert.equal(source.includes("'/api/external-shop/channels'"), true);
+  assert.equal(source.includes('loadPaymentChannels()'), true);
   assert.equal(source.includes("title={t('订单确认')}"), true);
   assert.equal(source.includes("{t('联系方式')}"), true);
   assert.equal(source.includes("{t('支付方式')}"), true);
   assert.equal(source.includes("{t('去支付')}"), true);
+  assert.equal(source.includes('quantity: 1,'), false);
+  assert.equal(source.includes('quantity,'), true);
   assert.equal(source.includes('width={720}'), false);
   assert.equal(source.includes('width={480}'), true);
   assert.equal(source.includes('window.open('), false);
@@ -110,6 +121,13 @@ test('shop confirmation modal keeps tighter spacing around contact, price, and f
   assert.equal(source.includes("className='space-y-2'"), false);
   assert.equal(source.includes("className='space-y-1.5'"), true);
   assert.equal(source.includes("className='flex justify-end gap-3 pt-3'"), true);
+  assert.equal(source.includes('InputNumber'), true);
+  assert.equal(source.includes("当前仅支持单件下单"), false);
+  assert.equal(source.includes("当前商品不限制下单数量"), false);
+  assert.equal(source.includes("支持多件下单，实际以下游库存为准"), false);
+  assert.equal(source.includes("{`x${normalizedSelectedGoodQuantity}`}"), true);
+  assert.equal(source.includes('max={Number(selectedGood?.stock_count || 1)}'), true);
+  assert.equal(source.includes("<Text type='danger'>*</Text>"), true);
 });
 
 test('shop goods cards avoid full-height card body that pushes actions outside the card', () => {
@@ -126,6 +144,18 @@ test('order pay and detail pages use the same centered page shell', () => {
   assert.equal(detailSource.includes("max-w-5xl mx-auto"), true);
   assert.equal(paySource.includes("!rounded-2xl shadow-sm border-0"), true);
   assert.equal(detailSource.includes("!rounded-2xl shadow-sm border-0"), true);
+});
+
+test('shop orders expose a confirmed delete action instead of only refresh and detail', () => {
+  const source = readSource('index.jsx');
+
+  assert.equal(source.includes('Popconfirm'), true);
+  assert.equal(
+    source.includes("API.delete(`/api/external-shop/orders/${record.local_trade_no}`)"),
+    true,
+  );
+  assert.equal(source.includes("{t('删除')}"), true);
+  assert.equal(source.includes("{t('确定删除这个订单记录吗？')}"), true);
 });
 
 test('order pay refresh uses local error handling and avoids background-tab refresh churn', () => {

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -25,6 +27,72 @@ type SyncSummary struct {
 	GoodsDisabled int    `json:"goods_disabled"`
 }
 
+var (
+	catalogFreshTTL        = time.Minute
+	catalogSyncMu          sync.Mutex
+	catalogRefreshInFlight atomic.Bool
+)
+
+type channelCacheState struct {
+	mu        sync.RWMutex
+	channels  []PaymentChannel
+	fetchedAt time.Time
+}
+
+var (
+	channelCache           channelCacheState
+	channelCacheTTL        = time.Minute
+	channelRefreshInFlight atomic.Bool
+)
+
+var triggerChannelRefreshAsync = func() {
+	RefreshChannelsAsync()
+}
+
+type persistedChannelCache struct {
+	Channels  []PaymentChannel `json:"channels"`
+	FetchedAt int64            `json:"fetched_at"`
+}
+
+func RefreshUserOrders(ctx context.Context, userId int, localTradeNos []string) {
+	now := time.Now()
+	seen := make(map[string]struct{}, len(localTradeNos))
+	for _, localTradeNo := range localTradeNos {
+		localTradeNo = strings.TrimSpace(localTradeNo)
+		if localTradeNo == "" {
+			continue
+		}
+		if _, ok := seen[localTradeNo]; ok {
+			continue
+		}
+		seen[localTradeNo] = struct{}{}
+
+		order, err := model.GetExternalShopOrderByLocalTradeNo(localTradeNo)
+		if err != nil || order == nil || order.UserId != userId {
+			continue
+		}
+		if ExpireLocalOrderIfTimedOut(order, now) {
+			_ = order.Update()
+			continue
+		}
+		if !shouldSyncOrder(order, now, autoSyncMinInterval) {
+			continue
+		}
+		_, _ = RefreshLocalOrder(ctx, order)
+	}
+}
+
+func RefreshUserOrdersAsync(userId int, localTradeNos []string) {
+	if userId <= 0 || len(localTradeNos) == 0 {
+		return
+	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		RefreshUserOrders(ctx, userId, localTradeNos)
+	}()
+}
+
 func NewConfiguredClient() (*LDXPClient, Config, error) {
 	cfg := GetConfig()
 	if !cfg.IsReady() {
@@ -43,10 +111,273 @@ func SyncCatalog(ctx context.Context) (*SyncSummary, error) {
 		client,
 		cfg,
 		100,
+		model.UpsertExternalShopCategory,
 		model.UpsertExternalShopGood,
+		model.DisableMissingExternalShopCategories,
 		model.DisableMissingExternalShopGoods,
 		time.Now,
 	)
+}
+
+func EnsureCatalogFresh(ctx context.Context) error {
+	cfg := GetConfig()
+	if !cfg.IsReady() {
+		return errors.New("external shop is not configured")
+	}
+	if catalogIsFresh(cfg, time.Now()) {
+		return nil
+	}
+	catalogSyncMu.Lock()
+	defer catalogSyncMu.Unlock()
+	if catalogIsFresh(cfg, time.Now()) {
+		return nil
+	}
+	_, err := SyncCatalog(ctx)
+	return err
+}
+
+func RefreshCatalogAsync() {
+	if !catalogRefreshInFlight.CompareAndSwap(false, true) {
+		return
+	}
+	go func() {
+		defer catalogRefreshInFlight.Store(false)
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		_ = EnsureCatalogFresh(ctx)
+	}()
+}
+
+func ListCachedChannels() []PaymentChannel {
+	cfg := GetConfig()
+	if !cfg.IsReady() {
+		return nil
+	}
+	channelCache.mu.RLock()
+	if len(channelCache.channels) > 0 {
+		channels := make([]PaymentChannel, len(channelCache.channels))
+		copy(channels, channelCache.channels)
+		channelCache.mu.RUnlock()
+		return channels
+	}
+	channelCache.mu.RUnlock()
+
+	channels, fetchedAt, err := loadPersistedChannels(ProviderLDXP, cfg.ShopToken)
+	if err != nil || len(channels) == 0 {
+		return nil
+	}
+	storeChannelsInMemory(channels, fetchedAt)
+	cloned := make([]PaymentChannel, len(channels))
+	copy(cloned, channels)
+	return cloned
+}
+
+func FetchChannels(ctx context.Context) ([]PaymentChannel, error) {
+	client, cfg, err := NewConfiguredClient()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.ListChannels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Code != 1 {
+		return nil, fmt.Errorf("list channels failed: %s", strings.TrimSpace(resp.Msg))
+	}
+	fetchedAt := time.Now()
+	if err := persistChannelsSnapshot(ProviderLDXP, cfg.ShopToken, resp.Data, fetchedAt); err != nil {
+		return nil, err
+	}
+	storeChannelsInMemory(resp.Data, fetchedAt)
+	return resp.Data, nil
+}
+
+func RefreshChannelsAsync() {
+	if !channelRefreshInFlight.CompareAndSwap(false, true) {
+		return
+	}
+	go func() {
+		defer channelRefreshInFlight.Store(false)
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		_, _ = FetchChannels(ctx)
+	}()
+}
+
+func PrewarmChannelCache() {
+	cfg := GetConfig()
+	if !cfg.IsReady() {
+		return
+	}
+	channels, fetchedAt, err := loadPersistedChannels(ProviderLDXP, cfg.ShopToken)
+	if err == nil && len(channels) > 0 {
+		storeChannelsInMemory(channels, fetchedAt)
+	}
+	triggerChannelRefreshAsync()
+}
+
+func storeChannelsInMemory(channels []PaymentChannel, fetchedAt time.Time) {
+	channelCache.mu.Lock()
+	channelCache.channels = append([]PaymentChannel(nil), channels...)
+	channelCache.fetchedAt = fetchedAt
+	channelCache.mu.Unlock()
+}
+
+func loadPersistedChannels(provider string, shopToken string) ([]PaymentChannel, time.Time, error) {
+	if strings.TrimSpace(provider) == "" || strings.TrimSpace(shopToken) == "" {
+		return nil, time.Time{}, nil
+	}
+	if channels, fetchedAt, err := loadChannelsFromRedis(provider, shopToken); err == nil && len(channels) > 0 {
+		return channels, fetchedAt, nil
+	}
+	snapshots, err := model.ListExternalShopChannelSnapshots(provider, shopToken, true)
+	if err != nil || len(snapshots) == 0 {
+		return nil, time.Time{}, err
+	}
+	channels := make([]PaymentChannel, 0, len(snapshots))
+	var latestSyncedAt int64
+	for _, snapshot := range snapshots {
+		channels = append(channels, PaymentChannel{
+			Id:           snapshot.ChannelId,
+			Name:         snapshot.Name,
+			Code:         snapshot.Code,
+			ShowName:     snapshot.ShowName,
+			Status:       snapshot.Status,
+			CustomStatus: snapshot.CustomStatus,
+			Rate:         snapshot.Rate,
+			PayType: PaymentChannelPayType{
+				Name: snapshot.PayTypeName,
+				Icon: snapshot.PayTypeIcon,
+			},
+		})
+		if snapshot.SyncedAt > latestSyncedAt {
+			latestSyncedAt = snapshot.SyncedAt
+		}
+	}
+	fetchedAt := time.Unix(latestSyncedAt, 0)
+	persistChannelsToRedis(provider, shopToken, channels, fetchedAt)
+	return channels, fetchedAt, nil
+}
+
+func persistChannelsSnapshot(provider string, shopToken string, channels []PaymentChannel, fetchedAt time.Time) error {
+	keepChannelIDs := make([]int, 0, len(channels))
+	for _, channel := range channels {
+		rawPayload, err := common.Marshal(channel)
+		if err != nil {
+			return err
+		}
+		if err := model.UpsertExternalShopChannelSnapshot(&model.ExternalShopChannelSnapshot{
+			Provider:     provider,
+			ShopToken:    shopToken,
+			ChannelId:    channel.Id,
+			Name:         channel.Name,
+			Code:         channel.Code,
+			ShowName:     channel.ShowName,
+			Status:       channel.Status,
+			CustomStatus: channel.CustomStatus,
+			Rate:         channel.Rate,
+			PayTypeName:  channel.PayType.Name,
+			PayTypeIcon:  channel.PayType.Icon,
+			Enabled:      true,
+			RawPayload:   string(rawPayload),
+			SyncedAt:     fetchedAt.Unix(),
+		}); err != nil {
+			return err
+		}
+		keepChannelIDs = append(keepChannelIDs, channel.Id)
+	}
+	if _, err := model.DisableMissingExternalShopChannelSnapshots(provider, shopToken, keepChannelIDs); err != nil {
+		return err
+	}
+	persistChannelsToRedis(provider, shopToken, channels, fetchedAt)
+	return nil
+}
+
+func loadChannelsFromRedis(provider string, shopToken string) ([]PaymentChannel, time.Time, error) {
+	if !common.RedisEnabled || common.RDB == nil {
+		return nil, time.Time{}, errors.New("redis is not enabled")
+	}
+	payload, err := common.RedisGet(buildChannelSnapshotRedisKey(provider, shopToken))
+	if err != nil || strings.TrimSpace(payload) == "" {
+		return nil, time.Time{}, err
+	}
+	var snapshot persistedChannelCache
+	if err := common.UnmarshalJsonStr(payload, &snapshot); err != nil {
+		return nil, time.Time{}, err
+	}
+	return snapshot.Channels, time.Unix(snapshot.FetchedAt, 0), nil
+}
+
+func persistChannelsToRedis(provider string, shopToken string, channels []PaymentChannel, fetchedAt time.Time) {
+	if !common.RedisEnabled || common.RDB == nil {
+		return
+	}
+	payload, err := common.Marshal(persistedChannelCache{
+		Channels:  channels,
+		FetchedAt: fetchedAt.Unix(),
+	})
+	if err != nil {
+		return
+	}
+	_ = common.RedisSet(buildChannelSnapshotRedisKey(provider, shopToken), string(payload), 24*time.Hour)
+}
+
+func buildChannelSnapshotRedisKey(provider string, shopToken string) string {
+	return fmt.Sprintf("external_shop:channels:%s:%s", strings.TrimSpace(provider), strings.TrimSpace(shopToken))
+}
+
+func catalogIsFresh(cfg Config, now time.Time) bool {
+	count, latestSyncedAt, err := model.GetExternalShopCatalogSyncState(ProviderLDXP, cfg.ShopToken)
+	if err != nil || count == 0 || latestSyncedAt <= 0 {
+		return false
+	}
+	return now.Unix()-latestSyncedAt < int64(catalogFreshTTL/time.Second)
+}
+
+func ListCatalogCategories(ctx context.Context) ([]Category, error) {
+	_, cfg, err := NewConfiguredClient()
+	if err != nil {
+		return nil, err
+	}
+	cachedCategories, err := model.ListExternalShopCategories(ProviderLDXP, cfg.ShopToken, true)
+	if err != nil {
+		return nil, err
+	}
+	categories := make([]Category, 0, len(cachedCategories))
+	for _, category := range cachedCategories {
+		if len(cfg.AllowedCategoryIDs) > 0 {
+			if _, ok := cfg.AllowedCategoryIDs[category.CategoryId]; !ok {
+				continue
+			}
+		}
+		categories = append(categories, Category{
+			Id:         category.CategoryId,
+			Name:       category.Name,
+			Image:      category.Image,
+			GoodsCount: category.GoodsCount,
+		})
+	}
+	return categories, nil
+}
+
+func listCategoriesFromSource(ctx context.Context, client catalogClient, cfg Config) ([]Category, error) {
+	resp, err := client.ListCategories(ctx, "card")
+	if err != nil {
+		return nil, err
+	}
+	if resp.Code != 1 {
+		return nil, fmt.Errorf("list categories failed: %s", strings.TrimSpace(resp.Msg))
+	}
+	categories := make([]Category, 0, len(resp.Data))
+	for _, category := range resp.Data {
+		if len(cfg.AllowedCategoryIDs) > 0 {
+			if _, ok := cfg.AllowedCategoryIDs[category.Id]; !ok {
+				continue
+			}
+		}
+		categories = append(categories, category)
+	}
+	return categories, nil
 }
 
 func syncCatalogWithClient(
@@ -54,7 +385,9 @@ func syncCatalogWithClient(
 	client catalogClient,
 	cfg Config,
 	pageSize int,
+	upsertCategory func(*model.ExternalShopCategory) error,
 	upsert func(*model.ExternalShopGood) error,
+	disableMissingCategories func(provider string, shopToken string, keepCategoryIDs []int) (int64, error),
 	disableMissing func(provider string, shopToken string, keepGoodsKeys []string) (int64, error),
 	now func() time.Time,
 ) (*SyncSummary, error) {
@@ -67,25 +400,35 @@ func syncCatalogWithClient(
 		cfg.ShopName = shopName
 	}
 
-	categoryResp, err := client.ListCategories(ctx, "card")
+	categories, err := listCategoriesFromSource(ctx, client, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	keepGoodsKeys := make([]string, 0)
+	keepCategoryIDs := make([]int, 0)
 	totalSynced := 0
 	nowUnix := now().Unix()
-	for _, category := range categoryResp.Data {
-		if len(cfg.AllowedCategoryIDs) > 0 {
-			if _, ok := cfg.AllowedCategoryIDs[category.Id]; !ok {
-				continue
-			}
+	for categoryIndex, category := range categories {
+		if err := upsertCategory(&model.ExternalShopCategory{
+			Provider:   ProviderLDXP,
+			ShopToken:  cfg.ShopToken,
+			CategoryId: category.Id,
+			Name:       category.Name,
+			Image:      category.Image,
+			GoodsCount: category.GoodsCount,
+			SortIndex:  categoryIndex,
+			Enabled:    true,
+			SyncedAt:   nowUnix,
+		}); err != nil {
+			return nil, err
 		}
+		keepCategoryIDs = append(keepCategoryIDs, category.Id)
 		items, err := listAllCategoryGoods(ctx, client, category.Id, pageSize)
 		if err != nil {
 			return nil, err
 		}
-		for _, item := range items {
+		for goodsIndex, item := range items {
 			if len(cfg.AllowedGoodsKeys) > 0 {
 				if _, ok := cfg.AllowedGoodsKeys[item.GoodsKey]; !ok {
 					continue
@@ -105,6 +448,8 @@ func syncCatalogWithClient(
 				Image:               item.Image,
 				CategoryId:          item.Category.Id,
 				CategoryName:        item.Category.Name,
+				CategorySort:        categoryIndex,
+				SortIndex:           goodsIndex,
 				Price:               item.Price,
 				MarketPrice:         item.MarketPrice,
 				CouponStatus:        item.CouponStatus,
@@ -124,13 +469,16 @@ func syncCatalogWithClient(
 			totalSynced++
 		}
 	}
+	if _, err := disableMissingCategories(ProviderLDXP, cfg.ShopToken, keepCategoryIDs); err != nil {
+		return nil, err
+	}
 	disabledCount, err := disableMissing(ProviderLDXP, cfg.ShopToken, keepGoodsKeys)
 	if err != nil {
 		return nil, err
 	}
 	return &SyncSummary{
 		ShopName:      cfg.ShopName,
-		Categories:    len(categoryResp.Data),
+		Categories:    len(categories),
 		GoodsSynced:   totalSynced,
 		GoodsDisabled: int(disabledCount),
 	}, nil
@@ -157,6 +505,9 @@ func listAllCategoryGoods(ctx context.Context, client catalogClient, categoryID 
 func CreateLocalOrder(ctx context.Context, userId int, goodsKey string, quantity int, contact string, channelID int) (*model.ExternalShopOrder, error) {
 	client, cfg, err := NewConfiguredClient()
 	if err != nil {
+		return nil, err
+	}
+	if err := EnsureCatalogFresh(ctx); err != nil {
 		return nil, err
 	}
 	good, err := model.GetExternalShopGoodByGoodsKey(ProviderLDXP, cfg.ShopToken, goodsKey)
@@ -275,8 +626,8 @@ func validatePurchasableGood(good *model.ExternalShopGood, quantity int) error {
 	if good.StockCount <= 0 {
 		return errors.New("goods is out of stock")
 	}
-	if quantity > 0 && good.LimitCount > 0 && quantity > good.LimitCount {
-		return fmt.Errorf("quantity exceeds limit %d", good.LimitCount)
+	if quantity > int(good.StockCount) {
+		return fmt.Errorf("quantity exceeds stock %d", good.StockCount)
 	}
 	return nil
 }

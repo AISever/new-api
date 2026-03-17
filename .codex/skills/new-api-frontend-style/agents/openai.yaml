@@ -1,0 +1,4 @@
+interface:
+  display_name: "new-api Frontend Style"
+  short_description: "Keep new-api pages visually consistent"
+  default_prompt: "Use $new-api-frontend-style to match the established React + Semi UI page style in this new-api repository."

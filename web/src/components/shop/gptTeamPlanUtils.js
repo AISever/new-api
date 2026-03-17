@@ -1,7 +1,20 @@
 import { getMaskedExternalShopContact } from './shopUtils.js';
 
-export function normalizeShopTabKey(value, gptTeamEnabled = false) {
+export function normalizeShopTabKey(
+  value,
+  externalShopReady = false,
+  gptTeamEnabled = false,
+) {
   if (value === 'gpt-team' && gptTeamEnabled) {
+    return 'gpt-team';
+  }
+  if (value === 'goods' && externalShopReady) {
+    return 'goods';
+  }
+  if (externalShopReady) {
+    return 'goods';
+  }
+  if (gptTeamEnabled) {
     return 'gpt-team';
   }
   return 'goods';
@@ -37,9 +50,11 @@ export function formatGPTTeamPlanDateTime(value) {
 }
 
 export function formatGPTTeamTeamStatus(value) {
-  const status = String(value || '').trim().toLowerCase();
+  const status = String(value || '')
+    .trim()
+    .toLowerCase();
   if (!status) {
-    return '-';
+    return '未知';
   }
   const labels = {
     active: '正常',
@@ -49,4 +64,30 @@ export function formatGPTTeamTeamStatus(value) {
     banned: '已封禁',
   };
   return labels[status] || value;
+}
+
+export function formatGPTTeamWarrantyExpiry(value, hasWarranty, warrantyValid) {
+  const raw = String(value || '').trim();
+  if (!hasWarranty) {
+    return '-';
+  }
+  if (!raw) {
+    return warrantyValid ? '待激活' : '-';
+  }
+  return formatGPTTeamPlanDateTime(raw);
+}
+
+export function getGPTTeamWarrantyRecordTeamName(value) {
+  const raw = String(value || '').trim();
+  return raw || '未知 Team';
+}
+
+export function getGPTTeamWarrantyRecordExpiry(record) {
+  if (!record) {
+    return '-';
+  }
+  const raw = record.has_warranty
+    ? String(record.user_expires_at || record.warranty_expires_at || '').trim()
+    : String(record.team_expires_at || '').trim();
+  return formatGPTTeamPlanDateTime(raw);
 }

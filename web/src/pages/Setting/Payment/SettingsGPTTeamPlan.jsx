@@ -1,6 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Form, Input, Space, Switch, Typography } from '@douyinfe/semi-ui';
-import { API, removeTrailingSlash, showError, showSuccess } from '../../../helpers';
+import {
+  Button,
+  Form,
+  Input,
+  Space,
+  Switch,
+  Typography,
+} from '@douyinfe/semi-ui';
+import {
+  API,
+  removeTrailingSlash,
+  showError,
+  showSuccess,
+} from '../../../helpers';
 import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
@@ -9,8 +21,8 @@ export default function SettingsGPTTeamPlan(props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [inputs, setInputs] = useState({
-    enabled: false,
-    base_url: 'http://gptteamplan.tech',
+    gptteamplan_enabled: false,
+    gptteamplan_base_url: 'http://gptteamplan.tech',
   });
   const formApiRef = useRef(null);
 
@@ -19,8 +31,9 @@ export default function SettingsGPTTeamPlan(props) {
       return;
     }
     const nextValues = {
-      enabled: props.options['gptteamplan.enabled'] === 'true',
-      base_url: props.options['gptteamplan.base_url'] || 'http://gptteamplan.tech',
+      gptteamplan_enabled: props.options['gptteamplan.enabled'] === 'true',
+      gptteamplan_base_url:
+        props.options['gptteamplan.base_url'] || 'http://gptteamplan.tech',
     };
     setInputs(nextValues);
     formApiRef.current.setValues(nextValues);
@@ -32,11 +45,13 @@ export default function SettingsGPTTeamPlan(props) {
       const options = [
         {
           key: 'gptteamplan.enabled',
-          value: inputs.enabled ? 'true' : 'false',
+          value: inputs.gptteamplan_enabled ? 'true' : 'false',
         },
         {
           key: 'gptteamplan.base_url',
-          value: removeTrailingSlash(inputs.base_url || 'http://gptteamplan.tech'),
+          value: removeTrailingSlash(
+            inputs.gptteamplan_base_url || 'http://gptteamplan.tech',
+          ),
         },
       ];
       const results = await Promise.all(
@@ -65,7 +80,9 @@ export default function SettingsGPTTeamPlan(props) {
     <Space vertical align='start' style={{ width: '100%' }}>
       <Text strong>{t('GPT Team 兑换')}</Text>
       <Text type='tertiary'>
-        {t('控制商品商城内 GPT Team 兑换页签的显示，并配置后端代调的基础地址。')}
+        {t(
+          '控制商品商城内 GPT Team 兑换页签的显示，并配置后端代调的基础地址。',
+        )}
       </Text>
       <Form
         getFormApi={(api) => {
@@ -76,18 +93,23 @@ export default function SettingsGPTTeamPlan(props) {
         style={{ width: '100%' }}
       >
         <Form.Switch
-          field='enabled'
+          field='gptteamplan_enabled'
           label={t('启用 GPT Team 兑换')}
           checkedText={t('开启')}
           uncheckedText={t('关闭')}
         />
         <Form.Input
-          field='base_url'
+          field='gptteamplan_base_url'
           label={t('基础地址')}
           placeholder='http://gptteamplan.tech'
         />
       </Form>
-      <Button onClick={handleSubmit} loading={loading} theme='solid' type='primary'>
+      <Button
+        onClick={handleSubmit}
+        loading={loading}
+        theme='solid'
+        type='primary'
+      >
         {t('保存设置')}
       </Button>
     </Space>

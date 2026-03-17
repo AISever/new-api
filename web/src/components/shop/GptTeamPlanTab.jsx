@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Banner,
   Button,
   Card,
   Empty,
@@ -14,24 +13,29 @@ import { useTranslation } from 'react-i18next';
 import {
   formatGPTTeamPlanDateTime,
   formatGPTTeamTeamStatus,
+  formatGPTTeamWarrantyExpiry,
+  getGPTTeamWarrantyRecordExpiry,
+  getGPTTeamWarrantyRecordTeamName,
   getMaskedGPTTeamCode,
   getMaskedGPTTeamEmail,
 } from './gptTeamPlanUtils';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 function DetailRow({ label, value }) {
+  const displayValue =
+    value === null || value === undefined || value === '' ? '-' : value;
   return (
     <div className='flex flex-col gap-1 md:flex-row md:items-start'>
       <Text type='tertiary' style={{ minWidth: 120 }}>
         {label}
       </Text>
-      <Text>{value || '-'}</Text>
+      <Text>{displayValue}</Text>
     </div>
   );
 }
 
-export default function GptTeamPlanTab() {
+export default function GptTeamPlanTab({ remainingSeats: initialRemainingSeats = null }) {
   const { t } = useTranslation();
   const [redeemEmail, setRedeemEmail] = useState('');
   const [redeemCode, setRedeemCode] = useState('');
@@ -106,7 +110,7 @@ export default function GptTeamPlanTab() {
       {
         title: t('Team'),
         dataIndex: 'team_name',
-        render: (value) => value || '-',
+        render: (value) => getGPTTeamWarrantyRecordTeamName(value),
       },
       {
         title: t('状态'),
@@ -114,14 +118,14 @@ export default function GptTeamPlanTab() {
         render: (value) => formatGPTTeamTeamStatus(value),
       },
       {
-        title: t('用户到期时间'),
-        dataIndex: 'user_expires_at',
+        title: t('兑换时间'),
+        dataIndex: 'used_at',
         render: (value) => formatGPTTeamPlanDateTime(value),
       },
       {
-        title: t('团队到期时间'),
+        title: t('到期时间'),
         dataIndex: 'team_expires_at',
-        render: (value) => formatGPTTeamPlanDateTime(value),
+        render: (_, record) => getGPTTeamWarrantyRecordExpiry(record),
       },
     ],
     [revealedWarrantyCodes, revealedWarrantyEmails, t],
@@ -134,18 +138,28 @@ export default function GptTeamPlanTab() {
     }
     setRedeemLoading(true);
     try {
-      const res = await API.post('/api/gptteamplan/redeem', {
-        email: redeemEmail.trim(),
-        code: redeemCode.trim(),
-      });
+      const res = await API.post(
+        '/api/gptteamplan/redeem',
+        {
+          email: redeemEmail.trim(),
+          code: redeemCode.trim(),
+        },
+        { skipErrorHandler: true },
+      );
       if (!res.data.success) {
-        throw new Error(res.data.message || t('兑换失败'));
+        setRedeemResult({
+          error: true,
+          message: res.data.message || t('兑换失败'),
+        });
+        return;
       }
       setRedeemResult(res.data.data || null);
       showSuccess(t('兑换成功'));
     } catch (error) {
-      showError(error.message || t('兑换失败'));
-      setRedeemResult(null);
+      setRedeemResult({
+        error: true,
+        message: error.message || t('兑换失败'),
+      });
     } finally {
       setRedeemLoading(false);
     }
@@ -158,41 +172,61 @@ export default function GptTeamPlanTab() {
     }
     setWarrantyLoading(true);
     try {
-      const res = await API.post('/api/gptteamplan/warranty/check', {
-        code: warrantyCode.trim(),
-      });
+      const res = await API.post(
+        '/api/gptteamplan/warranty/check',
+        {
+          code: warrantyCode.trim(),
+        },
+        { skipErrorHandler: true },
+      );
       if (!res.data.success) {
-        throw new Error(res.data.message || t('质保查询失败'));
+        setWarrantyResult({
+          error: true,
+          message: res.data.message || t('质保查询失败'),
+        });
+        setShowOriginalCode(false);
+        return;
       }
       setWarrantyResult(res.data.data || null);
       setShowOriginalCode(false);
     } catch (error) {
-      showError(error.message || t('质保查询失败'));
-      setWarrantyResult(null);
+      setWarrantyResult({
+        error: true,
+        message: error.message || t('质保查询失败'),
+      });
+      setShowOriginalCode(false);
     } finally {
       setWarrantyLoading(false);
     }
   };
 
+  const currentRemainingSeats =
+    redeemResult?.error || redeemResult?.remaining_seats === undefined
+      ? initialRemainingSeats
+      : redeemResult.remaining_seats;
+
+  const remainingSeatsDisplay =
+    currentRemainingSeats === null ||
+    currentRemainingSeats === undefined ||
+    Number.isNaN(Number(currentRemainingSeats))
+      ? '-'
+      : String(currentRemainingSeats);
+
   return (
     <div className='space-y-6'>
-      <div>
-        <Title heading={4}>{t('GPT Team 兑换')}</Title>
-        <Text type='tertiary'>
-          {t('在当前页面完成兑换和质保查询，无需跳转到外部站点。')}
-        </Text>
-      </div>
-
-      <Card className='!rounded-2xl shadow-sm border-0'>
-        <Banner
-          type='info'
-          description={t('兑换成功后会显示团队信息和到期信息，质保查询仅展示当前账号需要的字段。')}
-          closeIcon={null}
-        />
-      </Card>
-
       <div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
-        <Card className='!rounded-2xl shadow-sm border-0 h-full' title={t('兑换账号')}>
+        <Card
+          className='!rounded-2xl shadow-sm border-0 h-full'
+          title={
+            <div className='flex flex-wrap items-center justify-between gap-3'>
+              <span>{t('兑换账号')}</span>
+              <div className='flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm'>
+                <Text type='tertiary'>{t('剩余车位')}</Text>
+                <Text strong>{remainingSeatsDisplay}</Text>
+              </div>
+            </div>
+          }
+        >
           <Space vertical align='start' style={{ width: '100%' }}>
             <Input
               value={redeemEmail}
@@ -219,32 +253,46 @@ export default function GptTeamPlanTab() {
                 bodyStyle={{ paddingTop: 12 }}
               >
                 <Space vertical align='start' style={{ width: '100%' }}>
-                  {redeemResult.message ? (
-                    <Text strong>{redeemResult.message}</Text>
-                  ) : null}
-                  <DetailRow label={t('团队名称')} value={redeemResult.team_name} />
-                  <DetailRow
-                    label={t('订阅计划')}
-                    value={redeemResult.subscription_plan}
-                  />
-                  <DetailRow
-                    label={t('账号到期时间')}
-                    value={formatGPTTeamPlanDateTime(redeemResult.expires_at)}
-                  />
-                  <DetailRow
-                    label={t('团队到期时间')}
-                    value={formatGPTTeamPlanDateTime(redeemResult.team_expires_at)}
-                  />
-                  <DetailRow
-                    label={t('质保状态')}
-                    value={redeemResult.has_warranty ? t('已启用') : t('未启用')}
-                  />
-                  <DetailRow
-                    label={t('质保有效期')}
-                    value={formatGPTTeamPlanDateTime(
-                      redeemResult.warranty_expires_at,
-                    )}
-                  />
+                  {redeemResult.error ? (
+                    <Text strong type='danger'>{redeemResult.message}</Text>
+                  ) : (
+                    <>
+                      {redeemResult.message ? (
+                        <Text strong>{redeemResult.message}</Text>
+                      ) : null}
+                      <DetailRow label={t('团队名称')} value={redeemResult.team_name} />
+                      <DetailRow
+                        label={t('订阅计划')}
+                        value={redeemResult.subscription_plan}
+                      />
+                      <DetailRow
+                        label={t('剩余车位')}
+                        value={redeemResult.remaining_seats}
+                      />
+                      <DetailRow
+                        label={
+                          redeemResult.has_warranty
+                            ? t('质保到期时间')
+                            : t('账号到期时间')
+                        }
+                        value={formatGPTTeamPlanDateTime(redeemResult.expires_at)}
+                      />
+                      <DetailRow
+                        label={t('团队到期时间')}
+                        value={formatGPTTeamPlanDateTime(redeemResult.team_expires_at)}
+                      />
+                      <DetailRow
+                        label={t('质保状态')}
+                        value={redeemResult.has_warranty ? t('已启用') : t('未启用')}
+                      />
+                      <DetailRow
+                        label={t('质保有效期')}
+                        value={formatGPTTeamPlanDateTime(
+                          redeemResult.warranty_expires_at || redeemResult.expires_at,
+                        )}
+                      />
+                    </>
+                  )}
                 </Space>
               </Card>
             ) : null}
@@ -268,62 +316,76 @@ export default function GptTeamPlanTab() {
                 bodyStyle={{ paddingTop: 12 }}
               >
                 <Space vertical align='start' style={{ width: '100%' }}>
-                  {warrantyResult.message ? (
-                    <Text strong>{warrantyResult.message}</Text>
-                  ) : null}
-                  <DetailRow
-                    label={t('质保状态')}
-                    value={
-                      warrantyResult.has_warranty
-                        ? warrantyResult.warranty_valid
-                          ? t('有效')
-                          : t('已失效')
-                        : t('无质保')
-                    }
-                  />
-                  <DetailRow
-                    label={t('质保到期时间')}
-                    value={formatGPTTeamPlanDateTime(
-                      warrantyResult.warranty_expires_at,
-                    )}
-                  />
-                  <DetailRow
-                    label={t('是否可复用')}
-                    value={warrantyResult.can_reuse ? t('可以') : t('不可以')}
-                  />
-                  <Space>
-                    <Text type='tertiary'>{t('原始兑换码')}</Text>
-                    <Text code>
-                      {showOriginalCode
-                        ? warrantyResult.original_code || '-'
-                        : getMaskedGPTTeamCode(warrantyResult.original_code)}
-                    </Text>
-                    {warrantyResult.original_code ? (
-                      <Button
-                        size='small'
-                        theme='borderless'
-                        type='tertiary'
-                        onClick={() => setShowOriginalCode((current) => !current)}
-                      >
-                        {showOriginalCode ? t('隐藏') : t('完整显示')}
-                      </Button>
-                    ) : null}
-                  </Space>
-                  <div style={{ width: '100%' }}>
-                    <Text strong>{t('质保记录')}</Text>
-                    <Table
-                      style={{ marginTop: 12 }}
-                      rowKey={(record) =>
-                        `${record.code || 'no-code'}-${record.email || 'no-email'}`
-                      }
-                      pagination={false}
-                      columns={warrantyColumns}
-                      dataSource={warrantyResult.records || []}
-                      empty={
-                        <Empty description={t('暂无质保记录')} image={<Empty.PRESENTED_IMAGE_SIMPLE />} />
-                      }
-                    />
-                  </div>
+                  {warrantyResult.error ? (
+                    <Text strong type='danger'>{warrantyResult.message}</Text>
+                  ) : (
+                    <>
+                      {warrantyResult.message &&
+                      (!warrantyResult.records ||
+                        warrantyResult.records.length === 0) ? (
+                        <Text strong>{warrantyResult.message}</Text>
+                      ) : null}
+                      <DetailRow
+                        label={t('质保状态')}
+                        value={
+                          warrantyResult.has_warranty
+                            ? warrantyResult.warranty_valid
+                              ? t('有效')
+                              : t('已失效')
+                            : t('无质保')
+                        }
+                      />
+                      <DetailRow
+                        label={t('质保到期时间')}
+                        value={formatGPTTeamWarrantyExpiry(
+                          warrantyResult.warranty_expires_at,
+                          warrantyResult.has_warranty,
+                          warrantyResult.warranty_valid,
+                        )}
+                      />
+                      {warrantyResult.can_reuse ? (
+                        <>
+                          <DetailRow
+                            label={t('是否可复用')}
+                            value={t('可以')}
+                          />
+                          <Space>
+                            <Text type='tertiary'>{t('原始兑换码')}</Text>
+                            <Text code>
+                              {showOriginalCode
+                                ? warrantyResult.original_code || '-'
+                                : getMaskedGPTTeamCode(warrantyResult.original_code)}
+                            </Text>
+                            {warrantyResult.original_code ? (
+                              <Button
+                                size='small'
+                                theme='borderless'
+                                type='tertiary'
+                                onClick={() => setShowOriginalCode((current) => !current)}
+                              >
+                                {showOriginalCode ? t('隐藏') : t('完整显示')}
+                              </Button>
+                            ) : null}
+                          </Space>
+                        </>
+                      ) : null}
+                      <div style={{ width: '100%' }}>
+                        <Text strong>{t('质保记录')}</Text>
+                        <Table
+                          style={{ marginTop: 12 }}
+                          rowKey={(record) =>
+                            `${record.code || 'no-code'}-${record.email || 'no-email'}`
+                          }
+                          pagination={false}
+                          columns={warrantyColumns}
+                          dataSource={warrantyResult.records || []}
+                          empty={
+                            <Empty description={t('暂无质保记录')} image={<Empty.PRESENTED_IMAGE_SIMPLE />} />
+                          }
+                        />
+                      </div>
+                    </>
+                  )}
                 </Space>
               </Card>
             ) : null}

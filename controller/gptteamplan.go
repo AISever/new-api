@@ -1,7 +1,11 @@
 package controller
 
 import (
+	"context"
 	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/service"
@@ -19,11 +23,24 @@ type GPTTeamPlanWarrantyRequest struct {
 	Code string `json:"code"`
 }
 
+type gptTeamPlanStatusCache struct {
+	mu             sync.RWMutex
+	remainingSeats *int
+	fetchedAt      time.Time
+	lastAttemptAt  time.Time
+}
+
+var cachedGPTTeamPlanStatus gptTeamPlanStatusCache
+var gptTeamPlanStatusRefreshInFlight atomic.Bool
+var gptTeamPlanForceRefreshMinInterval = 15 * time.Second
+var fetchGPTTeamPlanRemainingSeats = func(ctx context.Context, baseURL string) (*int, error) {
+	client := gptteamplan.NewClient(baseURL, service.GetHttpClient())
+	return client.GetRemainingSeats(ctx)
+}
+
 func GetGPTTeamPlanStatus(c *gin.Context) {
-	cfg := gptteamplan.GetConfig()
-	common.ApiSuccess(c, gin.H{
-		"enabled": cfg.Enabled,
-	})
+	forceRefresh := c != nil && c.Query("refresh") == "1"
+	common.ApiSuccess(c, buildGPTTeamPlanStatus(getRequestContext(c), forceRefresh))
 }
 
 func RedeemGPTTeamPlan(c *gin.Context) {
@@ -81,4 +98,117 @@ func CheckGPTTeamPlanWarranty(c *gin.Context) {
 		return
 	}
 	common.ApiSuccess(c, result)
+}
+
+func buildGPTTeamPlanStatus(ctx context.Context, forceRefresh bool) gin.H {
+	cfg := gptteamplan.GetConfig()
+	status := gin.H{
+		"enabled":         cfg.Enabled,
+		"remaining_seats": nil,
+	}
+	if !cfg.IsReady() {
+		return status
+	}
+
+	if cachedRemainingSeats, ok := getCachedGPTTeamPlanRemainingSeats(); ok {
+		status["remaining_seats"] = cachedRemainingSeats
+	}
+
+	if forceRefresh && !isGPTTeamPlanForceRefreshDue() {
+		return status
+	}
+
+	if status["remaining_seats"] != nil && !forceRefresh {
+		return status
+	}
+
+	shouldFetch := true
+	if forceRefresh {
+		shouldFetch = gptTeamPlanStatusRefreshInFlight.CompareAndSwap(false, true)
+		if !shouldFetch {
+			return status
+		}
+		markGPTTeamPlanRefreshAttempt()
+		defer gptTeamPlanStatusRefreshInFlight.Store(false)
+	}
+
+	requestCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
+	defer cancel()
+
+	if remainingSeats, err := fetchGPTTeamPlanRemainingSeats(requestCtx, cfg.BaseURL); err == nil {
+		setCachedGPTTeamPlanRemainingSeats(remainingSeats)
+		status["remaining_seats"] = remainingSeats
+	}
+	return status
+}
+
+func buildGPTTeamPlanStatusSnapshot() gin.H {
+	cfg := gptteamplan.GetConfig()
+	status := gin.H{
+		"enabled":         cfg.Enabled,
+		"remaining_seats": nil,
+	}
+	if !cfg.IsReady() {
+		return status
+	}
+	if cachedRemainingSeats, ok := getCachedGPTTeamPlanRemainingSeats(); ok {
+		status["remaining_seats"] = cachedRemainingSeats
+	}
+	return status
+}
+
+func getRequestContext(c *gin.Context) context.Context {
+	if c != nil && c.Request != nil {
+		return c.Request.Context()
+	}
+	return context.Background()
+}
+
+func getCachedGPTTeamPlanRemainingSeats() (*int, bool) {
+	cachedGPTTeamPlanStatus.mu.RLock()
+	defer cachedGPTTeamPlanStatus.mu.RUnlock()
+	if cachedGPTTeamPlanStatus.remainingSeats == nil {
+		return nil, false
+	}
+	value := *cachedGPTTeamPlanStatus.remainingSeats
+	return &value, true
+}
+
+func setCachedGPTTeamPlanRemainingSeats(remainingSeats *int) {
+	cachedGPTTeamPlanStatus.mu.Lock()
+	defer cachedGPTTeamPlanStatus.mu.Unlock()
+	if remainingSeats == nil {
+		cachedGPTTeamPlanStatus.remainingSeats = nil
+		cachedGPTTeamPlanStatus.fetchedAt = time.Time{}
+		cachedGPTTeamPlanStatus.lastAttemptAt = time.Time{}
+		return
+	}
+	value := *remainingSeats
+	cachedGPTTeamPlanStatus.remainingSeats = &value
+	cachedGPTTeamPlanStatus.fetchedAt = time.Now()
+	cachedGPTTeamPlanStatus.lastAttemptAt = cachedGPTTeamPlanStatus.fetchedAt
+}
+
+func isGPTTeamPlanStatusCacheStale() bool {
+	cachedGPTTeamPlanStatus.mu.RLock()
+	defer cachedGPTTeamPlanStatus.mu.RUnlock()
+	if cachedGPTTeamPlanStatus.remainingSeats == nil || cachedGPTTeamPlanStatus.fetchedAt.IsZero() {
+		return true
+	}
+	return time.Since(cachedGPTTeamPlanStatus.fetchedAt) > time.Minute
+}
+
+func isGPTTeamPlanForceRefreshDue() bool {
+	cachedGPTTeamPlanStatus.mu.RLock()
+	defer cachedGPTTeamPlanStatus.mu.RUnlock()
+	if cachedGPTTeamPlanStatus.lastAttemptAt.IsZero() {
+		return true
+	}
+	return time.Since(cachedGPTTeamPlanStatus.lastAttemptAt) >= gptTeamPlanForceRefreshMinInterval
+}
+
+func markGPTTeamPlanRefreshAttempt() {
+	cachedGPTTeamPlanStatus.mu.Lock()
+	defer cachedGPTTeamPlanStatus.mu.Unlock()
+	cachedGPTTeamPlanStatus.lastAttemptAt = time.Now()
 }
