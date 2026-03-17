@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Button,
   Card,
   Empty,
   Input,
   Space,
-  Table,
   Typography,
 } from '@douyinfe/semi-ui';
 import { API, showError, showSuccess } from '../../helpers';
@@ -16,8 +15,6 @@ import {
   formatGPTTeamWarrantyExpiry,
   getGPTTeamWarrantyRecordExpiry,
   getGPTTeamWarrantyRecordTeamName,
-  getMaskedGPTTeamCode,
-  getMaskedGPTTeamEmail,
 } from './gptTeamPlanUtils';
 
 const { Text } = Typography;
@@ -30,7 +27,7 @@ function DetailRow({ label, value }) {
       <Text type='tertiary' style={{ minWidth: 120 }}>
         {label}
       </Text>
-      <Text>{displayValue}</Text>
+      {React.isValidElement(displayValue) ? displayValue : <Text>{displayValue}</Text>}
     </div>
   );
 }
@@ -44,92 +41,7 @@ export default function GptTeamPlanTab({ remainingSeats: initialRemainingSeats =
   const [warrantyLoading, setWarrantyLoading] = useState(false);
   const [redeemResult, setRedeemResult] = useState(null);
   const [warrantyResult, setWarrantyResult] = useState(null);
-  const [revealedWarrantyCodes, setRevealedWarrantyCodes] = useState({});
-  const [revealedWarrantyEmails, setRevealedWarrantyEmails] = useState({});
   const [showOriginalCode, setShowOriginalCode] = useState(false);
-
-  const warrantyColumns = useMemo(
-    () => [
-      {
-        title: t('兑换码'),
-        dataIndex: 'code',
-        render: (value, record) => {
-          const revealed = Boolean(revealedWarrantyCodes[record.code]);
-          return (
-            <Space>
-              <Text code>
-                {revealed ? value || '-' : getMaskedGPTTeamCode(value)}
-              </Text>
-              {value ? (
-                <Button
-                  size='small'
-                  theme='borderless'
-                  type='tertiary'
-                  onClick={() =>
-                    setRevealedWarrantyCodes((current) => ({
-                      ...current,
-                      [record.code]: !revealed,
-                    }))
-                  }
-                >
-                  {revealed ? t('隐藏') : t('完整显示')}
-                </Button>
-              ) : null}
-            </Space>
-          );
-        },
-      },
-      {
-        title: t('邮箱'),
-        dataIndex: 'email',
-        render: (value, record) => {
-          const key = `${record.code || ''}:${record.email || ''}`;
-          const revealed = Boolean(revealedWarrantyEmails[key]);
-          return (
-            <Space>
-              <Text>{revealed ? value || '-' : getMaskedGPTTeamEmail(value)}</Text>
-              {value ? (
-                <Button
-                  size='small'
-                  theme='borderless'
-                  type='tertiary'
-                  onClick={() =>
-                    setRevealedWarrantyEmails((current) => ({
-                      ...current,
-                      [key]: !revealed,
-                    }))
-                  }
-                >
-                  {revealed ? t('隐藏') : t('完整显示')}
-                </Button>
-              ) : null}
-            </Space>
-          );
-        },
-      },
-      {
-        title: t('Team'),
-        dataIndex: 'team_name',
-        render: (value) => getGPTTeamWarrantyRecordTeamName(value),
-      },
-      {
-        title: t('状态'),
-        dataIndex: 'team_status',
-        render: (value) => formatGPTTeamTeamStatus(value),
-      },
-      {
-        title: t('兑换时间'),
-        dataIndex: 'used_at',
-        render: (value) => formatGPTTeamPlanDateTime(value),
-      },
-      {
-        title: t('到期时间'),
-        dataIndex: 'team_expires_at',
-        render: (_, record) => getGPTTeamWarrantyRecordExpiry(record),
-      },
-    ],
-    [revealedWarrantyCodes, revealedWarrantyEmails, t],
-  );
 
   const redeem = async () => {
     if (!redeemEmail.trim() || !redeemCode.trim()) {
@@ -371,18 +283,76 @@ export default function GptTeamPlanTab({ remainingSeats: initialRemainingSeats =
                       ) : null}
                       <div style={{ width: '100%' }}>
                         <Text strong>{t('质保记录')}</Text>
-                        <Table
-                          style={{ marginTop: 12 }}
-                          rowKey={(record) =>
-                            `${record.code || 'no-code'}-${record.email || 'no-email'}`
-                          }
-                          pagination={false}
-                          columns={warrantyColumns}
-                          dataSource={warrantyResult.records || []}
-                          empty={
-                            <Empty description={t('暂无质保记录')} image={<Empty.PRESENTED_IMAGE_SIMPLE />} />
-                          }
-                        />
+                        {warrantyResult.records && warrantyResult.records.length > 0 ? (
+                          <div className='mt-3 space-y-3'>
+                            {warrantyResult.records.map((record, index) => (
+                              <div
+                                key={`${record.code || 'no-code'}-${record.email || 'no-email'}-${index}`}
+                                className='rounded-xl border border-[var(--semi-color-border)] bg-[var(--semi-color-fill-0)] p-4'
+                              >
+                                {warrantyResult.records.length > 1 ? (
+                                  <Text
+                                    strong
+                                    type='tertiary'
+                                    style={{ display: 'block', marginBottom: 12 }}
+                                  >
+                                    {`${t('记录')} ${index + 1}`}
+                                  </Text>
+                                ) : null}
+                                <div className='space-y-3'>
+                                  <DetailRow
+                                    label={t('兑换码')}
+                                    value={
+                                      <Text
+                                        code
+                                        style={{
+                                          wordBreak: 'break-all',
+                                          whiteSpace: 'normal',
+                                        }}
+                                      >
+                                        {record.code || '-'}
+                                      </Text>
+                                    }
+                                  />
+                                  <DetailRow
+                                    label={t('邮箱')}
+                                    value={
+                                      <Text
+                                        style={{
+                                          wordBreak: 'break-all',
+                                          whiteSpace: 'normal',
+                                        }}
+                                      >
+                                        {record.email || '-'}
+                                      </Text>
+                                    }
+                                  />
+                                  <DetailRow
+                                    label={t('Team')}
+                                    value={getGPTTeamWarrantyRecordTeamName(record.team_name)}
+                                  />
+                                  <DetailRow
+                                    label={t('状态')}
+                                    value={formatGPTTeamTeamStatus(record.team_status)}
+                                  />
+                                  <DetailRow
+                                    label={t('兑换时间')}
+                                    value={formatGPTTeamPlanDateTime(record.used_at)}
+                                  />
+                                  <DetailRow
+                                    label={t('到期时间')}
+                                    value={getGPTTeamWarrantyRecordExpiry(record)}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <Empty
+                            description={t('暂无质保记录')}
+                            image={<Empty.PRESENTED_IMAGE_SIMPLE />}
+                          />
+                        )}
                       </div>
                     </>
                   )}

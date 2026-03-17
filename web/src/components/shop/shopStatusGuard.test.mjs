@@ -91,3 +91,21 @@ test('shop page renders a non-error empty state when the external shop is unavai
     true,
   );
 });
+
+test('shop page exposes a tab-level refresh action in the tab header', () => {
+  assert.equal(source.includes('tabBarExtraContent='), true);
+  assert.equal(source.includes("icon={<IconRefresh />}"), true);
+  assert.equal(source.includes("{t('刷新')}"), true);
+  assert.equal(source.includes('loading={tabRefreshing}'), true);
+});
+
+test('shop page refresh action reloads the active tab data instead of hard refreshing the page', () => {
+  assert.equal(source.includes('const refreshActiveTab = async () => {'), true);
+  assert.equal(source.includes("if (activeTab === 'goods') {"), true);
+  assert.equal(source.includes("if (activeTab === 'gpt-team') {"), true);
+  assert.equal(source.includes('loadGoods({ refresh: true })'), true);
+  assert.equal(source.includes('loadGoodsCategories({ refresh: true })'), true);
+  assert.equal(source.includes('loadPaymentChannels({ refresh: true })'), true);
+  assert.equal(source.includes('loadOrders({'), true);
+  assert.equal(source.includes("API.get('/api/gptteamplan/status?refresh=1'"), true);
+});

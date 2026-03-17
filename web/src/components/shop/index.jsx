@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { IconSearch } from '@douyinfe/semi-icons';
+import { IconRefresh, IconSearch } from '@douyinfe/semi-icons';
 import {
   Button,
   Card,
@@ -111,6 +111,7 @@ export default function Shop() {
   const [orderPage, setOrderPage] = useState(1);
   const [orderPageSize, setOrderPageSize] = useState(10);
   const [orderSort, setOrderSort] = useState('created_at:desc');
+  const [tabRefreshing, setTabRefreshing] = useState(false);
 
   const loadGoods = async (options = {}) => {
     const { refresh = false, silent = false } = options;
@@ -547,6 +548,63 @@ export default function Shop() {
       ...current,
       [localTradeNo]: !current[localTradeNo],
     }));
+  };
+
+  const refreshActiveTab = async () => {
+    if (tabRefreshing) {
+      return;
+    }
+    setTabRefreshing(true);
+    try {
+      if (activeTab === 'goods') {
+        const nextShopStatus = await loadShopStatus();
+        if (!nextShopStatus.externalShopReady) {
+          setGoods([]);
+          setGoodsCategories([]);
+          setPaymentChannels([]);
+          setOrders([]);
+          setOrderTotal(0);
+          showSuccess(t('商城状态已刷新'));
+          return;
+        }
+        await Promise.all([
+          loadGoods({ refresh: true }),
+          loadGoodsCategories({ refresh: true }),
+          loadPaymentChannels({ refresh: true }),
+          loadOrders({
+            page: orderPage,
+            pageSize: orderPageSize,
+            sort: orderSort,
+            refresh: true,
+          }),
+        ]);
+        showSuccess(t('商城数据已刷新'));
+        return;
+      }
+
+      if (activeTab === 'gpt-team') {
+        const res = await API.get('/api/gptteamplan/status?refresh=1', {
+          skipErrorHandler: true,
+        });
+        if (!res?.data?.success) {
+          throw new Error(res?.data?.message || t('刷新失败'));
+        }
+        const nextRemainingSeats =
+          res.data.data?.remaining_seats === null ||
+          res.data.data?.remaining_seats === undefined
+            ? null
+            : Number(res.data.data.remaining_seats);
+        setShopStatus((current) => ({
+          ...current,
+          gptTeamRemainingSeats: nextRemainingSeats,
+        }));
+        showSuccess(t('GPT Team 数据已刷新'));
+      }
+    } catch (error) {
+      showError(error.message || t('刷新失败'));
+    } finally {
+      setTabRefreshing(false);
+    }
   };
 
   const goodsCategoryCards = useMemo(
@@ -1348,6 +1406,17 @@ export default function Shop() {
       <Tabs
         type='card'
         activeKey={activeTab}
+        tabBarExtraContent={
+          <Button
+            icon={<IconRefresh />}
+            loading={tabRefreshing}
+            onClick={refreshActiveTab}
+            theme='borderless'
+            type='primary'
+          >
+            {t('刷新')}
+          </Button>
+        }
         onChange={(key) => {
           const nextTab = normalizeShopTabKey(
             key,

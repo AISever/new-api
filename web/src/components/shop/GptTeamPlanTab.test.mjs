@@ -65,12 +65,29 @@ test('GptTeamPlanTab renders the entry remaining seats from parent status data',
 });
 
 test('GptTeamPlanTab follows source-site warranty fallback rendering', () => {
-  assert.equal(source.includes('getGPTTeamWarrantyRecordTeamName(value)'), true);
-  assert.equal(source.includes("title: t('兑换时间')"), true);
+  assert.equal(source.includes('getGPTTeamWarrantyRecordTeamName(record.team_name)'), true);
   assert.equal(source.includes('getGPTTeamWarrantyRecordExpiry(record)'), true);
   assert.equal(source.includes('formatGPTTeamWarrantyExpiry('), true);
   assert.equal(
     source.includes('warrantyResult.records.length === 0'),
     true,
   );
+});
+
+test('GptTeamPlanTab shows warranty record code and email directly without reveal toggles', () => {
+  assert.equal(source.includes('getMaskedGPTTeamCode(value)'), false);
+  assert.equal(source.includes('getMaskedGPTTeamEmail(value)'), false);
+  assert.equal(source.includes('revealedWarrantyCodes'), false);
+  assert.equal(source.includes('revealedWarrantyEmails'), false);
+});
+
+test('GptTeamPlanTab renders warranty records as full detail blocks instead of a table row', () => {
+  assert.equal(source.includes('import {\n  Button,\n  Card,\n  Empty,\n  Input,\n  Space,\n  Table,'), false);
+  assert.equal(source.includes('warrantyResult.records.map((record, index) => ('), true);
+  assert.equal(source.includes("label={t('兑换码')}"), true);
+  assert.equal(source.includes("label={t('邮箱')}"), true);
+  assert.equal(source.includes("label={t('兑换时间')}"), true);
+  assert.equal(source.includes("label={t('到期时间')}"), true);
+  assert.equal(source.includes("className='space-y-3'"), true);
+  assert.equal(source.includes("className='grid grid-cols-1 gap-3 lg:grid-cols-2'"), false);
 });
