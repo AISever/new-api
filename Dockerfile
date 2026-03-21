@@ -2,7 +2,7 @@ FROM node:22-alpine AS builder
 
 WORKDIR /build
 COPY web/package.json .
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY ./web .
 COPY ./VERSION .
 RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) npm run build
