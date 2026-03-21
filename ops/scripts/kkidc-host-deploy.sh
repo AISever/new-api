@@ -654,9 +654,9 @@ EOF
 main() {
   parse_args "$@"
   load_host_config
-  resolve_target_settings
 
   if [ "$ACTION" = "stop" ]; then
+    resolve_target_settings
     if [ "$DRY_RUN" = "true" ]; then
       print_dry_run
       exit 0
@@ -669,6 +669,7 @@ main() {
 
   load_app_env
   resolve_git_version
+  resolve_target_settings
   stage_clean_repo
   resolve_build_strategy
   validate_requested_operation
