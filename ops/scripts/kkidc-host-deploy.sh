@@ -351,6 +351,8 @@ validate_requested_operation() {
 remote_cmd() {
   sshpass -p "$REMOTE_PASSWORD" ssh \
     -o StrictHostKeyChecking=no \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=10 \
     -o PreferredAuthentications=password \
     -o PubkeyAuthentication=no \
     "${REMOTE_USER}@${REMOTE_HOST}" "$@"
@@ -359,6 +361,8 @@ remote_cmd() {
 remote_bash() {
   sshpass -p "$REMOTE_PASSWORD" ssh \
     -o StrictHostKeyChecking=no \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=10 \
     -o PreferredAuthentications=password \
     -o PubkeyAuthentication=no \
     "${REMOTE_USER}@${REMOTE_HOST}" 'bash -s'
@@ -367,6 +371,8 @@ remote_bash() {
 legacy_cmd() {
   sshpass -p "$LEGACY_BUILD_PASSWORD" ssh \
     -o StrictHostKeyChecking=no \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=10 \
     -o PreferredAuthentications=password \
     -o PubkeyAuthentication=no \
     "${LEGACY_BUILD_USER}@${LEGACY_BUILD_HOST}" "$@"
@@ -380,6 +386,8 @@ sync_stage_to_host() {
 
   COPYFILE_DISABLE=1 tar -C "$STAGE_DIR" -cf - . | sshpass -p "$target_password" ssh \
     -o StrictHostKeyChecking=no \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=10 \
     -o PreferredAuthentications=password \
     -o PubkeyAuthentication=no \
     "${target_user}@${target_host}" "rm -rf '$target_dir' && mkdir -p '$target_dir' && tar -xf - -C '$target_dir'"
@@ -391,6 +399,8 @@ copy_file_to_remote() {
 
   sshpass -p "$REMOTE_PASSWORD" scp \
     -o StrictHostKeyChecking=no \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=10 \
     -o PreferredAuthentications=password \
     -o PubkeyAuthentication=no \
     "$source_file" "${REMOTE_USER}@${REMOTE_HOST}:$target_file"
