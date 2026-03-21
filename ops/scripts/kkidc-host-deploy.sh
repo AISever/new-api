@@ -294,7 +294,7 @@ stage_clean_repo() {
   [ -f "$STAGE_DIR/Dockerfile" ] || die "missing Dockerfile in staged source"
   cp "$STAGE_DIR/Dockerfile" "$STAGE_DIR/Dockerfile.deploy"
   sed -i.bak "s|RUN go mod download|RUN go env -w GOPROXY=https://goproxy.cn,direct \\&\\& go mod download|" "$STAGE_DIR/Dockerfile.deploy"
-  sed -i.bak "s|RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=\$(cat VERSION) bun run build|RUN DISABLE_ESLINT_PLUGIN='true' NODE_OPTIONS='${FRONTEND_BUILD_NODE_OPTIONS}' VITE_REACT_APP_VERSION=\$(cat VERSION) bun run build|" "$STAGE_DIR/Dockerfile.deploy"
+  sed -i.bak "s|RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=\$(cat VERSION) npm run build|RUN DISABLE_ESLINT_PLUGIN='true' NODE_OPTIONS='${FRONTEND_BUILD_NODE_OPTIONS}' VITE_REACT_APP_VERSION=\$(cat VERSION) npm run build|" "$STAGE_DIR/Dockerfile.deploy"
   rm -f "$STAGE_DIR/Dockerfile.deploy.bak"
 }
 
