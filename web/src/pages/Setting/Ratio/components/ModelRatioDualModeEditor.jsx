@@ -88,6 +88,8 @@ export default function ModelRatioDualModeEditor(props) {
   const {
     cards,
     loading,
+    vendorCatalog,
+    vendorCatalogLoading,
     exposeRatioEnabled,
     setExposeRatioEnabled,
     setCardMode,
@@ -113,6 +115,8 @@ export default function ModelRatioDualModeEditor(props) {
           description={t(config.description)}
           valuePlaceholder={config.valuePlaceholder}
           card={cards[config.key]}
+          vendorCatalog={vendorCatalog}
+          vendorCatalogLoading={vendorCatalogLoading}
           onModeChange={(mode) => setCardMode(config.key, mode)}
           onJsonChange={(value) => setCardJson(config.key, value)}
           onRebuildRows={() => rebuildRowsFromJson(config.key)}
