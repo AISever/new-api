@@ -21,6 +21,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { API, showError, showSuccess, showWarning } from '../../../../helpers';
 import { getSubmitBlockingError } from '../utils/editorErrorHelpers';
 import { parseSimpleMapOption, stringifySimpleMapOption } from '../utils/optionTransformers';
+import {
+  createEmptyVendorCatalog,
+  createVendorCatalog,
+} from '../utils/vendorCatalog';
 
 const createRowIdFactory = () => {
   let currentId = 0;
@@ -108,6 +112,8 @@ export default function useModelRatioOptionEditorState({ options, refresh, t }) 
   const createIdRef = useRef(createRowIdFactory());
   const [loading, setLoading] = useState(false);
   const [baseline, setBaseline] = useState({});
+  const [vendorCatalog, setVendorCatalog] = useState(createEmptyVendorCatalog);
+  const [vendorCatalogLoading, setVendorCatalogLoading] = useState(false);
   const [cards, setCards] = useState(
     OPTION_KEYS.reduce((accumulator, key) => {
       accumulator[key] = createEmptyCardState();
@@ -138,6 +144,68 @@ export default function useModelRatioOptionEditorState({ options, refresh, t }) 
       }, {}),
     );
   }, [options]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadVendorCatalog = async () => {
+      setVendorCatalogLoading(true);
+      try {
+        const pricingResponse = await API.get('/api/pricing');
+        const payload = pricingResponse?.data || {};
+        const models = Array.isArray(payload.data) ? payload.data : [];
+        const vendors = Array.isArray(payload.vendors) ? payload.vendors : [];
+
+        if (!active) {
+          return;
+        }
+
+        setVendorCatalog(createVendorCatalog({ models, vendors }));
+      } catch (_) {
+        try {
+          const [modelsResponse, vendorsResponse] = await Promise.all([
+            API.get('/api/models/?page_size=1000'),
+            API.get('/api/vendors/?page_size=1000'),
+          ]);
+
+          if (!active) {
+            return;
+          }
+
+          const modelsPayload = modelsResponse?.data?.data;
+          const vendorsPayload = vendorsResponse?.data?.data;
+          const models = Array.isArray(modelsPayload?.items)
+            ? modelsPayload.items
+            : Array.isArray(modelsPayload)
+              ? modelsPayload
+              : [];
+          const vendors = Array.isArray(vendorsPayload?.items)
+            ? vendorsPayload.items
+            : Array.isArray(vendorsPayload)
+              ? vendorsPayload
+              : [];
+
+          setVendorCatalog(createVendorCatalog({ models, vendors }));
+        } catch (_) {
+          if (!active) {
+            return;
+          }
+
+          setVendorCatalog(createEmptyVendorCatalog());
+        }
+      } finally {
+        if (active) {
+          setVendorCatalogLoading(false);
+        }
+      }
+    };
+
+    loadVendorCatalog();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const updateCard = (cardKey, updater) => {
     setCards((previous) => ({
@@ -289,6 +357,8 @@ export default function useModelRatioOptionEditorState({ options, refresh, t }) 
   return {
     cards,
     loading,
+    vendorCatalog,
+    vendorCatalogLoading,
     exposeRatioEnabled,
     setExposeRatioEnabled,
     setCardMode,

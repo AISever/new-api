@@ -17,17 +17,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useMemo, useState } from 'react';
-import { Button, Input, TextArea } from '@douyinfe/semi-ui';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Input, Select, TextArea } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 import OptionModeCard from './OptionModeCard';
 import SimpleMapTableEditor from './SimpleMapTableEditor';
+import {
+  ALL_VENDOR_FILTER,
+  UNKNOWN_VENDOR_FILTER,
+  buildVendorFilterOptions,
+  resolveModelVendor,
+} from '../utils/vendorCatalog';
 
 export default function ModelRatioOptionCard({
   title,
   description,
   card,
   valuePlaceholder,
+  vendorCatalog,
+  vendorCatalogLoading,
   onModeChange,
   onJsonChange,
   onRebuildRows,
@@ -37,14 +45,34 @@ export default function ModelRatioOptionCard({
 }) {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
+  const [vendorFilter, setVendorFilter] = useState(ALL_VENDOR_FILTER);
+
+  const vendorOptions = useMemo(
+    () => buildVendorFilterOptions(card.rows, vendorCatalog, t),
+    [card.rows, t, vendorCatalog],
+  );
+
+  useEffect(() => {
+    if (!vendorOptions.some((option) => option.value === vendorFilter)) {
+      setVendorFilter(ALL_VENDOR_FILTER);
+    }
+  }, [vendorFilter, vendorOptions]);
 
   const filteredRows = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
-    if (!keyword) {
-      return card.rows;
-    }
-    return card.rows.filter((row) => row.key.toLowerCase().includes(keyword));
-  }, [card.rows, searchText]);
+    return card.rows.filter((row) => {
+      const key = String(row.key || '');
+      const resolvedVendor = resolveModelVendor(key, vendorCatalog);
+      const matchesSearch = !keyword || key.toLowerCase().includes(keyword);
+      const matchesVendor =
+        vendorFilter === ALL_VENDOR_FILTER ||
+        (vendorFilter === UNKNOWN_VENDOR_FILTER
+          ? !resolvedVendor?.name
+          : resolvedVendor?.name === vendorFilter);
+
+      return matchesSearch && matchesVendor;
+    });
+  }, [card.rows, searchText, vendorCatalog, vendorFilter]);
 
   return (
     <OptionModeCard
@@ -63,18 +91,37 @@ export default function ModelRatioOptionCard({
             valuePlaceholder={valuePlaceholder}
             onAddRow={() => {
               setSearchText('');
+              setVendorFilter(ALL_VENDOR_FILTER);
               onAddRow();
             }}
             onDeleteRow={onDeleteRow}
             onChangeRow={onChangeRow}
             toolbarExtra={
-              <Input
-                showClear
-                size='small'
-                value={searchText}
-                placeholder={t('搜索模型名称')}
-                onChange={(value) => setSearchText(value)}
-              />
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  width: '100%',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Input
+                  showClear
+                  size='small'
+                  value={searchText}
+                  placeholder={t('搜索模型名称')}
+                  onChange={(value) => setSearchText(value)}
+                  style={{ flex: '1 1 220px' }}
+                />
+                <Select
+                  size='small'
+                  value={vendorFilter}
+                  optionList={vendorOptions}
+                  loading={vendorCatalogLoading}
+                  onChange={(value) => setVendorFilter(value || ALL_VENDOR_FILTER)}
+                  style={{ width: 180 }}
+                />
+              </div>
             }
           />
         </>
