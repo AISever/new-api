@@ -71,7 +71,7 @@ export default function OperationRuleTableEditor({
               flexDirection: 'column',
               gap: 8,
               marginBottom: index === rows.length - 1 ? 0 : 8,
-              background: 'var(--semi-color-fill-0)',
+              background: 'var(--semi-color-bg-1)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>

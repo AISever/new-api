@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
-import { Button, Empty } from '@douyinfe/semi-ui';
+import { Button, Empty, Space } from '@douyinfe/semi-ui';
 import { IconPlus } from '@douyinfe/semi-icons';
 import { useIsMobile } from '../../../../hooks/common/useIsMobile';
 
@@ -46,40 +46,47 @@ export default function CompactEditorFrame({
     <div style={{ width: '100%' }}>
       <div
         style={{
-          display: 'flex',
-          alignItems: isMobile ? 'stretch' : 'center',
-          justifyContent: 'space-between',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: 8,
-          flexWrap: isMobile ? 'nowrap' : 'wrap',
+          padding: isMobile ? '0 0 8px 0' : '0 0 10px 0',
           marginBottom: 8,
         }}
       >
-        <Button
-          size='small'
-          icon={<IconPlus />}
-          onClick={onAdd}
-          style={isMobile ? { width: '100%' } : undefined}
+        <Space
+          wrap
+          align='center'
+          spacing={8}
+          style={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
+          }}
         >
-          {addLabel}
-        </Button>
-        {toolbarExtra ? (
-          <div
-            style={{
-              flex: isMobile ? '1 1 auto' : '1 1 240px',
-              minWidth: isMobile ? 0 : 220,
-              width: isMobile ? '100%' : undefined,
-            }}
+          <Button
+            size='small'
+            icon={<IconPlus />}
+            onClick={onAdd}
+            style={isMobile ? { width: '100%' } : undefined}
           >
-            {toolbarExtra}
-          </div>
-        ) : null}
+            {addLabel}
+          </Button>
+          {toolbarExtra ? (
+            <div
+              style={{
+                flex: isMobile ? '1 1 auto' : '1 1 240px',
+                minWidth: isMobile ? 0 : 220,
+                width: isMobile ? '100%' : undefined,
+              }}
+            >
+              {toolbarExtra}
+            </div>
+          ) : null}
+        </Space>
       </div>
       <div
         style={{
           border: '1px solid var(--semi-color-border)',
-          borderRadius: 12,
-          background: 'var(--semi-color-bg-1)',
+          borderRadius: 10,
+          background: 'var(--semi-color-bg-0)',
           overflow: 'hidden',
         }}
       >
@@ -90,7 +97,7 @@ export default function CompactEditorFrame({
                 style={{
                   ...headerStyle,
                   padding: '8px 12px',
-                  background: 'var(--semi-color-fill-0)',
+                  background: 'var(--semi-color-fill-1)',
                   color: 'var(--semi-color-text-2)',
                   fontSize: 12,
                   fontWeight: 600,
