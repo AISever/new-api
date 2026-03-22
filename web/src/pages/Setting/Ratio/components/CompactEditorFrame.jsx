@@ -42,6 +42,7 @@ export default function CompactEditorFrame({
 }) {
   const isMobile = useIsMobile();
   const headerStyle = createHeaderGrid(columns.map((column) => column.width).join(' '));
+  const childCount = React.Children.count(children);
 
   return (
     <div style={{ width: '100%' }}>
@@ -110,7 +111,7 @@ export default function CompactEditorFrame({
                 ))}
               </div>
             ) : null}
-            {isMobile && mobileHeader ? (
+            {isMobile && mobileHeader && childCount > 0 ? (
               <div
                 style={{
                   padding: '8px 10px',
@@ -125,7 +126,7 @@ export default function CompactEditorFrame({
               </div>
             ) : null}
             <div style={{ maxHeight, overflowY: 'auto', padding: isMobile ? 8 : 0 }}>
-              {children?.length ? (
+              {childCount > 0 ? (
                 children
               ) : (
                 <div style={{ padding: '20px 12px' }}>
