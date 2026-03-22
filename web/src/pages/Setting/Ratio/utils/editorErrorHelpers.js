@@ -17,9 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
-import ModelRatioDualModeEditor from './components/ModelRatioDualModeEditor';
-
-export default function ModelRatioSettings(props) {
-  return <ModelRatioDualModeEditor {...props} />;
-}
+export const getSubmitBlockingError = (cards) => {
+  const firstCardError = Object.values(cards).find((card) => card?.error?.trim());
+  return firstCardError?.error || '';
+};
