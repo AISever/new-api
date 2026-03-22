@@ -21,7 +21,8 @@ import React from 'react';
 import { Button, Input, Select, Typography } from '@douyinfe/semi-ui';
 import { IconDelete } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
-import { useIsMobile } from '../../../../hooks/common/useIsMobile';
+import useCompactEditorLayoutMode from '../hooks/useCompactEditorLayoutMode';
+import { shouldUseSharedInlineHeaders } from '../utils/editorLayout';
 import CompactEditorFrame from './CompactEditorFrame';
 
 const { Text } = Typography;
@@ -33,7 +34,9 @@ export default function OperationRuleTableEditor({
   onChangeRow,
 }) {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const layoutMode = useCompactEditorLayoutMode();
+  const isMobile = layoutMode !== 'desktop';
+  const useSharedHeader = shouldUseSharedInlineHeaders(layoutMode);
   const columns = [
     { key: 'group', label: t('用户分组'), width: 'minmax(120px, 1fr)' },
     { key: 'action', label: t('操作类型'), width: '120px' },
@@ -58,6 +61,25 @@ export default function OperationRuleTableEditor({
       emptyText={t('暂无数据')}
       minWidth={760}
       maxHeight={300}
+      mobileHeader={
+        useSharedHeader ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                'minmax(0, 1fr) minmax(110px, 0.9fr) minmax(0, 1fr) minmax(0, 1fr) 28px',
+              gap: 8,
+              alignItems: 'center',
+            }}
+          >
+            <div>{t('用户分组')}</div>
+            <div>{t('操作类型')}</div>
+            <div>{t('目标分组')}</div>
+            <div>{t('描述')}</div>
+            <span />
+          </div>
+        ) : null
+      }
     >
       {rows.map((record, index) => (
         isMobile ? (
@@ -66,66 +88,116 @@ export default function OperationRuleTableEditor({
             style={{
               border: '1px solid var(--semi-color-border)',
               borderRadius: 10,
-              padding: 10,
+              padding: useSharedHeader ? '8px 10px' : 10,
               display: 'flex',
               flexDirection: 'column',
-              gap: 8,
+              gap: useSharedHeader ? 6 : 8,
               marginBottom: index === rows.length - 1 ? 0 : 8,
               background: 'var(--semi-color-bg-1)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              <Text type='tertiary' size='small'>
-                {t('特殊可用分组规则')}
-              </Text>
-              <Button
-                size='small'
-                type='danger'
-                theme='borderless'
-                icon={<IconDelete />}
-                onClick={() => onDeleteRow(record.id)}
-              />
-            </div>
-            <Text type='tertiary' size='small'>
-              {t('用户分组')}
-            </Text>
-            <Input
-              size='small'
-              value={record.group}
-              placeholder={t('如 vip')}
-              onChange={(value) => onChangeRow(record.id, 'group', value)}
-            />
-            <Text type='tertiary' size='small'>
-              {t('操作类型')}
-            </Text>
-            <Select
-              size='small'
-              value={record.action}
-              onChange={(value) => onChangeRow(record.id, 'action', value)}
-              optionList={[
-                { label: t('添加'), value: 'add' },
-                { label: t('移除'), value: 'remove' },
-                { label: t('直接追加'), value: 'direct' },
-              ]}
-            />
-            <Text type='tertiary' size='small'>
-              {t('目标分组')}
-            </Text>
-            <Input
-              size='small'
-              value={record.targetGroup}
-              placeholder={t('如 premium')}
-              onChange={(value) => onChangeRow(record.id, 'targetGroup', value)}
-            />
-            <Text type='tertiary' size='small'>
-              {t('描述')}
-            </Text>
-            <Input
-              size='small'
-              value={record.description}
-              placeholder={t('分组描述')}
-              onChange={(value) => onChangeRow(record.id, 'description', value)}
-            />
+            {useSharedHeader ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    'minmax(0, 1fr) minmax(110px, 0.9fr) minmax(0, 1fr) minmax(0, 1fr) 28px',
+                  columnGap: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Input
+                  size='small'
+                  value={record.group}
+                  placeholder={t('如 vip')}
+                  onChange={(value) => onChangeRow(record.id, 'group', value)}
+                />
+                <Select
+                  size='small'
+                  value={record.action}
+                  onChange={(value) => onChangeRow(record.id, 'action', value)}
+                  optionList={[
+                    { label: t('添加'), value: 'add' },
+                    { label: t('移除'), value: 'remove' },
+                    { label: t('直接追加'), value: 'direct' },
+                  ]}
+                />
+                <Input
+                  size='small'
+                  value={record.targetGroup}
+                  placeholder={t('如 premium')}
+                  onChange={(value) => onChangeRow(record.id, 'targetGroup', value)}
+                />
+                <Input
+                  size='small'
+                  value={record.description}
+                  placeholder={t('分组描述')}
+                  onChange={(value) => onChangeRow(record.id, 'description', value)}
+                />
+                <Button
+                  size='small'
+                  type='danger'
+                  theme='borderless'
+                  icon={<IconDelete />}
+                  onClick={() => onDeleteRow(record.id)}
+                />
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <Text type='tertiary' size='small'>
+                    {t('特殊可用分组规则')}
+                  </Text>
+                  <Button
+                    size='small'
+                    type='danger'
+                    theme='borderless'
+                    icon={<IconDelete />}
+                    onClick={() => onDeleteRow(record.id)}
+                  />
+                </div>
+                <Text type='tertiary' size='small'>
+                  {t('用户分组')}
+                </Text>
+                <Input
+                  size='small'
+                  value={record.group}
+                  placeholder={t('如 vip')}
+                  onChange={(value) => onChangeRow(record.id, 'group', value)}
+                />
+                <Text type='tertiary' size='small'>
+                  {t('操作类型')}
+                </Text>
+                <Select
+                  size='small'
+                  value={record.action}
+                  onChange={(value) => onChangeRow(record.id, 'action', value)}
+                  optionList={[
+                    { label: t('添加'), value: 'add' },
+                    { label: t('移除'), value: 'remove' },
+                    { label: t('直接追加'), value: 'direct' },
+                  ]}
+                />
+                <Text type='tertiary' size='small'>
+                  {t('目标分组')}
+                </Text>
+                <Input
+                  size='small'
+                  value={record.targetGroup}
+                  placeholder={t('如 premium')}
+                  onChange={(value) => onChangeRow(record.id, 'targetGroup', value)}
+                />
+                <Text type='tertiary' size='small'>
+                  {t('描述')}
+                </Text>
+                <Input
+                  size='small'
+                  value={record.description}
+                  placeholder={t('分组描述')}
+                  onChange={(value) => onChangeRow(record.id, 'description', value)}
+                />
+              </>
+            )}
           </div>
         ) : (
           <div

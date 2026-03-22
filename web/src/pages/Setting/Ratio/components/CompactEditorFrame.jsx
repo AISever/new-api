@@ -38,6 +38,7 @@ export default function CompactEditorFrame({
   toolbarExtra = null,
   minWidth = 640,
   maxHeight = 360,
+  mobileHeader = null,
 }) {
   const isMobile = useIsMobile();
   const headerStyle = createHeaderGrid(columns.map((column) => column.width).join(' '));
@@ -107,6 +108,20 @@ export default function CompactEditorFrame({
                 {columns.map((column) => (
                   <div key={column.key}>{column.label}</div>
                 ))}
+              </div>
+            ) : null}
+            {isMobile && mobileHeader ? (
+              <div
+                style={{
+                  padding: '8px 10px',
+                  background: 'var(--semi-color-fill-0)',
+                  color: 'var(--semi-color-text-2)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderBottom: '1px solid var(--semi-color-border)',
+                }}
+              >
+                {mobileHeader}
               </div>
             ) : null}
             <div style={{ maxHeight, overflowY: 'auto', padding: isMobile ? 8 : 0 }}>

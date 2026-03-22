@@ -21,7 +21,8 @@ import React from 'react';
 import { Button, Input, Space, Typography } from '@douyinfe/semi-ui';
 import { IconArrowDown, IconArrowUp, IconDelete } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
-import { useIsMobile } from '../../../../hooks/common/useIsMobile';
+import useCompactEditorLayoutMode from '../hooks/useCompactEditorLayoutMode';
+import { shouldUseSharedInlineHeaders } from '../utils/editorLayout';
 import CompactEditorFrame from './CompactEditorFrame';
 
 const { Text } = Typography;
@@ -34,7 +35,9 @@ export default function OrderedListTableEditor({
   onMoveRow,
 }) {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const layoutMode = useCompactEditorLayoutMode();
+  const isMobile = layoutMode !== 'desktop';
+  const useSharedHeader = shouldUseSharedInlineHeaders(layoutMode);
   const columns = [
     { key: 'index', label: t('顺序'), width: '56px' },
     { key: 'value', label: t('分组'), width: 'minmax(180px, 1fr)' },
@@ -57,6 +60,22 @@ export default function OrderedListTableEditor({
       emptyText={t('暂无数据')}
       minWidth={520}
       maxHeight={260}
+      mobileHeader={
+        useSharedHeader ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '56px minmax(0, 1fr) auto',
+              gap: 8,
+              alignItems: 'center',
+            }}
+          >
+            <div>{t('顺序')}</div>
+            <div>{t('分组')}</div>
+            <span />
+          </div>
+        ) : null
+      }
     >
       {rows.map((record, index) => (
         isMobile ? (
@@ -65,58 +84,102 @@ export default function OrderedListTableEditor({
             style={{
               border: '1px solid var(--semi-color-border)',
               borderRadius: 10,
-              padding: 10,
+              padding: useSharedHeader ? '8px 10px' : 10,
               display: 'flex',
               flexDirection: 'column',
-              gap: 8,
+              gap: useSharedHeader ? 6 : 8,
               marginBottom: index === rows.length - 1 ? 0 : 8,
               background: 'var(--semi-color-bg-1)',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-              }}
-            >
-              <Text type='tertiary'>
-                {t('顺序')} #{index + 1}
-              </Text>
-              <Space spacing={4}>
-                <Button
+            {useSharedHeader ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '56px minmax(0, 1fr) auto',
+                  columnGap: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text type='tertiary'>#{index + 1}</Text>
+                <Input
                   size='small'
-                  theme='borderless'
-                  icon={<IconArrowUp />}
-                  disabled={index === 0}
-                  onClick={() => onMoveRow(index, index - 1)}
+                  value={record.value}
+                  placeholder={t('如 default')}
+                  onChange={(value) => onChangeRow(record.id, 'value', value)}
                 />
-                <Button
+                <Space spacing={2}>
+                  <Button
+                    size='small'
+                    theme='borderless'
+                    icon={<IconArrowUp />}
+                    disabled={index === 0}
+                    onClick={() => onMoveRow(index, index - 1)}
+                  />
+                  <Button
+                    size='small'
+                    theme='borderless'
+                    icon={<IconArrowDown />}
+                    disabled={index === rows.length - 1}
+                    onClick={() => onMoveRow(index, index + 1)}
+                  />
+                  <Button
+                    size='small'
+                    type='danger'
+                    theme='borderless'
+                    icon={<IconDelete />}
+                    onClick={() => onDeleteRow(record.id)}
+                  />
+                </Space>
+              </div>
+            ) : (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                  }}
+                >
+                  <Text type='tertiary'>
+                    {t('顺序')} #{index + 1}
+                  </Text>
+                  <Space spacing={4}>
+                    <Button
+                      size='small'
+                      theme='borderless'
+                      icon={<IconArrowUp />}
+                      disabled={index === 0}
+                      onClick={() => onMoveRow(index, index - 1)}
+                    />
+                    <Button
+                      size='small'
+                      theme='borderless'
+                      icon={<IconArrowDown />}
+                      disabled={index === rows.length - 1}
+                      onClick={() => onMoveRow(index, index + 1)}
+                    />
+                    <Button
+                      size='small'
+                      type='danger'
+                      theme='borderless'
+                      icon={<IconDelete />}
+                      onClick={() => onDeleteRow(record.id)}
+                    />
+                  </Space>
+                </div>
+                <Text type='tertiary' size='small'>
+                  {t('分组')}
+                </Text>
+                <Input
                   size='small'
-                  theme='borderless'
-                  icon={<IconArrowDown />}
-                  disabled={index === rows.length - 1}
-                  onClick={() => onMoveRow(index, index + 1)}
+                  value={record.value}
+                  placeholder={t('如 default')}
+                  onChange={(value) => onChangeRow(record.id, 'value', value)}
                 />
-                <Button
-                  size='small'
-                  type='danger'
-                  theme='borderless'
-                  icon={<IconDelete />}
-                  onClick={() => onDeleteRow(record.id)}
-                />
-              </Space>
-            </div>
-            <Text type='tertiary' size='small'>
-              {t('分组')}
-            </Text>
-            <Input
-              size='small'
-              value={record.value}
-              placeholder={t('如 default')}
-              onChange={(value) => onChangeRow(record.id, 'value', value)}
-            />
+              </>
+            )}
           </div>
         ) : (
           <div
