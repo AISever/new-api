@@ -18,7 +18,14 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
-import { Banner, Button, Card, Typography } from '@douyinfe/semi-ui';
+import {
+  Banner,
+  Card,
+  Divider,
+  Radio,
+  RadioGroup,
+  Typography,
+} from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../../../../hooks/common/useIsMobile';
 
@@ -40,56 +47,53 @@ export default function OptionModeCard({
   return (
     <Card
       style={{ marginBottom: 12 }}
-      bodyStyle={{ padding: 12 }}
+      bodyStyle={{ padding: 0 }}
       headerStyle={{ padding: '12px 16px' }}
-      title={title}
-      headerExtraContent={
+      title={
         <div
           style={{
             display: 'flex',
-            gap: 8,
-            flexWrap: 'wrap',
-            justifyContent: isMobile ? 'flex-start' : 'flex-end',
+            flexDirection: 'column',
+            gap: 4,
           }}
         >
-          <Button
-            theme={mode === 'table' ? 'solid' : 'light'}
-            type='primary'
-            size='small'
-            style={isMobile ? { flex: '1 1 120px' } : undefined}
-            onClick={() => onModeChange?.('table')}
-          >
-            {t('表格模式')}
-          </Button>
-          <Button
-            theme={mode === 'json' ? 'solid' : 'light'}
-            type='tertiary'
-            size='small'
-            style={isMobile ? { flex: '1 1 96px' } : undefined}
-            onClick={() => onModeChange?.('json')}
-          >
-            JSON
-          </Button>
+          <span>{title}</span>
+          {description ? (
+            <Text type='tertiary' size='small'>
+              {description}
+            </Text>
+          ) : null}
         </div>
       }
+      headerExtraContent={
+        <RadioGroup
+          type='button'
+          buttonSize='small'
+          size='small'
+          value={mode}
+          direction={isMobile ? 'vertical' : 'horizontal'}
+          onChange={(event) => onModeChange?.(event.target.value)}
+        >
+          <Radio value='table'>{t('表格模式')}</Radio>
+          <Radio value='json'>JSON</Radio>
+        </RadioGroup>
+      }
     >
-      {description ? (
-        <Text type='tertiary' style={{ display: 'block', marginBottom: 8 }}>
-          {description}
-        </Text>
-      ) : null}
-      {error ? (
-        <Banner
-          type='danger'
-          bordered
-          fullMode={false}
-          closeIcon={null}
-          style={{ marginBottom: 8 }}
-          description={error}
-        />
-      ) : null}
-      {mode === 'table' ? tableContent : jsonContent}
-      {footer}
+      <Divider margin='0' />
+      <div style={{ padding: 16 }}>
+        {error ? (
+          <Banner
+            type='danger'
+            bordered
+            fullMode={false}
+            closeIcon={null}
+            style={{ marginBottom: 12 }}
+            description={error}
+          />
+        ) : null}
+        {mode === 'table' ? tableContent : jsonContent}
+        {footer}
+      </div>
     </Card>
   );
 }
