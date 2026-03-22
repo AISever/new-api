@@ -18,8 +18,9 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
-import { Banner, Button, Card, Space, Typography } from '@douyinfe/semi-ui';
+import { Banner, Button, Card, Typography } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '../../../../hooks/common/useIsMobile';
 
 const { Text } = Typography;
 
@@ -34,6 +35,7 @@ export default function OptionModeCard({
   footer = null,
 }) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   return (
     <Card
@@ -42,11 +44,19 @@ export default function OptionModeCard({
       headerStyle={{ padding: '12px 16px' }}
       title={title}
       headerExtraContent={
-        <Space>
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            flexWrap: 'wrap',
+            justifyContent: isMobile ? 'flex-start' : 'flex-end',
+          }}
+        >
           <Button
             theme={mode === 'table' ? 'solid' : 'light'}
             type='primary'
             size='small'
+            style={isMobile ? { flex: '1 1 120px' } : undefined}
             onClick={() => onModeChange?.('table')}
           >
             {t('表格模式')}
@@ -55,11 +65,12 @@ export default function OptionModeCard({
             theme={mode === 'json' ? 'solid' : 'light'}
             type='tertiary'
             size='small'
+            style={isMobile ? { flex: '1 1 96px' } : undefined}
             onClick={() => onModeChange?.('json')}
           >
             JSON
           </Button>
-        </Space>
+        </div>
       }
     >
       {description ? (

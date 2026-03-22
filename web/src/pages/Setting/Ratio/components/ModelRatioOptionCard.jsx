@@ -119,7 +119,7 @@ export default function ModelRatioOptionCard({
                   optionList={vendorOptions}
                   loading={vendorCatalogLoading}
                   onChange={(value) => setVendorFilter(value || ALL_VENDOR_FILTER)}
-                  style={{ width: 180 }}
+                  style={{ width: '100%', maxWidth: 180 }}
                 />
               </div>
             }

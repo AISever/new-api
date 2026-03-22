@@ -18,10 +18,13 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
-import { Button, Input } from '@douyinfe/semi-ui';
+import { Button, Input, Typography } from '@douyinfe/semi-ui';
 import { IconDelete } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '../../../../hooks/common/useIsMobile';
 import CompactEditorFrame from './CompactEditorFrame';
+
+const { Text } = Typography;
 
 export default function SimpleMapTableEditor({
   rows,
@@ -37,6 +40,7 @@ export default function SimpleMapTableEditor({
   addLabel,
 }) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   const columns = [
     { key: 'key', label: keyLabel, width: 'minmax(220px, 1.6fr)' },
@@ -61,35 +65,87 @@ export default function SimpleMapTableEditor({
       emptyText={t('暂无数据')}
     >
       {rows.map((record, index) => (
-        <div
-          key={record.id}
-          style={{
-            ...rowStyle,
-            borderBottom:
-              index === rows.length - 1 ? 'none' : '1px solid var(--semi-color-border)',
-          }}
-        >
-          <Input
-            size='small'
-            value={record.key}
-            placeholder={keyPlaceholder}
-            onChange={(value) => onChangeRow(record.id, 'key', value)}
-          />
-          <Input
-            size='small'
-            value={record.value}
-            placeholder={valuePlaceholder}
-            suffix={valueSuffix}
-            onChange={(value) => onChangeRow(record.id, 'value', value)}
-          />
-          <Button
-            size='small'
-            type='danger'
-            theme='borderless'
-            icon={<IconDelete />}
-            onClick={() => onDeleteRow(record.id)}
-          />
-        </div>
+        isMobile ? (
+          <div
+            key={record.id}
+            style={{
+              border: '1px solid var(--semi-color-border)',
+              borderRadius: 10,
+              padding: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              marginBottom: index === rows.length - 1 ? 0 : 8,
+              background: 'var(--semi-color-fill-0)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}
+            >
+              <Text type='tertiary' size='small'>
+                {keyLabel}
+              </Text>
+              <Button
+                size='small'
+                type='danger'
+                theme='borderless'
+                icon={<IconDelete />}
+                onClick={() => onDeleteRow(record.id)}
+              />
+            </div>
+            <Input
+              size='small'
+              value={record.key}
+              placeholder={keyPlaceholder}
+              onChange={(value) => onChangeRow(record.id, 'key', value)}
+            />
+            <Text type='tertiary' size='small'>
+              {valueLabel}
+            </Text>
+            <Input
+              size='small'
+              value={record.value}
+              placeholder={valuePlaceholder}
+              suffix={valueSuffix}
+              onChange={(value) => onChangeRow(record.id, 'value', value)}
+            />
+          </div>
+        ) : (
+          <div
+            key={record.id}
+            style={{
+              ...rowStyle,
+              borderBottom:
+                index === rows.length - 1 ? 'none' : '1px solid var(--semi-color-border)',
+            }}
+          >
+            <Input
+              size='small'
+              value={record.key}
+              placeholder={keyPlaceholder}
+              onChange={(value) => onChangeRow(record.id, 'key', value)}
+            />
+            <Input
+              size='small'
+              value={record.value}
+              placeholder={valuePlaceholder}
+              suffix={valueSuffix}
+              onChange={(value) => onChangeRow(record.id, 'value', value)}
+            />
+            <Button
+              size='small'
+              type='danger'
+              theme='borderless'
+              icon={<IconDelete />}
+              onClick={() => onDeleteRow(record.id)}
+            />
+          </div>
+        )
       ))}
     </CompactEditorFrame>
   );

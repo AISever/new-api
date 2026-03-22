@@ -20,6 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import React from 'react';
 import { Button, Empty } from '@douyinfe/semi-ui';
 import { IconPlus } from '@douyinfe/semi-icons';
+import { useIsMobile } from '../../../../hooks/common/useIsMobile';
 
 const createHeaderGrid = (gridTemplateColumns) => ({
   display: 'grid',
@@ -38,6 +39,7 @@ export default function CompactEditorFrame({
   minWidth = 640,
   maxHeight = 360,
 }) {
+  const isMobile = useIsMobile();
   const headerStyle = createHeaderGrid(columns.map((column) => column.width).join(' '));
 
   return (
@@ -45,18 +47,32 @@ export default function CompactEditorFrame({
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: isMobile ? 'stretch' : 'center',
           justifyContent: 'space-between',
+          flexDirection: isMobile ? 'column' : 'row',
           gap: 8,
-          flexWrap: 'wrap',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
           marginBottom: 8,
         }}
       >
-        <Button size='small' icon={<IconPlus />} onClick={onAdd}>
+        <Button
+          size='small'
+          icon={<IconPlus />}
+          onClick={onAdd}
+          style={isMobile ? { width: '100%' } : undefined}
+        >
           {addLabel}
         </Button>
         {toolbarExtra ? (
-          <div style={{ flex: '1 1 240px', minWidth: 220 }}>{toolbarExtra}</div>
+          <div
+            style={{
+              flex: isMobile ? '1 1 auto' : '1 1 240px',
+              minWidth: isMobile ? 0 : 220,
+              width: isMobile ? '100%' : undefined,
+            }}
+          >
+            {toolbarExtra}
+          </div>
         ) : null}
       </div>
       <div
@@ -68,23 +84,25 @@ export default function CompactEditorFrame({
         }}
       >
         <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth }}>
-            <div
-              style={{
-                ...headerStyle,
-                padding: '8px 12px',
-                background: 'var(--semi-color-fill-0)',
-                color: 'var(--semi-color-text-2)',
-                fontSize: 12,
-                fontWeight: 600,
-                borderBottom: '1px solid var(--semi-color-border)',
-              }}
-            >
-              {columns.map((column) => (
-                <div key={column.key}>{column.label}</div>
-              ))}
-            </div>
-            <div style={{ maxHeight, overflowY: 'auto' }}>
+          <div style={{ minWidth: isMobile ? '100%' : minWidth }}>
+            {!isMobile ? (
+              <div
+                style={{
+                  ...headerStyle,
+                  padding: '8px 12px',
+                  background: 'var(--semi-color-fill-0)',
+                  color: 'var(--semi-color-text-2)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderBottom: '1px solid var(--semi-color-border)',
+                }}
+              >
+                {columns.map((column) => (
+                  <div key={column.key}>{column.label}</div>
+                ))}
+              </div>
+            ) : null}
+            <div style={{ maxHeight, overflowY: 'auto', padding: isMobile ? 8 : 0 }}>
               {children?.length ? (
                 children
               ) : (
