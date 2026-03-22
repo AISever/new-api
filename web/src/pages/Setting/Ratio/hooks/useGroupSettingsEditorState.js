@@ -30,6 +30,10 @@ import {
   stringifySimpleMapOption,
   stringifySpecialUsableGroupOption,
 } from '../utils/optionTransformers';
+import {
+  validateSpecialUsableGroupRows,
+  validateUserUsableGroupRows,
+} from '../utils/rowValidators';
 
 const createRowIdFactory = () => {
   let currentId = 0;
@@ -146,9 +150,9 @@ const validateRelationRows = (rows, t) => {
 
 const CARD_ROW_VALIDATORS = {
   groupRatio: validateSimpleNumericRows,
-  userUsableGroups: () => '',
+  userUsableGroups: validateUserUsableGroupRows,
   groupGroupRatio: validateRelationRows,
-  groupSpecialUsableGroup: () => '',
+  groupSpecialUsableGroup: validateSpecialUsableGroupRows,
   autoGroups: () => '',
 };
 
