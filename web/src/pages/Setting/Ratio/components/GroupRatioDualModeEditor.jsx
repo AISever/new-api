@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
-import { Button, Spin, Switch, TextArea, Typography } from '@douyinfe/semi-ui';
+import { Button, Spin, Switch, Tag, TextArea, Typography } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 import {
   parseGroupRelationOption,
@@ -59,6 +59,8 @@ export default function GroupRatioDualModeEditor(props) {
     refresh: props.refresh,
     t,
   });
+  const isUserUsableGroupLinked = (groupKey) =>
+    cards.groupRatio.rows.some((row) => String(row.key ?? '').trim() === String(groupKey ?? '').trim());
 
   return (
     <Spin spinning={loading}>
@@ -132,18 +134,34 @@ export default function GroupRatioDualModeEditor(props) {
         onModeChange={(mode) => setCardMode('userUsableGroups', mode)}
         error={cards.userUsableGroups.error}
         tableContent={
-          <SimpleMapTableEditor
-            rows={cards.userUsableGroups.rows}
-            keyLabel={t('分组名称')}
-            valueLabel={t('展示名称')}
-            keyPlaceholder={t('如 vip')}
-            valuePlaceholder={t('如 VIP 用户')}
-            onAddRow={() => addRow('userUsableGroups', { key: '', value: '' })}
-            onDeleteRow={(rowId) => deleteRow('userUsableGroups', rowId)}
-            onChangeRow={(rowId, field, value) =>
-              updateRow('userUsableGroups', rowId, field, value)
-            }
-          />
+          <>
+            <SimpleMapTableEditor
+              rows={cards.userUsableGroups.rows}
+              keyLabel={t('分组名称')}
+              valueLabel={t('展示名称')}
+              keyPlaceholder={t('如 vip')}
+              valuePlaceholder={t('如 VIP 用户')}
+              onAddRow={() => addRow('userUsableGroups', { key: '', value: '' })}
+              onDeleteRow={(rowId) => deleteRow('userUsableGroups', rowId)}
+              onChangeRow={(rowId, field, value) =>
+                updateRow('userUsableGroups', rowId, field, value)
+              }
+              renderRowActionPrefix={(record) =>
+                isUserUsableGroupLinked(record.key) ? (
+                  <Tag size='small' color='blue'>
+                    {t('联动')}
+                  </Tag>
+                ) : null
+              }
+            />
+            <Text
+              type='tertiary'
+              size='small'
+              style={{ display: 'block', marginTop: 8 }}
+            >
+              {t('带“联动”标记的分组由上方分组倍率中的显示开关控制。')}
+            </Text>
+          </>
         }
         jsonContent={
           <>
