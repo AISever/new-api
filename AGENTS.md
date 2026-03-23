@@ -152,3 +152,45 @@ For request structs that are parsed from client JSON and then re-marshaled to up
   - field absent in client JSON => `nil` => omitted on marshal;
   - field explicitly set to zero/false => non-`nil` pointer => must still be sent upstream.
 - Avoid using non-pointer scalars with `omitempty` for optional request parameters, because zero values (`0`, `0.0`, `false`) will be silently dropped during marshal.
+
+### Rule 7: Responsive Breakpoints — Reuse Project Definitions
+
+When implementing or adjusting frontend responsive behavior:
+
+- Reuse existing project breakpoint definitions first, especially `web/src/hooks/common/useIsMobile.js`.
+- Do NOT introduce feature-local breakpoints such as `430`, `520`, or other ad-hoc thresholds in business components unless they are first promoted into a shared project-level constant with a documented reason.
+- For mobile/desktop branching, align with the project's existing mobile boundary instead of creating a second responsive system inside a page or widget.
+
+### Rule 8: Deployment Entrypoints — Use Repository Scripts
+
+All deployment, start/stop, restore, and environment update operations MUST go through the repository's formal script entrypoints documented in `ops/README.md`.
+
+- Local Docker test environment: use `ops/scripts/local-test-env.sh`
+- `kkidc` environments: use `ops/scripts/kkidc-host-deploy.sh`
+- `tencent` environments: use the corresponding `ops/scripts/tencent-*.sh` entrypoint or `ops/scripts/deploy-from-branch.sh` when explicitly documented
+
+Do NOT treat ad-hoc SSH command sequences, temporary shell history, or `.tmp` scripts as a normal deployment path.
+
+### Rule 9: Server Deployments — Only Ship Committed Code
+
+For any server environment (`kkidc` test/production, `tencent` test/standby):
+
+- Only deploy committed repository state.
+- Do NOT ship local uncommitted changes to a server environment.
+- If a workflow needs local-only verification, use the local Docker test environment instead of bypassing the server deployment rules.
+
+### Rule 10: Interactive Config Editors — Keep JSON Semantics Intact
+
+When converting JSON configuration into table/form editors:
+
+- Keep the original backend option storage format unchanged unless explicitly planned otherwise.
+- Preserve a JSON editing path as a fallback or advanced mode.
+- Invalid JSON must block destructive synchronization; do NOT silently overwrite or discard it.
+- If one editor mutates another option through linkage, the UI must show that linkage explicitly and must fail safely when the linked source is invalid.
+
+### Rule 11: UI Interaction Changes — Require Page-Level Verification
+
+For frontend changes involving interaction behavior, linked settings, focus management, or mobile layout:
+
+- `eslint` and `build` are not sufficient by themselves.
+- Run at least one page-level verification step, such as Playwright interaction checks or real browser validation against the local test environment.

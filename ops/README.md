@@ -8,6 +8,7 @@
 - 环境专属文件按服务器前缀命名：`kkidc-*`、`tencent-*`。
 - 通用文档与通用入口不加前缀。
 - **不要修改官方原有脚本**；本目录只收纳我们自己增加的运维内容。
+- 本地、测试、生产环境都必须通过仓库内正式脚本入口操作，不使用手工命令流作为常规部署方式。
 
 ## 1. 当前环境口径
 
@@ -45,6 +46,13 @@
 - `tencent` 从备份恢复：`ops/scripts/tencent-restore-from-backup.sh`
 - `tencent` 启用 HTTPS：`ops/scripts/tencent-enable-https-certbot.sh`
 
+要求：
+
+- 本地 Docker 测试环境的部署、更新、重置、备份必须通过 `ops/scripts/local-test-env.sh`。
+- `kkidc` 测试/生产环境必须通过 `ops/scripts/kkidc-host-deploy.sh`。
+- `tencent` 测试/预备生产环境必须通过对应的 `ops/scripts/tencent-*.sh` 或文档明确指定的 `ops/scripts/deploy-from-branch.sh`。
+- 不要把 SSH 登录后手动执行的临时命令、shell history、`.tmp` 脚本视为正式入口。
+
 ## 4. 环境 compose
 
 - 本地 Docker 测试 compose：`ops/compose/local-test.yml`
@@ -69,6 +77,7 @@
 - `tencent` 测试环境关闭入口：`ops/scripts/tencent-test-stop.sh`，只停 `new-api-test`，保留测试数据。
 - 因此这里只抽取 `tencent` 内部公共核心：`ops/scripts/deploy-from-branch.sh`。
 - `tencent` 测试与 `tencent` 预备生产只在目录、端口、数据库、compose 生成方式上有差异，其余分支切换、构建、版本注入逻辑保持一致。
+- 服务器环境只允许部署已提交的仓库状态；需要验证未提交改动时，先用本地 Docker 测试环境。
 
 ## 7. tencent 双模式部署
 
