@@ -21,6 +21,7 @@ import React from 'react';
 import { Button, Input, Typography } from '@douyinfe/semi-ui';
 import { IconDelete } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
+import usePendingAppendedRowFocus from '../hooks/usePendingAppendedRowFocus';
 import useCompactEditorLayoutMode from '../hooks/useCompactEditorLayoutMode';
 import { shouldUseSharedInlineHeaders } from '../utils/editorLayout';
 import CompactEditorFrame from './CompactEditorFrame';
@@ -37,6 +38,8 @@ export default function RelationTableEditor({
   const layoutMode = useCompactEditorLayoutMode();
   const isMobile = layoutMode !== 'desktop';
   const useSharedHeader = shouldUseSharedInlineHeaders(layoutMode);
+  const { containerRef, focusRowId, requestFocusOnNextAddedRow } =
+    usePendingAppendedRowFocus(rows);
   const columns = [
     { key: 'group', label: t('用户分组'), width: 'minmax(140px, 1fr)' },
     { key: 'targetGroup', label: t('使用分组'), width: 'minmax(140px, 1fr)' },
@@ -55,7 +58,10 @@ export default function RelationTableEditor({
   return (
     <CompactEditorFrame
       addLabel={t('新增规则')}
-      onAdd={onAddRow}
+      onAdd={() => {
+        requestFocusOnNextAddedRow();
+        onAddRow();
+      }}
       columns={columns}
       emptyText={t('暂无数据')}
       minWidth={680}
@@ -78,7 +84,8 @@ export default function RelationTableEditor({
         ) : null
       }
     >
-      {rows.map((record, index) => (
+      <div ref={containerRef}>
+        {rows.map((record, index) => (
         isMobile ? (
           <div
             key={record.id}
@@ -95,6 +102,7 @@ export default function RelationTableEditor({
           >
             {useSharedHeader ? (
               <div
+                data-row-focus-id={record.id === focusRowId ? record.id : undefined}
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(88px, 0.8fr) 28px',
@@ -147,6 +155,7 @@ export default function RelationTableEditor({
                 </Text>
                 <Input
                   size='small'
+                  data-row-focus-id={record.id === focusRowId ? record.id : undefined}
                   value={record.group}
                   placeholder={t('如 vip')}
                   onChange={(value) => onChangeRow(record.id, 'group', value)}
@@ -181,12 +190,14 @@ export default function RelationTableEditor({
                 index === rows.length - 1 ? 'none' : '1px solid var(--semi-color-border)',
             }}
           >
-            <Input
-              size='small'
-              value={record.group}
-              placeholder={t('如 vip')}
-              onChange={(value) => onChangeRow(record.id, 'group', value)}
-            />
+            <div data-row-focus-id={record.id === focusRowId ? record.id : undefined}>
+              <Input
+                size='small'
+                value={record.group}
+                placeholder={t('如 vip')}
+                onChange={(value) => onChangeRow(record.id, 'group', value)}
+              />
+            </div>
             <Input
               size='small'
               value={record.targetGroup}
@@ -208,7 +219,8 @@ export default function RelationTableEditor({
             />
           </div>
         )
-      ))}
+        ))}
+      </div>
     </CompactEditorFrame>
   );
 }

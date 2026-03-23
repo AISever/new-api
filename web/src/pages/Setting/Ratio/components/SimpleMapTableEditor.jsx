@@ -21,6 +21,7 @@ import React from 'react';
 import { Button, Input, Typography } from '@douyinfe/semi-ui';
 import { IconDelete } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
+import usePendingAppendedRowFocus from '../hooks/usePendingAppendedRowFocus';
 import useCompactEditorLayoutMode from '../hooks/useCompactEditorLayoutMode';
 import { shouldUseSharedInlineHeaders } from '../utils/editorLayout';
 import CompactEditorFrame from './CompactEditorFrame';
@@ -44,6 +45,8 @@ export default function SimpleMapTableEditor({
   const layoutMode = useCompactEditorLayoutMode();
   const isMobile = layoutMode !== 'desktop';
   const useSharedHeader = shouldUseSharedInlineHeaders(layoutMode);
+  const { containerRef, focusRowId, requestFocusOnNextAddedRow } =
+    usePendingAppendedRowFocus(rows);
 
   const columns = [
     { key: 'key', label: keyLabel, width: 'minmax(220px, 1.6fr)' },
@@ -62,7 +65,10 @@ export default function SimpleMapTableEditor({
   return (
     <CompactEditorFrame
       addLabel={addLabel || t('新增一行')}
-      onAdd={onAddRow}
+      onAdd={() => {
+        requestFocusOnNextAddedRow();
+        onAddRow();
+      }}
       columns={columns}
       toolbarExtra={toolbarExtra}
       emptyText={t('暂无数据')}
@@ -83,7 +89,8 @@ export default function SimpleMapTableEditor({
         ) : null
       }
     >
-      {rows.map((record, index) => (
+      <div ref={containerRef}>
+        {rows.map((record, index) => (
         isMobile ? (
           <div
             key={record.id}
@@ -100,6 +107,7 @@ export default function SimpleMapTableEditor({
           >
             {useSharedHeader ? (
               <div
+                data-row-focus-id={record.id === focusRowId ? record.id : undefined}
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'minmax(0, 1.7fr) minmax(88px, 0.9fr) 28px',
@@ -151,6 +159,7 @@ export default function SimpleMapTableEditor({
                 </div>
                 <Input
                   size='small'
+                  data-row-focus-id={record.id === focusRowId ? record.id : undefined}
                   value={record.key}
                   placeholder={keyPlaceholder}
                   onChange={(value) => onChangeRow(record.id, 'key', value)}
@@ -177,12 +186,14 @@ export default function SimpleMapTableEditor({
                 index === rows.length - 1 ? 'none' : '1px solid var(--semi-color-border)',
             }}
           >
-            <Input
-              size='small'
-              value={record.key}
-              placeholder={keyPlaceholder}
-              onChange={(value) => onChangeRow(record.id, 'key', value)}
-            />
+            <div data-row-focus-id={record.id === focusRowId ? record.id : undefined}>
+              <Input
+                size='small'
+                value={record.key}
+                placeholder={keyPlaceholder}
+                onChange={(value) => onChangeRow(record.id, 'key', value)}
+              />
+            </div>
             <Input
               size='small'
               value={record.value}
@@ -199,7 +210,8 @@ export default function SimpleMapTableEditor({
             />
           </div>
         )
-      ))}
+        ))}
+      </div>
     </CompactEditorFrame>
   );
 }

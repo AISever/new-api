@@ -21,6 +21,7 @@ import React from 'react';
 import { Button, Input, Space, Typography } from '@douyinfe/semi-ui';
 import { IconArrowDown, IconArrowUp, IconDelete } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
+import usePendingAppendedRowFocus from '../hooks/usePendingAppendedRowFocus';
 import useCompactEditorLayoutMode from '../hooks/useCompactEditorLayoutMode';
 import { shouldUseSharedInlineHeaders } from '../utils/editorLayout';
 import CompactEditorFrame from './CompactEditorFrame';
@@ -38,6 +39,8 @@ export default function OrderedListTableEditor({
   const layoutMode = useCompactEditorLayoutMode();
   const isMobile = layoutMode !== 'desktop';
   const useSharedHeader = shouldUseSharedInlineHeaders(layoutMode);
+  const { containerRef, focusRowId, requestFocusOnNextAddedRow } =
+    usePendingAppendedRowFocus(rows);
   const columns = [
     { key: 'index', label: t('顺序'), width: '56px' },
     { key: 'value', label: t('分组'), width: 'minmax(180px, 1fr)' },
@@ -55,7 +58,10 @@ export default function OrderedListTableEditor({
   return (
     <CompactEditorFrame
       addLabel={t('新增分组')}
-      onAdd={onAddRow}
+      onAdd={() => {
+        requestFocusOnNextAddedRow();
+        onAddRow();
+      }}
       columns={columns}
       emptyText={t('暂无数据')}
       minWidth={520}
@@ -77,7 +83,8 @@ export default function OrderedListTableEditor({
         ) : null
       }
     >
-      {rows.map((record, index) => (
+      <div ref={containerRef}>
+        {rows.map((record, index) => (
         isMobile ? (
           <div
             key={record.id}
@@ -94,6 +101,7 @@ export default function OrderedListTableEditor({
           >
             {useSharedHeader ? (
               <div
+                data-row-focus-id={record.id === focusRowId ? record.id : undefined}
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '56px minmax(0, 1fr) auto',
@@ -174,6 +182,7 @@ export default function OrderedListTableEditor({
                 </Text>
                 <Input
                   size='small'
+                  data-row-focus-id={record.id === focusRowId ? record.id : undefined}
                   value={record.value}
                   placeholder={t('如 default')}
                   onChange={(value) => onChangeRow(record.id, 'value', value)}
@@ -191,12 +200,14 @@ export default function OrderedListTableEditor({
             }}
           >
             <Text type='tertiary'>{index + 1}</Text>
-            <Input
-              size='small'
-              value={record.value}
-              placeholder={t('如 default')}
-              onChange={(value) => onChangeRow(record.id, 'value', value)}
-            />
+            <div data-row-focus-id={record.id === focusRowId ? record.id : undefined}>
+              <Input
+                size='small'
+                value={record.value}
+                placeholder={t('如 default')}
+                onChange={(value) => onChangeRow(record.id, 'value', value)}
+              />
+            </div>
             <Space spacing={4}>
               <Button
                 size='small'
@@ -222,7 +233,8 @@ export default function OrderedListTableEditor({
             </Space>
           </div>
         )
-      ))}
+        ))}
+      </div>
     </CompactEditorFrame>
   );
 }
