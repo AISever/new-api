@@ -22,6 +22,11 @@ import { API, showError, showSuccess, showWarning } from '../../../../helpers';
 import { getSubmitBlockingError } from '../utils/editorErrorHelpers';
 import { DEFAULT_OPTION_EDITOR_MODE } from '../utils/editorMode';
 import {
+  isGroupVisibleInUserUsableRows,
+  renameLinkedUserUsableGroup,
+  setGroupVisibilityInUserUsableRows,
+} from '../utils/groupVisibilityLinkage';
+import {
   parseGroupRelationOption,
   parseOrderedStringListOption,
   parseSimpleMapOption,
@@ -157,8 +162,33 @@ const CARD_ROW_VALIDATORS = {
   autoGroups: () => '',
 };
 
+const CARD_ROW_SERIALIZERS = {
+  groupRatio: (rows) => stringifySimpleMapOption(stripId(rows), 'number'),
+  userUsableGroups: (rows) => stringifySimpleMapOption(stripId(rows), 'string'),
+  groupGroupRatio: (rows) => stringifyGroupRelationOption(stripId(rows)),
+  groupSpecialUsableGroup: (rows) =>
+    stringifySpecialUsableGroupOption(stripId(rows)),
+  autoGroups: (rows) => stringifyOrderedStringListOption(stripId(rows)),
+};
+
+const buildUpdatedCardState = (cardKey, card, rows, t) => {
+  const validationError = CARD_ROW_VALIDATORS[cardKey]?.(rows, t) || '';
+  return {
+    ...card,
+    error:
+      card.mode === 'table'
+        ? validationError
+        : card.error && card.error.startsWith('JSON ')
+          ? card.error
+          : validationError,
+    rawJson: CARD_ROW_SERIALIZERS[cardKey](rows),
+    rows,
+  };
+};
+
 export default function useGroupSettingsEditorState({ options, refresh, t }) {
   const createIdRef = useRef(createRowIdFactory());
+  const linkedVisibleGroupKeyRef = useRef({});
   const [loading, setLoading] = useState(false);
   const [defaultUseAutoGroup, setDefaultUseAutoGroup] = useState(false);
   const [baseline, setBaseline] = useState({
@@ -179,6 +209,7 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
 
   useEffect(() => {
     const createId = createIdRef.current;
+    linkedVisibleGroupKeyRef.current = {};
     const nextBaseline = {
       GroupRatio: options.GroupRatio || '{}',
       UserUsableGroups: options.UserUsableGroups || '{}',
@@ -273,20 +304,101 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
   };
 
   const replaceCardRows = (cardKey, nextRows) => {
-    const validationError = CARD_ROW_VALIDATORS[cardKey]?.(nextRows, t) || '';
-    updateCard(cardKey, (card) => ({
-      ...card,
-      error:
-        card.mode === 'table'
-          ? validationError
-          : card.error && card.error.startsWith('JSON ')
-            ? card.error
-            : validationError,
-      rows: nextRows,
-    }));
+    updateCard(cardKey, (card) => buildUpdatedCardState(cardKey, card, nextRows, t));
+  };
+
+  const hasUserUsableGroupsJsonError =
+    cards.userUsableGroups.mode === 'json' &&
+    Boolean(cards.userUsableGroups.error?.startsWith('JSON '));
+
+  const syncUserUsableGroupRows = (previousRows, nextRows) =>
+    withStableRowIds(nextRows, previousRows, createIdRef.current);
+
+  const renameGroupVisibilityLinkage = ({ rowId, previousKey, nextKey }) => {
+    const normalizedPreviousKey = String(previousKey ?? '').trim();
+    const normalizedNextKey = String(nextKey ?? '').trim();
+
+    if (!normalizedPreviousKey || normalizedPreviousKey === normalizedNextKey) {
+      return false;
+    }
+
+    if (
+      hasUserUsableGroupsJsonError &&
+      isGroupVisibleInUserUsableRows(
+        stripId(cards.userUsableGroups.rows),
+        normalizedPreviousKey,
+      )
+    ) {
+      showError(t('请先修正用户可选分组中的 JSON 错误'));
+      return true;
+    }
+
+    setCards((previous) => {
+      const nextGroupRows = previous.groupRatio.rows.map((row) =>
+        row.id === rowId ? { ...row, key: nextKey } : row,
+      );
+
+      const nextUserUsableRows = syncUserUsableGroupRows(
+        previous.userUsableGroups.rows,
+        renameLinkedUserUsableGroup(
+          stripId(previous.userUsableGroups.rows),
+          normalizedPreviousKey,
+          normalizedNextKey,
+        ),
+      );
+
+      return {
+        ...previous,
+        groupRatio: buildUpdatedCardState(
+          'groupRatio',
+          previous.groupRatio,
+          nextGroupRows,
+          t,
+        ),
+        userUsableGroups: buildUpdatedCardState(
+          'userUsableGroups',
+          previous.userUsableGroups,
+          nextUserUsableRows,
+          t,
+        ),
+      };
+    });
+
+    if (normalizedNextKey) {
+      linkedVisibleGroupKeyRef.current[rowId] = normalizedNextKey;
+    }
+
+    return true;
   };
 
   const updateRow = (cardKey, rowId, field, value) => {
+    if (cardKey === 'groupRatio' && field === 'key') {
+      const previousRow = cards.groupRatio.rows.find((row) => row.id === rowId);
+      const rememberedKey = linkedVisibleGroupKeyRef.current[rowId];
+      const sourceKey = String(rememberedKey ?? previousRow?.key ?? '').trim();
+
+      if (
+        sourceKey &&
+        isGroupVisibleInUserUsableRows(
+          stripId(cards.userUsableGroups.rows),
+          sourceKey,
+        )
+      ) {
+        linkedVisibleGroupKeyRef.current[rowId] = sourceKey;
+      }
+
+      if (
+        previousRow &&
+        renameGroupVisibilityLinkage({
+          rowId,
+          previousKey: sourceKey,
+          nextKey: value,
+        })
+      ) {
+        return;
+      }
+    }
+
     replaceCardRows(
       cardKey,
       cards[cardKey].rows.map((row) =>
@@ -302,7 +414,54 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
     ]);
   };
 
+  const setGroupVisibility = (rowId, visible) => {
+    const targetRow = cards.groupRatio.rows.find((row) => row.id === rowId);
+    const groupKey = String(targetRow?.key ?? '').trim();
+
+    if (!groupKey) {
+      return;
+    }
+
+    if (hasUserUsableGroupsJsonError) {
+      showError(t('请先修正用户可选分组中的 JSON 错误'));
+      return;
+    }
+
+    linkedVisibleGroupKeyRef.current[rowId] = groupKey;
+
+    setCards((previous) => {
+      const nextUserUsableRows = syncUserUsableGroupRows(
+        previous.userUsableGroups.rows,
+        setGroupVisibilityInUserUsableRows(
+          stripId(previous.userUsableGroups.rows),
+          groupKey,
+          visible,
+        ),
+      );
+
+      return {
+        ...previous,
+        userUsableGroups: buildUpdatedCardState(
+          'userUsableGroups',
+          previous.userUsableGroups,
+          nextUserUsableRows,
+          t,
+        ),
+      };
+    });
+
+    if (!visible) {
+      delete linkedVisibleGroupKeyRef.current[rowId];
+    }
+  };
+
+  const isGroupVisible = (groupKey) =>
+    isGroupVisibleInUserUsableRows(stripId(cards.userUsableGroups.rows), groupKey);
+
   const deleteRow = (cardKey, rowId) => {
+    if (cardKey === 'groupRatio') {
+      delete linkedVisibleGroupKeyRef.current[rowId];
+    }
     replaceCardRows(
       cardKey,
       cards[cardKey].rows.filter((row) => row.id !== rowId),
@@ -422,6 +581,9 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
     addRow,
     deleteRow,
     moveRow,
+    isGroupVisible,
+    setGroupVisibility,
+    hasUserUsableGroupsJsonError,
     rebuildCardRowsFromJson,
     submit,
   };
