@@ -28,13 +28,14 @@ import {
 } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../../../../hooks/common/useIsMobile';
+import { DEFAULT_OPTION_EDITOR_MODE } from '../utils/editorMode';
 
 const { Text } = Typography;
 
 export default function OptionModeCard({
   title,
   description = '',
-  mode = 'table',
+  mode = DEFAULT_OPTION_EDITOR_MODE,
   onModeChange,
   error = '',
   tableContent,

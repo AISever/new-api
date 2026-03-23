@@ -20,6 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { API, showError, showSuccess, showWarning } from '../../../../helpers';
 import { getSubmitBlockingError } from '../utils/editorErrorHelpers';
+import { DEFAULT_OPTION_EDITOR_MODE } from '../utils/editorMode';
 import { parseSimpleMapOption, stringifySimpleMapOption } from '../utils/optionTransformers';
 import {
   createEmptyVendorCatalog,
@@ -43,7 +44,7 @@ const OPTION_KEYS = [
 ];
 
 const createEmptyCardState = () => ({
-  mode: 'table',
+  mode: DEFAULT_OPTION_EDITOR_MODE,
   error: '',
   rows: [],
   rawJson: '{}',
@@ -135,7 +136,7 @@ export default function useModelRatioOptionEditorState({ options, refresh, t }) 
     setCards(
       OPTION_KEYS.reduce((accumulator, key) => {
         accumulator[key] = {
-          mode: 'table',
+          mode: DEFAULT_OPTION_EDITOR_MODE,
           error: '',
           rawJson: nextBaseline[key],
           rows: withRowIds(parseSimpleMapOption(nextBaseline[key], 'number'), createId),

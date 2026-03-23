@@ -20,6 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { API, showError, showSuccess, showWarning } from '../../../../helpers';
 import { getSubmitBlockingError } from '../utils/editorErrorHelpers';
+import { DEFAULT_OPTION_EDITOR_MODE } from '../utils/editorMode';
 import {
   parseGroupRelationOption,
   parseOrderedStringListOption,
@@ -85,7 +86,7 @@ const moveItem = (list, fromIndex, toIndex) => {
   return nextList;
 };
 
-const createEmptyCardState = (mode = 'table') => ({
+const createEmptyCardState = (mode = DEFAULT_OPTION_EDITOR_MODE) => ({
   mode,
   error: '',
   rows: [],
@@ -192,7 +193,7 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
     setDefaultUseAutoGroup(nextBaseline.DefaultUseAutoGroup);
     setCards({
       groupRatio: {
-        mode: 'table',
+        mode: DEFAULT_OPTION_EDITOR_MODE,
         error: '',
         rawJson: nextBaseline.GroupRatio,
         rows: withRowIds(
@@ -201,7 +202,7 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
         ),
       },
       userUsableGroups: {
-        mode: 'table',
+        mode: DEFAULT_OPTION_EDITOR_MODE,
         error: '',
         rawJson: nextBaseline.UserUsableGroups,
         rows: withRowIds(
@@ -210,7 +211,7 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
         ),
       },
       groupGroupRatio: {
-        mode: 'table',
+        mode: DEFAULT_OPTION_EDITOR_MODE,
         error: '',
         rawJson: nextBaseline.GroupGroupRatio,
         rows: withRowIds(
@@ -219,7 +220,7 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
         ),
       },
       groupSpecialUsableGroup: {
-        mode: 'table',
+        mode: DEFAULT_OPTION_EDITOR_MODE,
         error: '',
         rawJson: nextBaseline.GroupSpecialUsableGroup,
         rows: withRowIds(
@@ -228,7 +229,7 @@ export default function useGroupSettingsEditorState({ options, refresh, t }) {
         ),
       },
       autoGroups: {
-        mode: 'table',
+        mode: DEFAULT_OPTION_EDITOR_MODE,
         error: '',
         rawJson: nextBaseline.AutoGroups,
         rows: withRowIds(parseOrderedStringListOption(nextBaseline.AutoGroups), createId),
