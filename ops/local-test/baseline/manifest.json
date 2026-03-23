@@ -1,0 +1,34 @@
+{
+  "version": "2026-03-23",
+  "generated_at": "2026-03-23T21:00:00+08:00",
+  "description": "Local Docker test environment baseline for repeatable verification.",
+  "app": {
+    "url": "http://127.0.0.1:3001",
+    "container": "new-api-test",
+    "expected_status": {
+      "success": true,
+      "setup": true
+    }
+  },
+  "database": {
+    "container": "postgres-test",
+    "type": "postgresql",
+    "user": "root",
+    "password": "123456",
+    "database": "new-api"
+  },
+  "redis": {
+    "container": "redis-test"
+  },
+  "accounts": {
+    "admin": {
+      "username": "admin",
+      "password": "Admin123456!"
+    }
+  },
+  "data_notes": [
+    "This baseline is de-sensitized local test data.",
+    "It guarantees setup=true and a directly usable admin account.",
+    "Use reset-to-baseline to restore this exact environment state."
+  ]
+}
