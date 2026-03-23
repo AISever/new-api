@@ -1,0 +1,25 @@
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'root') THEN
+    CREATE ROLE root WITH
+      SUPERUSER
+      INHERIT
+      CREATEROLE
+      CREATEDB
+      LOGIN
+      REPLICATION
+      BYPASSRLS
+      PASSWORD '123456';
+  ELSE
+    ALTER ROLE root WITH
+      SUPERUSER
+      INHERIT
+      CREATEROLE
+      CREATEDB
+      LOGIN
+      REPLICATION
+      BYPASSRLS
+      PASSWORD '123456';
+  END IF;
+END
+$$;

@@ -1,0 +1,51 @@
+services:
+  new-api:
+    build:
+      context: ../..
+      dockerfile: ops/docker/Dockerfile.local-test
+    image: ${LOCAL_TEST_IMAGE:-codex/new-api-local:latest}
+    container_name: new-api-test
+    restart: unless-stopped
+    command: --log-dir /app/logs
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../../data:/data
+      - ../../logs:/app/logs
+    environment:
+      SQL_DSN: postgresql://root:123456@postgres-test:5432/new-api
+      REDIS_CONN_STRING: redis://redis-test
+      TZ: Asia/Shanghai
+      SESSION_SECRET: 0f63cb30076aab43a4e6b28abcf961509568aad950ad6cb7be92195e203739c4
+      CRYPTO_SECRET: 78b25e0969e3fb46203efa159732d82179656a6dd9a2f074456d1da289fabb36
+      BATCH_UPDATE_ENABLED: "true"
+      ERROR_LOG_ENABLED: "true"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -Eq '\"success\":[[:space:]]*true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: new-api
+      TZ: Asia/Shanghai
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: redis-test
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+    name: new-api_pg_data_test

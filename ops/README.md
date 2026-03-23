@@ -33,6 +33,7 @@
 
 ## 3. 环境脚本
 
+- 本地 Docker 测试环境统一入口：`ops/scripts/local-test-env.sh`
 - 通用 `tencent` 分支部署核心：`ops/scripts/deploy-from-branch.sh`
 - 本地构建并上传到 `tencent`（可选）：`ops/scripts/tencent-local-build-upload-deploy.sh`
 - `kkidc` 新服务器统一部署：`ops/scripts/kkidc-host-deploy.sh production|test`
@@ -46,6 +47,7 @@
 
 ## 4. 环境 compose
 
+- 本地 Docker 测试 compose：`ops/compose/local-test.yml`
 - `tencent` 测试 compose：`ops/compose/tencent-test.yml`
 - `tencent` 预备生产 compose：仓库根 `docker-compose.yml` + 运行期生成的 `docker-compose.override.yml`
 
