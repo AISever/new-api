@@ -27,6 +27,7 @@ import {
   parseSpecialUsableGroupOption,
 } from '../utils/optionTransformers';
 import useGroupSettingsEditorState from '../hooks/useGroupSettingsEditorState';
+import GroupRatioTableEditor from './GroupRatioTableEditor';
 import OptionModeCard from './OptionModeCard';
 import OrderedListTableEditor from './OrderedListTableEditor';
 import OperationRuleTableEditor from './OperationRuleTableEditor';
@@ -48,6 +49,9 @@ export default function GroupRatioDualModeEditor(props) {
     addRow,
     deleteRow,
     moveRow,
+    isGroupVisible,
+    setGroupVisibility,
+    hasUserUsableGroupsJsonError,
     rebuildCardRowsFromJson,
     submit,
   } = useGroupSettingsEditorState({
@@ -65,18 +69,37 @@ export default function GroupRatioDualModeEditor(props) {
         onModeChange={(mode) => setCardMode('groupRatio', mode)}
         error={cards.groupRatio.error}
         tableContent={
-          <SimpleMapTableEditor
-            rows={cards.groupRatio.rows}
-            keyLabel={t('分组名称')}
-            valueLabel={t('倍率')}
-            keyPlaceholder={t('如 vip')}
-            valuePlaceholder='1'
-            onAddRow={() => addRow('groupRatio', { key: '', value: '' })}
-            onDeleteRow={(rowId) => deleteRow('groupRatio', rowId)}
-            onChangeRow={(rowId, field, value) =>
-              updateRow('groupRatio', rowId, field, value)
-            }
-          />
+          <>
+            <GroupRatioTableEditor
+              rows={cards.groupRatio.rows}
+              onAddRow={() => addRow('groupRatio', { key: '', value: '' })}
+              onDeleteRow={(rowId) => deleteRow('groupRatio', rowId)}
+              onChangeRow={(rowId, field, value) =>
+                updateRow('groupRatio', rowId, field, value)
+              }
+              onToggleVisible={setGroupVisibility}
+              isGroupVisible={isGroupVisible}
+              visibilityDisabled={hasUserUsableGroupsJsonError}
+            />
+            <Text
+              type='tertiary'
+              size='small'
+              style={{ display: 'block', marginTop: 8 }}
+            >
+              {t(
+                '显示开关会同步维护“用户可选分组”；展示名称仍可在下方单独编辑。',
+              )}
+            </Text>
+            {hasUserUsableGroupsJsonError ? (
+              <Text
+                type='warning'
+                size='small'
+                style={{ display: 'block', marginTop: 4 }}
+              >
+                {t('用户可选分组 JSON 有错误时，显示联动将暂时禁用。')}
+              </Text>
+            ) : null}
+          </>
         }
         jsonContent={
           <>
