@@ -35,32 +35,23 @@ test('getCompactEditorLayoutMode keeps desktop rows on non-mobile widths', async
   );
 });
 
-test('getCompactEditorLayoutMode keeps stacked cards below inline breakpoint', async () => {
-  const { getCompactEditorLayoutMode, INLINE_MOBILE_EDITOR_BREAKPOINT } =
-    await loadEditorLayout();
+test('getCompactEditorLayoutMode uses stacked cards for mobile widths', async () => {
+  const { getCompactEditorLayoutMode } = await loadEditorLayout();
 
   assert.equal(typeof getCompactEditorLayoutMode, 'function');
-  assert.equal(typeof INLINE_MOBILE_EDITOR_BREAKPOINT, 'number');
   assert.equal(
     getCompactEditorLayoutMode({
       isMobile: true,
-      viewportWidth: INLINE_MOBILE_EDITOR_BREAKPOINT - 1,
+      viewportWidth: 390,
     }),
     'stacked',
   );
-});
-
-test('getCompactEditorLayoutMode switches to inline cards at the mobile inline breakpoint', async () => {
-  const { getCompactEditorLayoutMode, INLINE_MOBILE_EDITOR_BREAKPOINT } =
-    await loadEditorLayout();
-
-  assert.equal(typeof getCompactEditorLayoutMode, 'function');
   assert.equal(
     getCompactEditorLayoutMode({
       isMobile: true,
-      viewportWidth: INLINE_MOBILE_EDITOR_BREAKPOINT,
+      viewportWidth: 430,
     }),
-    'inline',
+    'stacked',
   );
 });
 

@@ -17,19 +17,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-export const INLINE_MOBILE_EDITOR_BREAKPOINT = 430;
-
 export const getCompactEditorLayoutMode = ({ isMobile, viewportWidth }) => {
   if (!isMobile) {
     return 'desktop';
-  }
-
-  if (
-    typeof viewportWidth === 'number' &&
-    Number.isFinite(viewportWidth) &&
-    viewportWidth >= INLINE_MOBILE_EDITOR_BREAKPOINT
-  ) {
-    return 'inline';
   }
 
   return 'stacked';
