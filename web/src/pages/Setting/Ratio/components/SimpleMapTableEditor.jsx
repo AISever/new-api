@@ -40,6 +40,7 @@ export default function SimpleMapTableEditor({
   valueSuffix,
   toolbarExtra,
   addLabel,
+  renderRowActionPrefix,
 }) {
   const { t } = useTranslation();
   const layoutMode = useCompactEditorLayoutMode();
@@ -48,10 +49,11 @@ export default function SimpleMapTableEditor({
   const { containerRef, focusRowId, requestFocusOnNextAddedRow } =
     usePendingAppendedRowFocus(rows);
 
+  const actionWidth = renderRowActionPrefix ? '92px' : '44px';
   const columns = [
     { key: 'key', label: keyLabel, width: 'minmax(220px, 1.6fr)' },
     { key: 'value', label: valueLabel, width: 'minmax(120px, 1fr)' },
-    { key: 'actions', label: t('操作'), width: '44px' },
+    { key: 'actions', label: t('操作'), width: actionWidth },
   ];
   const rowStyle = {
     display: 'grid',
@@ -110,7 +112,7 @@ export default function SimpleMapTableEditor({
                 data-row-focus-id={record.id === focusRowId ? record.id : undefined}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1.7fr) minmax(88px, 0.9fr) 28px',
+                  gridTemplateColumns: `minmax(0, 1.7fr) minmax(88px, 0.9fr) ${actionWidth}`,
                   columnGap: 8,
                   alignItems: 'center',
                 }}
@@ -128,13 +130,23 @@ export default function SimpleMapTableEditor({
                   suffix={valueSuffix}
                   onChange={(value) => onChangeRow(record.id, 'value', value)}
                 />
-                <Button
-                  size='small'
-                  type='danger'
-                  theme='borderless'
-                  icon={<IconDelete />}
-                  onClick={() => onDeleteRow(record.id)}
-                />
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  {renderRowActionPrefix ? renderRowActionPrefix(record) : null}
+                  <Button
+                    size='small'
+                    type='danger'
+                    theme='borderless'
+                    icon={<IconDelete />}
+                    onClick={() => onDeleteRow(record.id)}
+                  />
+                </div>
               </div>
             ) : (
               <>
@@ -149,13 +161,22 @@ export default function SimpleMapTableEditor({
                   <Text type='tertiary' size='small'>
                     {keyLabel}
                   </Text>
-                  <Button
-                    size='small'
-                    type='danger'
-                    theme='borderless'
-                    icon={<IconDelete />}
-                    onClick={() => onDeleteRow(record.id)}
-                  />
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    {renderRowActionPrefix ? renderRowActionPrefix(record) : null}
+                    <Button
+                      size='small'
+                      type='danger'
+                      theme='borderless'
+                      icon={<IconDelete />}
+                      onClick={() => onDeleteRow(record.id)}
+                    />
+                  </div>
                 </div>
                 <Input
                   size='small'
@@ -201,13 +222,23 @@ export default function SimpleMapTableEditor({
               suffix={valueSuffix}
               onChange={(value) => onChangeRow(record.id, 'value', value)}
             />
-            <Button
-              size='small'
-              type='danger'
-              theme='borderless'
-              icon={<IconDelete />}
-              onClick={() => onDeleteRow(record.id)}
-            />
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              {renderRowActionPrefix ? renderRowActionPrefix(record) : null}
+              <Button
+                size='small'
+                type='danger'
+                theme='borderless'
+                icon={<IconDelete />}
+                onClick={() => onDeleteRow(record.id)}
+              />
+            </div>
           </div>
         )
         ))}
