@@ -21,19 +21,14 @@ Use `ops/README.md` as the operations entry point before doing any deployment, m
 | --- | --- | --- | --- |
 | `kkidc` 生产环境 | 当前启用 | `https://api.aisever.cn` | 当前真实生产流量 |
 | `kkidc` 测试环境 | 按需启动 | `http://114.66.47.192:3001` | 新功能验证，测试后需关闭 |
-| `tencent` 测试环境 | 按需启动 | `http://123.206.229.105:3001` | `tencent` 服务器候选分支验证，测试后需关闭 |
-| `tencent` 预备生产环境 | 已部署未启用 | `http://123.206.229.105:3000` / `https://api.aisever.art` | 切换目标环境，当前不是生产流量入口 |
 
 Deployment workflow reminders:
 - Read `ops/environments/README.md` first.
 - Use `ops/checklists/` for routine test / production / cutover operations.
-- If the task touches `tencent` test deployment, also read `docs/installation/TENCENT_TEST.md`.
-- If the task touches `tencent` standby deployment or cutover, also read `docs/installation/DEPLOYMENT.md`.
-- Do not confuse `tencent` test with `tencent` standby; the standby environment is still non-production.
 
 ## Project Skills
 
-- `new-api-release-workflow`: Use for official version selection, stable-vs-alpha判断, `codex/release-*` 升级分支创建, 私有补丁迁移, 以及测试/生产/腾讯云待切流环境的发布流程分析。Skill file: `.codex/skills/new-api-release-workflow/SKILL.md`
+- `new-api-release-workflow`: Use for official version selection, stable-vs-alpha判断, `codex/release-*` 升级分支创建, 私有补丁迁移, 以及本地/`kkidc` 测试与生产环境的发布流程分析。Skill file: `.codex/skills/new-api-release-workflow/SKILL.md`
 
 ## Architecture
 
@@ -167,13 +162,11 @@ All deployment, start/stop, restore, and environment update operations MUST go t
 
 - Local Docker test environment: use `ops/scripts/local-test-env.sh`
 - `kkidc` environments: use `ops/scripts/kkidc-host-deploy.sh`
-- `tencent` environments: use the corresponding `ops/scripts/tencent-*.sh` entrypoint or `ops/scripts/deploy-from-branch.sh` when explicitly documented
-
 Do NOT treat ad-hoc SSH command sequences, temporary shell history, or `.tmp` scripts as a normal deployment path.
 
 ### Rule 9: Server Deployments — Only Ship Committed Code
 
-For any server environment (`kkidc` test/production, `tencent` test/standby):
+For any server environment currently in use (`kkidc` test/production):
 
 - Only deploy committed repository state.
 - Do NOT ship local uncommitted changes to a server environment.
