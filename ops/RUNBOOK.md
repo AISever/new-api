@@ -32,6 +32,12 @@ bash ops/scripts/kkidc-host-deploy.sh test-stop
 
 ## 2. `kkidc` 生产环境
 
+备份：
+
+```bash
+bash ops/scripts/kkidc-host-backup.sh production
+```
+
 发布：
 
 ```bash
@@ -48,4 +54,5 @@ curl https://api.aisever.cn/api/status
 
 1. 先发 `kkidc` 测试并验证。
 2. 验证完成后关闭 `kkidc` 测试。
-3. 再发 `kkidc` 生产。
+3. 如涉及数据库、配置或数据迁移，先执行 `bash ops/scripts/kkidc-host-backup.sh production`。
+4. 再发 `kkidc` 生产。
