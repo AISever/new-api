@@ -156,23 +156,19 @@ When implementing or adjusting frontend responsive behavior:
 - Do NOT introduce feature-local breakpoints such as `430`, `520`, or other ad-hoc thresholds in business components unless they are first promoted into a shared project-level constant with a documented reason.
 - For mobile/desktop branching, align with the project's existing mobile boundary instead of creating a second responsive system inside a page or widget.
 
-### Rule 8: Deployment Entrypoints — Use Repository Scripts
+### Rule 8: Environment Operations — Use Repository Entrypoints
 
-All deployment, start/stop, restore, and environment update operations MUST go through the repository's formal script entrypoints documented in `ops/README.md`.
+All environment operations MUST go through the repository's formal script entrypoints documented in `ops/README.md`. This includes deploy, start/stop, backup, restore, reset, and environment update work.
 
 - Local Docker test environment: use `ops/scripts/local-test-env.sh`
-- `kkidc` environments: use `ops/scripts/kkidc-host-deploy.sh`
-Do NOT treat ad-hoc SSH command sequences, temporary shell history, or `.tmp` scripts as a normal deployment path.
-
-### Rule 9: Server Deployments — Only Ship Committed Code
-
-For any server environment currently in use (`kkidc` test/production):
-
-- Only deploy committed repository state.
+- `kkidc` deploy/start/stop: use `ops/scripts/kkidc-host-deploy.sh`
+- `kkidc` backup: use `ops/scripts/kkidc-host-backup.sh`
+- Server environments may only operate on committed repository state.
 - Do NOT ship local uncommitted changes to a server environment.
 - If a workflow needs local-only verification, use the local Docker test environment instead of bypassing the server deployment rules.
+- Do NOT treat ad-hoc SSH command sequences, temporary shell history, or `.tmp` scripts as a normal environment operation path.
 
-### Rule 10: Interactive Config Editors — Keep JSON Semantics Intact
+### Rule 9: Interactive Config Editors — Keep JSON Semantics Intact
 
 When converting JSON configuration into table/form editors:
 
@@ -181,7 +177,7 @@ When converting JSON configuration into table/form editors:
 - Invalid JSON must block destructive synchronization; do NOT silently overwrite or discard it.
 - If one editor mutates another option through linkage, the UI must show that linkage explicitly and must fail safely when the linked source is invalid.
 
-### Rule 11: UI Interaction Changes — Require Page-Level Verification
+### Rule 10: UI Interaction Changes — Require Page-Level Verification
 
 For frontend changes involving interaction behavior, linked settings, focus management, or mobile layout:
 

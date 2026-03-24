@@ -7,6 +7,7 @@
 - 确认本次代码来自预定分支，且已明确版本/提交号。
 - 先阅读 `ops/environments/kkidc-test.md`。
 - 如涉及数据库、计费、模型倍率、登录等核心功能，先记录回滚点。
+- 如需保留当前测试环境数据，先执行 `bash ops/scripts/kkidc-host-backup.sh test`。
 - 确认不会误操作 `kkidc` 生产环境 `:3000`。
 
 ## 发布中
