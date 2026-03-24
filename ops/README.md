@@ -36,6 +36,8 @@
 - 本地 Docker 测试环境的部署、更新、重置、备份必须通过 `ops/scripts/local-test-env.sh`。
 - `kkidc` 测试/生产环境的部署、启动、停止必须通过 `ops/scripts/kkidc-host-deploy.sh`。
 - `kkidc` 测试/生产环境的数据库与运行目录备份必须通过 `ops/scripts/kkidc-host-backup.sh`。
+- `ops/scripts/kkidc-host-deploy.sh` 默认使用本地 Docker 构建镜像；本地不可构建时直接失败，不自动退回服务器构建。
+- `--build-strategy remote` / `legacy-remote` 仅保留为显式紧急选项，不作为常规发布路径。
 - 服务器环境只允许部署或操作已提交的仓库状态；需要验证未提交改动时，先用本地 Docker 测试环境。
 - 不要把 SSH 登录后手动执行的临时命令、shell history、`.tmp` 脚本视为正式入口。
 

@@ -110,8 +110,8 @@ if ! printf '%s\n' "$PROD_OUTPUT" | grep -q '^sync_prod_data_from_legacy=false$'
   exit 1
 fi
 
-if ! printf '%s\n' "$PROD_OUTPUT" | grep -q '^build_strategy=remote$'; then
-  echo "FAIL: production auto build strategy should fall back to remote on the target host" >&2
+if ! printf '%s\n' "$PROD_OUTPUT" | grep -q '^build_strategy=local$'; then
+  echo "FAIL: production auto build strategy should resolve to local" >&2
   exit 1
 fi
 
