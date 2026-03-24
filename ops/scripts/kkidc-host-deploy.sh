@@ -54,6 +54,12 @@ REDIS_CONTAINER="new-api-redis"
 CADDY_CONTAINER="snowlight-caddy"
 BUILD_STRATEGY_RESOLVED=""
 LEGACY_BUILD_DIR=""
+DURATION_STAGE_SECONDS="0"
+DURATION_IMAGE_SECONDS="0"
+DURATION_DATA_SYNC_SECONDS="0"
+DURATION_REMOTE_START_SECONDS="0"
+DURATION_VERIFY_SECONDS="0"
+DURATION_TOTAL_SECONDS="0"
 
 usage() {
   cat <<EOF
@@ -78,6 +84,12 @@ EOF
 
 log() {
   printf '[%s] %s\n' "$1" "$2"
+}
+
+elapsed_seconds() {
+  local started_at="$1"
+  local finished_at="$2"
+  echo $((finished_at - started_at))
 }
 
 die() {
@@ -320,6 +332,18 @@ server_address=${SERVER_ADDRESS}
 stage_dir=${STAGE_DIR}
 build_strategy=${BUILD_STRATEGY_RESOLVED}
 sync_prod_data_from_legacy=${SYNC_PROD_DATA_FROM_LEGACY}
+EOF
+}
+
+print_deploy_summary() {
+  print_dry_run
+  cat <<EOF
+duration_stage_seconds=${DURATION_STAGE_SECONDS}
+duration_image_seconds=${DURATION_IMAGE_SECONDS}
+duration_data_sync_seconds=${DURATION_DATA_SYNC_SECONDS}
+duration_remote_start_seconds=${DURATION_REMOTE_START_SECONDS}
+duration_verify_seconds=${DURATION_VERIFY_SECONDS}
+duration_total_seconds=${DURATION_TOTAL_SECONDS}
 EOF
 }
 
@@ -652,6 +676,13 @@ EOF
 }
 
 main() {
+  local total_started_at="$SECONDS"
+  local stage_started_at
+  local image_started_at
+  local data_sync_started_at
+  local remote_start_started_at
+  local verify_started_at
+
   parse_args "$@"
   load_host_config
 
@@ -670,9 +701,11 @@ main() {
   load_app_env
   resolve_git_version
   resolve_target_settings
+  stage_started_at="$SECONDS"
   stage_clean_repo
   resolve_build_strategy
   validate_requested_operation
+  DURATION_STAGE_SECONDS="$(elapsed_seconds "$stage_started_at" "$SECONDS")"
 
   if [ "$DRY_RUN" = "true" ]; then
     print_dry_run
@@ -680,18 +713,31 @@ main() {
   fi
 
   check_dependencies
+
+  image_started_at="$SECONDS"
   prepare_remote_runtime
   ensure_test_database
   build_remote_image
+  DURATION_IMAGE_SECONDS="$(elapsed_seconds "$image_started_at" "$SECONDS")"
+
+  data_sync_started_at="$SECONDS"
   sync_production_data_from_legacy
+  DURATION_DATA_SYNC_SECONDS="$(elapsed_seconds "$data_sync_started_at" "$SECONDS")"
+
+  remote_start_started_at="$SECONDS"
   deploy_remote_app
+  DURATION_REMOTE_START_SECONDS="$(elapsed_seconds "$remote_start_started_at" "$SECONDS")"
+
+  verify_started_at="$SECONDS"
   verify_remote_app
   update_server_address_option
   configure_remote_caddy
   verify_remote_entrypoint
   clear_remote_cache
+  DURATION_VERIFY_SECONDS="$(elapsed_seconds "$verify_started_at" "$SECONDS")"
+  DURATION_TOTAL_SECONDS="$(elapsed_seconds "$total_started_at" "$SECONDS")"
 
-  print_dry_run
+  print_deploy_summary
 }
 
 main "$@"

@@ -62,4 +62,11 @@ if ! printf '%s\n' "$OUTPUT" | grep -q '^target_env=test$'; then
   exit 1
 fi
 
+for field in duration_stage_seconds duration_image_seconds duration_data_sync_seconds duration_remote_start_seconds duration_verify_seconds duration_total_seconds; do
+  if ! printf '%s\n' "$OUTPUT" | grep -Eq "^${field}=[0-9]+$"; then
+    echo "FAIL: expected ${field} in final output" >&2
+    exit 1
+  fi
+done
+
 echo "PASS: kkidc host deploy completes non-build flow without silent early exit"
