@@ -283,8 +283,6 @@ resolve_build_strategy() {
     auto)
       if local_docker_available; then
         BUILD_STRATEGY_RESOLVED="local"
-      elif [ -n "$LEGACY_BUILD_HOST" ] && [ -n "$LEGACY_BUILD_USER" ] && [ -n "$LEGACY_BUILD_PASSWORD" ] && [ "$LEGACY_BUILD_HOST" != "$REMOTE_HOST" ]; then
-        BUILD_STRATEGY_RESOLVED="legacy-remote"
       else
         BUILD_STRATEGY_RESOLVED="remote"
       fi
