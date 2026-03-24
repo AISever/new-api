@@ -43,9 +43,24 @@ EOF
 
 OUTPUT="$(REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" test --config "$CONFIG_FILE" --dry-run)"
 
-if ! printf '%s\n' "$OUTPUT" | grep -q '^build_strategy=remote$'; then
-  echo "FAIL: auto build strategy should prefer target-host remote build over legacy remote build" >&2
+if ! printf '%s\n' "$OUTPUT" | grep -q '^build_strategy=local$'; then
+  echo "FAIL: auto build strategy should resolve to local build" >&2
   exit 1
 fi
 
-echo "PASS: kkidc host deploy auto build strategy prefers remote target host"
+set +e
+RUN_OUTPUT="$(REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" test --config "$CONFIG_FILE" 2>&1)"
+RUN_EXIT="$?"
+set -e
+
+if [ "$RUN_EXIT" -eq 0 ]; then
+  echo "FAIL: actual deploy should fail closed when local docker is unavailable" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$RUN_OUTPUT" | grep -q 'local docker is unavailable for build strategy=local'; then
+  echo "FAIL: expected local-docker-unavailable failure message" >&2
+  exit 1
+fi
+
+echo "PASS: kkidc host deploy auto build strategy resolves to local and fails closed without local docker"

@@ -74,7 +74,7 @@ Options:
   --dry-run             print resolved settings and staged source path
   --keep-stage-dir      keep staged archive directory after exit
   --skip-build          reuse existing remote image tag for current HEAD
-  --build-strategy MODE auto | local | legacy-remote | remote (default: auto)
+  --build-strategy MODE auto | local | legacy-remote | remote (default: auto -> local)
   --clear-cache         flush Redis DB for the target environment after deploy
   --sync-prod-data-from-legacy
                         restore old kkidc production data onto the new host before deploy
@@ -281,11 +281,7 @@ resolve_build_strategy() {
 
   case "$BUILD_STRATEGY_REQUESTED" in
     auto)
-      if local_docker_available; then
-        BUILD_STRATEGY_RESOLVED="local"
-      else
-        BUILD_STRATEGY_RESOLVED="remote"
-      fi
+      BUILD_STRATEGY_RESOLVED="local"
       ;;
     local|legacy-remote|remote)
       BUILD_STRATEGY_RESOLVED="$BUILD_STRATEGY_REQUESTED"
