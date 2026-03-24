@@ -6,14 +6,11 @@
 - `origin`: your working repository `AISever/new-api`
 - `main`: keep aligned with `upstream/main`
 - `codex/release-vX.Y.Z-pN`: custom release branch based on one official stable tag
-- `codex/prod-live`: deployment branch for validated code
 
 ## 2. Environment truth
 
-- `kkidc` production: `http://202.140.142.149:3000`
-- `kkidc` test: `http://202.140.142.149:3001`
-- `tencent` test: `http://123.206.229.105:3001`
-- `tencent` standby: `http://123.206.229.105:3000` / planned `https://api.aisever.art`
+- `kkidc` production: see `ops/environments/README.md`
+- `kkidc` test: see `ops/environments/README.md`
 
 Read `ops/environments/README.md` before any deployment advice.
 
@@ -31,8 +28,7 @@ Read `ops/environments/README.md` before any deployment advice.
 4. Cherry-pick only the commits that still matter.
 5. Resolve conflicts with minimum divergence from upstream.
 6. Validate locally, then in test.
-7. Update `codex/prod-live` after validation.
-8. Deploy active production only after test passes.
+7. Deploy active production only after test passes.
 
 ## 5. Command skeleton
 
@@ -44,15 +40,9 @@ git pull --ff-only upstream main
 git switch -c codex/release-vX.Y.Z-pN vX.Y.Z
 git cherry-pick <commit>...
 
-git switch codex/prod-live
-git merge --ff-only codex/release-vX.Y.Z-pN
 ```
 
 ## 6. Deployment entry points
 
 - `kkidc` test: `ops/checklists/kkidc-test-release.md`
 - `kkidc` production: `ops/checklists/kkidc-production-release.md`
-- `tencent` test: `ops/checklists/tencent-test-release.md`
-- `tencent` cutover: `ops/checklists/tencent-cutover.md`
-- `tencent` test deployment: `docs/installation/TENCENT_TEST.md`
-- `tencent` detailed deployment: `docs/installation/DEPLOYMENT.md`

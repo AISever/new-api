@@ -6,7 +6,7 @@
 
 - 先阅读 `ops/environments/kkidc-production.md`。
 - 确认本次改动已经在 `kkidc` 测试环境验证通过。
-- 确认当前操作目标是 `kkidc` 生产，而不是 `tencent` 预备生产。
+- 确认当前操作目标是 `kkidc` 生产环境。
 - 如涉及数据库、配置、数据迁移，先做备份并记录回滚方案。
 
 ## 发布中
