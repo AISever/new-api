@@ -110,6 +110,11 @@ if ! printf '%s\n' "$PROD_OUTPUT" | grep -q '^sync_prod_data_from_legacy=false$'
   exit 1
 fi
 
+if ! printf '%s\n' "$PROD_OUTPUT" | grep -q '^build_strategy=remote$'; then
+  echo "FAIL: production auto build strategy should fall back to remote on the target host" >&2
+  exit 1
+fi
+
 if ! printf '%s\n' "$PROD_VERSION" | grep -q '^codex/release-v0.11.2-patch.2-p1+'; then
   echo "FAIL: production version should include branch prefix" >&2
   exit 1
