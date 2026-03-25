@@ -72,7 +72,7 @@ if [ "$(cat "$PROD_STAGE_DIR/payload.txt")" != "clean" ]; then
   exit 1
 fi
 
-if ! grep -q "NODE_OPTIONS='--max-old-space-size=2048'" "$PROD_STAGE_DIR/Dockerfile.deploy"; then
+if ! grep -q "NODE_OPTIONS='--max-old-space-size=4096'" "$PROD_STAGE_DIR/Dockerfile.deploy"; then
   echo "FAIL: staged Dockerfile.deploy should inject frontend NODE_OPTIONS" >&2
   exit 1
 fi
