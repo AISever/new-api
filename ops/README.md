@@ -58,6 +58,7 @@
 
 - 2026-03-25 使用本地 `linux/amd64` 构建并发布 `kkidc` 测试环境时，`c6407d4d` 的实测结果为：
   - `duration_image_seconds=355`
+  - `duration_image_build_seconds` / `duration_image_export_seconds` / `duration_image_upload_seconds` / `duration_image_load_seconds` 已在脚本中单独输出，可用于继续判断是否有必要引入镜像仓库。
   - `duration_remote_start_seconds=2`
   - `duration_verify_seconds=14`
   - `duration_total_seconds=372`

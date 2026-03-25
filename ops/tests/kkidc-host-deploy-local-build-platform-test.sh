@@ -85,9 +85,15 @@ if ! grep -q -- "--platform linux/amd64 -t new-api:kkidc-test-" "$DOCKER_LOG"; t
   exit 1
 fi
 
-if ! grep -q "^save new-api:kkidc-test-" "$DOCKER_LOG"; then
-  echo "FAIL: expected local image save step" >&2
+if ! grep -q "^save -o .* new-api:kkidc-test-" "$DOCKER_LOG"; then
+  echo "FAIL: expected local image export step" >&2
   cat "$DOCKER_LOG" >&2
+  exit 1
+fi
+
+if ! grep -q "docker load -i '/opt/new-api-build-test/new-api-kkidc-test-" "$SSH_LOG"; then
+  echo "FAIL: expected remote docker load step using transferred archive" >&2
+  cat "$SSH_LOG" >&2
   exit 1
 fi
 
@@ -95,5 +101,12 @@ if ! printf '%s\n' "$OUTPUT" | grep -q '^build_strategy=local$'; then
   echo "FAIL: expected local build strategy in final output" >&2
   exit 1
 fi
+
+for field in duration_image_build_seconds duration_image_export_seconds duration_image_upload_seconds duration_image_load_seconds; do
+  if ! printf '%s\n' "$OUTPUT" | grep -Eq "^${field}=[0-9]+$"; then
+    echo "FAIL: expected ${field} in final output" >&2
+    exit 1
+  fi
+done
 
 echo "PASS: kkidc host deploy local build targets linux/amd64 before remote load"
