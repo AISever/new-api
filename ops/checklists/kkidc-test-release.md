@@ -15,7 +15,7 @@
 
 - 按 `kkidc` 测试环境既有方式部署。
 - 记录本次部署分支、提交 SHA、部署时间。
-- 记录脚本输出的阶段耗时，至少保留 `duration_image_seconds` 和 `duration_total_seconds`。
+- 记录脚本输出的阶段耗时，至少保留 `duration_image_seconds`、`duration_image_build_seconds`、`duration_image_upload_seconds`、`duration_image_load_seconds`、`duration_total_seconds`。
 - 如有配置变更，记录是否同步修改了数据库 option / `.env` / 面板配置。
 
 ## 发布后验证

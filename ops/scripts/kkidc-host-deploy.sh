@@ -57,6 +57,10 @@ BUILD_STRATEGY_RESOLVED=""
 LEGACY_BUILD_DIR=""
 DURATION_STAGE_SECONDS="0"
 DURATION_IMAGE_SECONDS="0"
+DURATION_IMAGE_BUILD_SECONDS="0"
+DURATION_IMAGE_EXPORT_SECONDS="0"
+DURATION_IMAGE_UPLOAD_SECONDS="0"
+DURATION_IMAGE_LOAD_SECONDS="0"
 DURATION_DATA_SYNC_SECONDS="0"
 DURATION_REMOTE_START_SECONDS="0"
 DURATION_VERIFY_SECONDS="0"
@@ -347,6 +351,10 @@ print_deploy_summary() {
   cat <<EOF
 duration_stage_seconds=${DURATION_STAGE_SECONDS}
 duration_image_seconds=${DURATION_IMAGE_SECONDS}
+duration_image_build_seconds=${DURATION_IMAGE_BUILD_SECONDS}
+duration_image_export_seconds=${DURATION_IMAGE_EXPORT_SECONDS}
+duration_image_upload_seconds=${DURATION_IMAGE_UPLOAD_SECONDS}
+duration_image_load_seconds=${DURATION_IMAGE_LOAD_SECONDS}
 duration_data_sync_seconds=${DURATION_DATA_SYNC_SECONDS}
 duration_remote_start_seconds=${DURATION_REMOTE_START_SECONDS}
 duration_verify_seconds=${DURATION_VERIFY_SECONDS}
@@ -440,7 +448,7 @@ copy_file_to_remote() {
 prepare_remote_runtime() {
   remote_bash <<EOF
 set -euo pipefail
-mkdir -p '${DATA_DIR}' '${LOG_DIR}' /opt/snowlight /opt/snowlight/data /opt/snowlight/config
+mkdir -p '${DATA_DIR}' '${LOG_DIR}' '${REMOTE_BUILD_DIR}' /opt/snowlight /opt/snowlight/data /opt/snowlight/config
 docker network inspect '${REMOTE_NETWORK}' >/dev/null 2>&1 || docker network create '${REMOTE_NETWORK}' >/dev/null
 EOF
 }
@@ -458,23 +466,51 @@ EOF
 }
 
 build_remote_image() {
+  local step_started_at
+  local image_archive_path
+  local remote_image_archive_path
+
   case "$BUILD_STRATEGY_RESOLVED" in
     skip)
       return
       ;;
     local)
+      step_started_at="$SECONDS"
       docker build --platform "$TARGET_IMAGE_PLATFORM" -t "$IMAGE_NAME" -f "$STAGE_DIR/Dockerfile.deploy" "$STAGE_DIR"
-      docker save "$IMAGE_NAME" | remote_cmd "docker load >/dev/null"
+      DURATION_IMAGE_BUILD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
+
+      image_archive_path="$(mktemp "${TMPDIR:-/tmp}/kkidc-image-${TARGET_ENV}-${SHA}-XXXXXX.tar")"
+      remote_image_archive_path="${REMOTE_BUILD_DIR}/${IMAGE_NAME//[:\/]/-}.tar"
+
+      step_started_at="$SECONDS"
+      docker save -o "$image_archive_path" "$IMAGE_NAME"
+      DURATION_IMAGE_EXPORT_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
+
+      step_started_at="$SECONDS"
+      copy_file_to_remote "$image_archive_path" "$remote_image_archive_path"
+      DURATION_IMAGE_UPLOAD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
+
+      step_started_at="$SECONDS"
+      remote_cmd "docker load -i '$remote_image_archive_path' >/dev/null && rm -f '$remote_image_archive_path'"
+      DURATION_IMAGE_LOAD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
+
+      rm -f "$image_archive_path"
       ;;
     legacy-remote)
       LEGACY_BUILD_DIR="/tmp/new-api-build-${TARGET_ENV}-${SHA}"
       sync_stage_to_host "$LEGACY_BUILD_HOST" "$LEGACY_BUILD_USER" "$LEGACY_BUILD_PASSWORD" "$LEGACY_BUILD_DIR"
+      step_started_at="$SECONDS"
       legacy_cmd "cd '$LEGACY_BUILD_DIR' && docker build -t '$IMAGE_NAME' -f Dockerfile.deploy ."
+      DURATION_IMAGE_BUILD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
+      step_started_at="$SECONDS"
       legacy_cmd "docker save '$IMAGE_NAME'" | remote_cmd "docker load >/dev/null"
+      DURATION_IMAGE_UPLOAD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
       ;;
     remote)
       sync_stage_to_host "$REMOTE_HOST" "$REMOTE_USER" "$REMOTE_PASSWORD" "$REMOTE_BUILD_DIR"
+      step_started_at="$SECONDS"
       remote_cmd "cd '$REMOTE_BUILD_DIR' && docker build -t '$IMAGE_NAME' -f Dockerfile.deploy ."
+      DURATION_IMAGE_BUILD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
       ;;
   esac
 }
