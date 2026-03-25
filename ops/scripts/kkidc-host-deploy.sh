@@ -9,6 +9,7 @@ CONFIG_FILE="$PROJECT_ROOT/.kkidc/.env.lighthouse"
 APP_ENV_FILE="${APP_ENV_FILE:-$PROJECT_ROOT/.env.local}"
 FRONTEND_BUILD_NODE_OPTIONS="${FRONTEND_BUILD_NODE_OPTIONS:---max-old-space-size=2048}"
 BUILD_STRATEGY_REQUESTED="${BUILD_STRATEGY:-auto}"
+TARGET_IMAGE_PLATFORM="${TARGET_IMAGE_PLATFORM:-linux/amd64}"
 
 TARGET_ENV=""
 ACTION="deploy"
@@ -301,6 +302,17 @@ stage_clean_repo() {
   cp "$STAGE_DIR/Dockerfile" "$STAGE_DIR/Dockerfile.deploy"
   sed -i.bak "s|RUN go mod download|RUN go env -w GOPROXY=https://goproxy.cn,direct \\&\\& go mod download|" "$STAGE_DIR/Dockerfile.deploy"
   sed -i.bak "s|RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=\$(cat VERSION) npm run build|RUN DISABLE_ESLINT_PLUGIN='true' NODE_OPTIONS='${FRONTEND_BUILD_NODE_OPTIONS}' VITE_REACT_APP_VERSION=\$(cat VERSION) npm run build|" "$STAGE_DIR/Dockerfile.deploy"
+  python3 - "$STAGE_DIR/Dockerfile.deploy" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+content = path.read_text()
+needle = "RUN apk add --no-cache ca-certificates tzdata wget \\"
+replacement = "RUN sed -i 's|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g' /etc/apk/repositories \\\n    && apk add --no-cache ca-certificates tzdata wget \\"
+if needle in content:
+    path.write_text(content.replace(needle, replacement, 1))
+PY
   rm -f "$STAGE_DIR/Dockerfile.deploy.bak"
 }
 
@@ -325,6 +337,7 @@ version_value=${VERSION_VALUE}
 server_address=${SERVER_ADDRESS}
 stage_dir=${STAGE_DIR}
 build_strategy=${BUILD_STRATEGY_RESOLVED}
+target_image_platform=${TARGET_IMAGE_PLATFORM}
 sync_prod_data_from_legacy=${SYNC_PROD_DATA_FROM_LEGACY}
 EOF
 }
@@ -450,7 +463,7 @@ build_remote_image() {
       return
       ;;
     local)
-      docker build -t "$IMAGE_NAME" -f "$STAGE_DIR/Dockerfile.deploy" "$STAGE_DIR"
+      docker build --platform "$TARGET_IMAGE_PLATFORM" -t "$IMAGE_NAME" -f "$STAGE_DIR/Dockerfile.deploy" "$STAGE_DIR"
       docker save "$IMAGE_NAME" | remote_cmd "docker load >/dev/null"
       ;;
     legacy-remote)
