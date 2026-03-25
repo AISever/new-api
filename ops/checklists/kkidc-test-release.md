@@ -6,6 +6,7 @@
 
 - 确认本次代码来自预定分支，且已明确版本/提交号。
 - 先阅读 `ops/environments/kkidc-test.md`。
+- 确认本地 Docker 可用；当前 `kkidc` 默认要求本地 `linux/amd64` 构建。
 - 如涉及数据库、计费、模型倍率、登录等核心功能，先记录回滚点。
 - 如需保留当前测试环境数据，先执行 `bash ops/scripts/kkidc-host-backup.sh test`。
 - 确认不会误操作 `kkidc` 生产环境 `:3000`。
@@ -14,6 +15,7 @@
 
 - 按 `kkidc` 测试环境既有方式部署。
 - 记录本次部署分支、提交 SHA、部署时间。
+- 记录脚本输出的阶段耗时，至少保留 `duration_image_seconds` 和 `duration_total_seconds`。
 - 如有配置变更，记录是否同步修改了数据库 option / `.env` / 面板配置。
 
 ## 发布后验证

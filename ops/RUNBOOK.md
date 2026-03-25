@@ -8,6 +8,7 @@
 - 需要发布到 `kkidc` 时，先阅读 `ops/environments/README.md`。
 - 测试环境默认不常驻；验证完成后必须执行 stop。
 - `kkidc` 发布默认在本地 Docker 构建镜像，再上传到服务器；本地无法构建时应先修复本地环境，而不是常规退回服务器构建。
+- 本地 Docker 需要可用；当前默认目标平台是 `linux/amd64`，默认前端堆限制是 `4096`。
 
 ## 1. `kkidc` 测试环境
 
@@ -30,6 +31,7 @@ bash ops/scripts/kkidc-host-deploy.sh test-stop
 ```
 
 说明：`test-stop` 只停止 `new-api-test`，保留 `new-api-test` 数据库、Redis `db 1`、`/opt/new-api-test/data`、`/opt/new-api-test/logs`。
+近期实测：2026-03-25 本地构建 + 上传测试环境总耗时约 `372s`，其中镜像构建阶段约 `355s`。
 
 ## 2. `kkidc` 生产环境
 

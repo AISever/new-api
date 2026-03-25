@@ -38,6 +38,8 @@
 - `kkidc` 测试/生产环境的数据库与运行目录备份必须通过 `ops/scripts/kkidc-host-backup.sh`。
 - `ops/scripts/kkidc-host-deploy.sh` 默认使用本地 Docker 构建镜像；本地不可构建时直接失败，不自动退回服务器构建。
 - `--build-strategy remote` / `legacy-remote` 仅保留为显式紧急选项，不作为常规发布路径。
+- 当前 `kkidc` 本地构建默认使用 `linux/amd64` 目标平台，避免 Apple Silicon 本地镜像直接推到 `amd64` 服务器后出现 `exec format error`。
+- 当前 `kkidc` 本地构建默认使用 `FRONTEND_BUILD_NODE_OPTIONS=--max-old-space-size=4096`，并在部署专用 `Dockerfile.deploy` 中把 Alpine 包源切到阿里云镜像，避免本地交叉构建 OOM 或 Alpine 官方源波动导致失败。
 - 服务器环境只允许部署或操作已提交的仓库状态；需要验证未提交改动时，先用本地 Docker 测试环境。
 - 不要把 SSH 登录后手动执行的临时命令、shell history、`.tmp` 脚本视为正式入口。
 
@@ -51,6 +53,14 @@
 2. 验证通过后再部署到新 `kkidc` 生产环境（`https://api.aisever.cn`）。
 3. 发布前如涉及数据库、配置或数据迁移，先执行 `bash ops/scripts/kkidc-host-backup.sh production` 生成备份。
 4. `kkidc` 测试环境默认不常驻，验证结束后必须执行 stop 关闭测试应用。
+
+参考耗时：
+
+- 2026-03-25 使用本地 `linux/amd64` 构建并发布 `kkidc` 测试环境时，`c6407d4d` 的实测结果为：
+  - `duration_image_seconds=355`
+  - `duration_remote_start_seconds=2`
+  - `duration_verify_seconds=14`
+  - `duration_total_seconds=372`
 
 ## 6. 部署脚本抽象边界
 
