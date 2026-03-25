@@ -22,7 +22,9 @@ EOF
 cat > "$REPO_DIR/Dockerfile" <<'EOF'
 FROM scratch
 RUN go mod download
-RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) bun run build
+RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) npm run build
+RUN apk add --no-cache ca-certificates tzdata wget \
+    && update-ca-certificates
 EOF
 mkdir -p "$REPO_DIR/ops/scripts"
 
@@ -67,6 +69,16 @@ fi
 
 if [ "$(cat "$PROD_STAGE_DIR/payload.txt")" != "clean" ]; then
   echo "FAIL: staged payload should come from committed HEAD, not dirty working tree" >&2
+  exit 1
+fi
+
+if ! grep -q "NODE_OPTIONS='--max-old-space-size=2048'" "$PROD_STAGE_DIR/Dockerfile.deploy"; then
+  echo "FAIL: staged Dockerfile.deploy should inject frontend NODE_OPTIONS" >&2
+  exit 1
+fi
+
+if ! grep -q "mirrors.aliyun.com/alpine" "$PROD_STAGE_DIR/Dockerfile.deploy"; then
+  echo "FAIL: staged Dockerfile.deploy should rewrite Alpine package mirror" >&2
   exit 1
 fi
 
