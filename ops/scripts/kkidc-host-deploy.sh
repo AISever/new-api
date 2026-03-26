@@ -10,6 +10,8 @@ APP_ENV_FILE="${APP_ENV_FILE:-$PROJECT_ROOT/.env.local}"
 FRONTEND_BUILD_NODE_OPTIONS="${FRONTEND_BUILD_NODE_OPTIONS:---max-old-space-size=4096}"
 BUILD_STRATEGY_REQUESTED="${BUILD_STRATEGY:-auto}"
 TARGET_IMAGE_PLATFORM="${TARGET_IMAGE_PLATFORM:-linux/amd64}"
+REMOTE_BUILD_MIN_MEM_AVAILABLE_MB="${REMOTE_BUILD_MIN_MEM_AVAILABLE_MB:-2048}"
+REMOTE_BUILD_MAX_LOAD1="${REMOTE_BUILD_MAX_LOAD1:-4.00}"
 
 TARGET_ENV=""
 ACTION="deploy"
@@ -372,6 +374,30 @@ check_dependencies() {
   command -v tar >/dev/null 2>&1 || die "tar is required"
   if [ "$BUILD_STRATEGY_RESOLVED" = "local" ] && ! local_docker_available; then
     die "local docker is unavailable for build strategy=local"
+  fi
+}
+
+check_remote_build_guard() {
+  local mem_available_mb
+  local load1
+
+  if [ "$BUILD_STRATEGY_RESOLVED" != "remote" ]; then
+    return
+  fi
+
+  mem_available_mb="$(remote_cmd "free -m | awk '/^Mem:/ {print \$7}'")"
+  load1="$(remote_cmd "uptime | awk -F'load average: ' '{print \$2}' | cut -d',' -f1 | tr -d ' '")"
+
+  if [ -z "$mem_available_mb" ] || [ -z "$load1" ]; then
+    die "remote build guard could not determine host resources"
+  fi
+
+  if [ "$mem_available_mb" -lt "$REMOTE_BUILD_MIN_MEM_AVAILABLE_MB" ]; then
+    die "remote build guard rejected current host state: MemAvailable=${mem_available_mb}MB < ${REMOTE_BUILD_MIN_MEM_AVAILABLE_MB}MB"
+  fi
+
+  if ! awk -v value="$load1" -v max="$REMOTE_BUILD_MAX_LOAD1" 'BEGIN { exit !(value <= max) }'; then
+    die "remote build guard rejected current host state: load1=${load1} > ${REMOTE_BUILD_MAX_LOAD1}"
   fi
 }
 
@@ -756,6 +782,7 @@ main() {
   fi
 
   check_dependencies
+  check_remote_build_guard
 
   image_started_at="$SECONDS"
   prepare_remote_runtime
