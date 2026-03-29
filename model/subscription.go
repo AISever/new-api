@@ -169,7 +169,7 @@ type SubscriptionPlan struct {
 	UpgradeGroup string `json:"upgrade_group" gorm:"type:varchar(64);default:''"`
 
 	// Effective groups for request-time subscription billing (empty = all groups)
-	EffectiveGroups string `json:"effective_groups" gorm:"type:text;default:''"`
+	EffectiveGroups string `json:"effective_groups" gorm:"type:text"`
 
 	// Total quota (amount in quota units, 0 = unlimited)
 	TotalAmount int64 `json:"total_amount" gorm:"type:bigint;not null;default:0"`
