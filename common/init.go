@@ -78,6 +78,16 @@ func InitEnv() {
 		}
 	}
 
+	SiteAssetDir = GetEnvOrDefaultString("SITE_ASSET_DIR", SiteAssetDir)
+	var err error
+	SiteAssetDir, err = filepath.Abs(SiteAssetDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := os.MkdirAll(SiteAssetDir, 0o755); err != nil {
+		log.Fatal(err)
+	}
+
 	// Initialize variables from constants.go that were using environment variables
 	DebugEnabled = os.Getenv("DEBUG") == "true"
 	MemoryCacheEnabled = os.Getenv("MEMORY_CACHE_ENABLED") == "true"

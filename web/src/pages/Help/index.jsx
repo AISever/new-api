@@ -5,14 +5,26 @@ This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
 published by the Free Software Foundation, either version 3 of the
 License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useState, useContext } from 'react';
+import React, { useMemo, useState, useContext } from 'react';
 import { Tabs, TabPane, Card, Typography, Collapse, Tag, Banner, Toast } from '@douyinfe/semi-ui';
 import { IconCode, IconTerminal, IconDesktop, IconApps, IconCopy } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
 import { useActualTheme } from '../../context/Theme';
+import { useIsMobile } from '../../hooks/common/useIsMobile';
+import { buildDisplayHelpGroupCards } from '../../components/settings/utils/helpGroupCards';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -22,9 +34,14 @@ const Help = () => {
   const [activeTab, setActiveTab] = useState('claude-code');
   const [activePlatform, setActivePlatform] = useState('windows');
   const actualTheme = useActualTheme();
+  const isMobile = useIsMobile();
 
   // 获取服务器地址
   const serverAddress = statusState?.status?.server_address || window.location.origin;
+  const helpGroupCards = useMemo(
+    () => buildDisplayHelpGroupCards(statusState?.status?.help_group_cards || []),
+    [statusState?.status?.help_group_cards],
+  );
 
   const CodeBlock = ({ children }) => {
     const isDark = actualTheme === 'dark';
@@ -522,27 +539,89 @@ EOF`}</CodeBlock>
 
   return (
     <div className="mt-[60px] px-4 py-6 max-w-6xl mx-auto">
-      {/* 微信群邀请 */}
-      <Card className="mb-6" bodyStyle={{ padding: '16px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <img 
-            src="/WeChat-qun.jpg" 
-            alt={t('微信群二维码')}
-            style={{ 
-              width: '180px', 
-              height: '180px', 
-              borderRadius: '8px',
-              flexShrink: 0
-            }} 
-          />
-          <div>
-            <Title heading={5} style={{ marginBottom: '8px' }}>{t('欢迎加微信群沟通交流')}</Title>
-            <Paragraph style={{ marginBottom: 0, color: 'var(--semi-color-text-2)' }}>
-              {t('扫描二维码加入 AIGC 交流群，与更多开发者一起探讨 AI 编程工具的使用技巧和最佳实践。')}
-            </Paragraph>
+      {helpGroupCards.length === 1 ? (
+        <Card className="mb-6" bodyStyle={{ padding: '16px 24px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '20px',
+            }}
+          >
+            <img
+              src={helpGroupCards[0].image_url}
+              alt={helpGroupCards[0].title || t('群聊卡片图片')}
+              style={{
+                width: isMobile ? '100%' : '180px',
+                maxWidth: '220px',
+                aspectRatio: '1 / 1',
+                objectFit: 'cover',
+                borderRadius: '12px',
+                flexShrink: 0,
+              }}
+            />
+            <div>
+              {helpGroupCards[0].label ? (
+                <Text
+                  style={{
+                    display: 'inline-block',
+                    marginBottom: '8px',
+                    color: 'var(--semi-color-text-2)',
+                  }}
+                >
+                  {helpGroupCards[0].label}
+                </Text>
+              ) : null}
+              <Title heading={5} style={{ marginBottom: '8px' }}>
+                {helpGroupCards[0].title}
+              </Title>
+              <Paragraph style={{ marginBottom: 0, color: 'var(--semi-color-text-2)' }}>
+                {helpGroupCards[0].description}
+              </Paragraph>
+            </div>
           </div>
+        </Card>
+      ) : null}
+
+      {helpGroupCards.length > 1 ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile
+              ? '1fr'
+              : 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px',
+          }}
+        >
+          {helpGroupCards.map((card) => (
+            <Card key={card.id} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <img
+                  src={card.image_url}
+                  alt={card.title || t('群聊卡片图片')}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    objectFit: 'cover',
+                    borderRadius: '12px',
+                  }}
+                />
+                {card.label ? (
+                  <Text style={{ color: 'var(--semi-color-text-2)' }}>{card.label}</Text>
+                ) : null}
+                <Title heading={5} style={{ marginBottom: 0 }}>
+                  {card.title}
+                </Title>
+                <Paragraph style={{ marginBottom: 0, color: 'var(--semi-color-text-2)' }}>
+                  {card.description}
+                </Paragraph>
+              </div>
+            </Card>
+          ))}
         </div>
-      </Card>
+      ) : null}
 
       <Title heading={2} className="mb-6">{t('AI 编程工具使用指南')}</Title>
       
