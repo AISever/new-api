@@ -33,6 +33,7 @@ import { marked } from 'marked';
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
 import Text from '@douyinfe/semi-ui/lib/es/typography/text';
+import HelpGroupCardsSetting from './HelpGroupCardsSetting';
 
 const LEGAL_USER_AGREEMENT_KEY = 'legal.user_agreement';
 const LEGAL_PRIVACY_POLICY_KEY = 'legal.privacy_policy';
@@ -48,6 +49,7 @@ const OtherSetting = () => {
     Footer: '',
     About: '',
     HomePageContent: '',
+    HelpGroupCards: '[]',
   });
   let [loading, setLoading] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -81,6 +83,7 @@ const OtherSetting = () => {
     HomePageContent: false,
     About: false,
     Footer: false,
+    HelpGroupCards: false,
     CheckUpdate: false,
   });
   const handleInputChange = async (value, e) => {
@@ -225,6 +228,19 @@ const OtherSetting = () => {
       showError('页脚内容更新失败');
     } finally {
       setLoadingInput((loadingInput) => ({ ...loadingInput, Footer: false }));
+    }
+  };
+
+  const submitHelpGroupCards = async (value) => {
+    try {
+      setLoadingInput((state) => ({ ...state, HelpGroupCards: true }));
+      await updateOption('HelpGroupCards', value);
+      showSuccess(t('群聊卡片已更新'));
+    } catch (error) {
+      console.error('群聊卡片更新失败', error);
+      showError(t('群聊卡片更新失败'));
+    } finally {
+      setLoadingInput((state) => ({ ...state, HelpGroupCards: false }));
     }
   };
 
@@ -497,6 +513,11 @@ const OtherSetting = () => {
             </Form.Section>
           </Card>
         </Form>
+        <HelpGroupCardsSetting
+          value={inputs.HelpGroupCards}
+          saving={loadingInput['HelpGroupCards']}
+          onSave={submitHelpGroupCards}
+        />
       </Col>
       <Modal
         title={t('新版本') + '：' + updateData.tag_name}
