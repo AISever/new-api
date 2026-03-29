@@ -175,6 +175,11 @@ func SetApiRouter(router *gin.Engine) {
 			optionRoute.POST("/rest_model_ratio", controller.ResetModelRatio)
 			optionRoute.POST("/migrate_console_setting", controller.MigrateConsoleSetting) // 用于迁移检测的旧键，下个版本会删除
 		}
+		siteAssetRoute := apiRouter.Group("/site-assets")
+		siteAssetRoute.Use(middleware.RootAuth())
+		{
+			siteAssetRoute.POST("/upload", middleware.UploadRateLimit(), controller.UploadSiteAsset)
+		}
 
 		// Custom OAuth provider management (root only)
 		customOAuthRoute := apiRouter.Group("/custom-oauth-provider")
