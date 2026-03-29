@@ -93,6 +93,7 @@ var LinuxDOMinimumTrustLevel = 0
 var WeChatServerAddress = ""
 var WeChatServerToken = ""
 var WeChatAccountQRCodeImageURL = ""
+var SiteAssetDir = "./data/site-assets"
 
 var TurnstileSiteKey = ""
 var TurnstileSecretKey = ""
