@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -23,6 +24,18 @@ type TopUp struct {
 	CreateTime      int64   `json:"create_time"`
 	CompleteTime    int64   `json:"complete_time"`
 	Status          string  `json:"status"`
+}
+
+type AdminTopUpFilter struct {
+	Keyword       string
+	Status        string
+	PaymentMethod string
+}
+
+type AdminTopUpItem struct {
+	TopUp
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name"`
 }
 
 func (topUp *TopUp) Insert() error {
@@ -158,6 +171,61 @@ func GetAllTopUps(pageInfo *common.PageInfo) (topups []*TopUp, total int64, err 
 	}
 
 	if err = tx.Order("id desc").Limit(pageInfo.GetPageSize()).Offset(pageInfo.GetStartIdx()).Find(&topups).Error; err != nil {
+		tx.Rollback()
+		return nil, 0, err
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		return nil, 0, err
+	}
+
+	return topups, total, nil
+}
+
+func GetAdminTopUps(pageInfo *common.PageInfo, filter AdminTopUpFilter) (topups []*AdminTopUpItem, total int64, err error) {
+	tx := DB.Begin()
+	if tx.Error != nil {
+		return nil, 0, tx.Error
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	query := tx.Model(&TopUp{}).
+		Select("top_ups.*, users.username, users.display_name").
+		Joins("LEFT JOIN users ON users.id = top_ups.user_id")
+
+	keyword := strings.TrimSpace(filter.Keyword)
+	if keyword != "" {
+		like := "%%" + keyword + "%%"
+		query = query.Where(
+			"top_ups.trade_no LIKE ? OR top_ups.provider_trade_no LIKE ? OR users.username LIKE ? OR users.display_name LIKE ?",
+			like,
+			like,
+			like,
+			like,
+		)
+	}
+
+	if status := strings.TrimSpace(filter.Status); status != "" {
+		query = query.Where("top_ups.status = ?", status)
+	}
+
+	if paymentMethod := strings.TrimSpace(filter.PaymentMethod); paymentMethod != "" {
+		query = query.Where("top_ups.payment_method = ?", paymentMethod)
+	}
+
+	if err = query.Count(&total).Error; err != nil {
+		tx.Rollback()
+		return nil, 0, err
+	}
+
+	if err = query.Order("top_ups.id desc").
+		Limit(pageInfo.GetPageSize()).
+		Offset(pageInfo.GetStartIdx()).
+		Find(&topups).Error; err != nil {
 		tx.Rollback()
 		return nil, 0, err
 	}

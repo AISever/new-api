@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -449,24 +450,27 @@ func GetUserTopUps(c *gin.Context) {
 // GetAllTopUps 管理员获取全平台充值记录
 func GetAllTopUps(c *gin.Context) {
 	pageInfo := common.GetPageQuery(c)
-	keyword := c.Query("keyword")
+	filter := model.AdminTopUpFilter{
+		Keyword:       strings.TrimSpace(c.Query("keyword")),
+		Status:        strings.TrimSpace(c.Query("status")),
+		PaymentMethod: strings.TrimSpace(c.Query("payment_method")),
+	}
 
 	var (
-		topups []*model.TopUp
+		topups []*model.AdminTopUpItem
 		total  int64
 		err    error
 	)
-	if keyword != "" {
-		topups, total, err = model.SearchAllTopUps(keyword, pageInfo)
-	} else {
-		topups, total, err = model.GetAllTopUps(pageInfo)
-	}
+	topups, total, err = model.GetAdminTopUps(pageInfo, filter)
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
 	for index, topUp := range topups {
-		topups[index] = syncPendingLdxpTopUp(c.Request.Context(), topUp)
+		synced := syncPendingLdxpTopUp(c.Request.Context(), &topUp.TopUp)
+		if synced != nil {
+			topups[index].TopUp = *synced
+		}
 	}
 
 	pageInfo.SetTotal(int(total))

@@ -35,6 +35,7 @@ import Channel from './pages/Channel';
 import Token from './pages/Token';
 import Redemption from './pages/Redemption';
 import TopUp from './pages/TopUp';
+import TopupOrders from './pages/TopupOrders';
 import LdxpTopupPayPage from './pages/LdxpTopupPay';
 import LdxpSubscriptionPayPage from './pages/LdxpSubscriptionPay';
 import Log from './pages/Log';
@@ -278,6 +279,16 @@ function App() {
                 <TopUp />
               </Suspense>
             </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/topup-orders'
+          element={
+            <AdminRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <TopupOrders />
+              </Suspense>
+            </AdminRoute>
           }
         />
         <Route

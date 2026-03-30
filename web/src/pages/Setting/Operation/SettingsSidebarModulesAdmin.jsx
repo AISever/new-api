@@ -66,6 +66,7 @@ export default function SettingsSidebarModulesAdmin(props) {
       redemption: true,
       user: true,
       subscription: true,
+      topupOrders: true,
       setting: true,
     },
   });
@@ -127,6 +128,7 @@ export default function SettingsSidebarModulesAdmin(props) {
         redemption: true,
         user: true,
         subscription: true,
+        topupOrders: true,
         setting: true,
       },
     };
@@ -196,6 +198,7 @@ export default function SettingsSidebarModulesAdmin(props) {
             redemption: true,
             user: true,
             subscription: true,
+            topupOrders: true,
             setting: true,
           },
         };
@@ -264,6 +267,11 @@ export default function SettingsSidebarModulesAdmin(props) {
           key: 'subscription',
           title: t('订阅管理'),
           description: t('订阅套餐管理'),
+        },
+        {
+          key: 'topupOrders',
+          title: t('充值订单'),
+          description: t('在线充值与钱包充值订单记录'),
         },
         {
           key: 'redemption',
