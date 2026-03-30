@@ -18,9 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  Banner,
   Button,
   Card,
   Spin,
@@ -31,6 +30,7 @@ import { API, showError, showSuccess } from '../../helpers';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { getLdxpPayLayout } from './utils/ldxpPayLayout';
+import { shouldAutoStartLdxpPay } from './utils/ldxpPayAutostart';
 import { launchLdxpExternalPay } from './utils/ldxpPayLaunch';
 import { formatUserFacingLdxpPlanTitle } from './utils/ldxpDisplay';
 
@@ -63,6 +63,7 @@ function formatMoney(value) {
 const LdxpOrderPay = ({ mode = 'topup' }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { trade_no: tradeNo = '' } = useParams();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
@@ -168,6 +169,22 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
   }, [isSubscription, loadOrder, navigate, pollingActive, showIframe, successPath, t]);
 
   const layout = useMemo(() => getLdxpPayLayout(isMobile), [isMobile]);
+  const autoStartRequested = useMemo(
+    () => shouldAutoStartLdxpPay({ isMobile, search: location.search }),
+    [isMobile, location.search],
+  );
+
+  useEffect(() => {
+    if (!autoStartRequested || showIframe || !order?.payment_url || !isOrderPayable(order.status)) {
+      return;
+    }
+    setIframeLoaded(false);
+    setIframeStalled(false);
+    setIframeVersion((current) => current + 1);
+    setShowIframe(true);
+    setMobilePayLaunched(false);
+    setPollingActive(true);
+  }, [autoStartRequested, order, showIframe]);
 
   useEffect(() => {
     if (!layout.mobileUsesExternalPayFlow || !mobilePayLaunched) {
@@ -241,7 +258,7 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
   if (!order) {
     return (
       <div className={`${layout.pageClassName} ${layout.shellClassName}`}>
-        <Card className={layout.heroCardClassName}>
+        <Card className={layout.sideCardClassName}>
           <Text>{t('订单不存在或已无法访问')}</Text>
         </Card>
       </div>
@@ -264,40 +281,47 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
     },
   ];
 
-  const compactButtonClassName = isMobile ? 'w-full' : 'w-full justify-center';
+  const compactButtonClassName = 'w-full justify-center';
   const startButtonLabel = layout.mobileUsesExternalPayFlow ? t('打开官方支付页') : t('开始支付');
-  const shouldRenderEmbeddedPayPanel = !layout.mobileUsesExternalPayFlow || showIframe;
+  const showStatusBanner = iframeStalled || (layout.mobileUsesExternalPayFlow && mobilePayLaunched);
+  const workspaceHint = layout.mobileUsesExternalPayFlow
+    ? mobilePayLaunched
+      ? t('支付已在官方页面或支付宝应用中发起，完成后回到当前订单页检查结果。')
+      : t('支付将在官方页面或支付宝应用中完成，当前订单页会保留在 new-api 中。')
+    : t('点击左侧“开始支付”后，这里会加载支付页面。');
 
   return (
     <div className={layout.pageClassName}>
       <div className={layout.shellClassName}>
         <div className={layout.contentGridClassName}>
-          <Card className={layout.heroCardClassName}>
+          <Card className={layout.sideCardClassName}>
             <div className='space-y-4'>
-              <div className='space-y-1'>
-                <Title heading={isMobile ? 5 : 4} className='!mb-0'>
-                  {t(isSubscription ? '订阅支付' : '充值支付')}
-                </Title>
-                <Text type='tertiary'>{payHint}</Text>
+              <div className='space-y-3'>
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='min-w-0 space-y-1'>
+                    <Title heading={isMobile ? 5 : 4} className='!mb-0'>
+                      {t(isSubscription ? '订阅支付' : '充值支付')}
+                    </Title>
+                    <Text type='tertiary'>{t('请先核对订单信息，再进入支付流程。')}</Text>
+                  </div>
+                  <Tag color={statusColorMap[order.status] || 'grey'}>
+                    {t(statusLabelMap[order.status] || order.status || '未知状态')}
+                  </Tag>
+                </div>
+                {showStatusBanner && (
+                  <div className='rounded-2xl border border-[var(--semi-color-border)] bg-[var(--semi-color-fill-0)] px-4 py-3'>
+                    <Text type='secondary'>{payHint}</Text>
+                  </div>
+                )}
               </div>
-
-              <Banner
-                type={iframeStalled ? 'warning' : 'info'}
-                fullMode={false}
-                className='!w-full'
-                description={payHint}
-              />
 
               <div className={layout.summaryGridClassName}>
                 {summaryItems.map((item) => (
-                  <div
-                    key={item.key}
-                    className='rounded-xl border border-[var(--semi-color-border)] bg-[var(--semi-color-fill-0)] px-3 py-3'
-                  >
+                  <div key={item.key} className={layout.summaryRowClassName}>
                     <Text type='tertiary' size='small'>
                       {item.key}
                     </Text>
-                    <div className='mt-1 break-all text-sm sm:text-base font-medium text-[var(--semi-color-text-0)]'>
+                    <div className={layout.summaryValueClassName}>
                       {item.value}
                     </div>
                   </div>
@@ -324,6 +348,7 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
                       setIframeStalled(false);
                       setIframeVersion((current) => current + 1);
                       setShowIframe(true);
+                      setMobilePayLaunched(false);
                       setPollingActive(true);
                     }}
                     disabled={!isOrderPayable(order.status) || !order.payment_url}
@@ -350,28 +375,47 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
             </div>
           </Card>
 
-          <Card className={layout.heroCardClassName}>
-            {!shouldRenderEmbeddedPayPanel ? (
-              <div className={layout.placeholderClassName}>
-                <div className='max-w-xl space-y-3 text-left'>
+          <Card className={layout.mainCardClassName}>
+            {!showIframe ? (
+              <div className='space-y-4'>
+                <div className='space-y-1'>
                   <Title heading={isMobile ? 6 : 5} className='!mb-0'>
-                    {t('移动端支付说明')}
+                    {t('支付工作区')}
                   </Title>
-                  <Text type='tertiary'>{payHint}</Text>
-                  <div className='space-y-2 text-sm text-[var(--semi-color-text-1)]'>
-                    <div>{t('1. 点击“打开官方支付页”拉起支付。')}</div>
-                    <div>{t('2. 系统可能打开新标签页，或直接唤起支付宝应用。')}</div>
-                    <div>{t('3. 支付完成后回到当前订单页，再点击“检查结果”。')}</div>
-                  </div>
+                  <Text type='tertiary'>{workspaceHint}</Text>
                 </div>
-              </div>
-            ) : !showIframe ? (
-              <div className={layout.placeholderClassName}>
-                <div className='max-w-xl space-y-3'>
-                  <Title heading={isMobile ? 6 : 5} className='!mb-0'>
-                    {t('支付页面')}
-                  </Title>
-                  <Text type='tertiary'>{payHint}</Text>
+
+                <div className={layout.workspaceSplitClassName}>
+                  <div
+                    className={layout.placeholderClassName}
+                    style={{ minHeight: `${layout.placeholderHeight}px` }}
+                  >
+                    <div className='max-w-xl space-y-3'>
+                      <Title heading={isMobile ? 6 : 5} className='!mb-0'>
+                        {t('支付页面')}
+                      </Title>
+                      <Text type='tertiary'>{workspaceHint}</Text>
+                    </div>
+                  </div>
+
+                  <div className={layout.workspaceAsideClassName}>
+                    <div className='space-y-3'>
+                      <Title heading={6} className='!mb-0'>
+                        {t('支付流程')}
+                      </Title>
+                      <div className='space-y-2 text-sm text-[var(--semi-color-text-1)]'>
+                        <div>{t('1. 先核对左侧订单金额与状态。')}</div>
+                        <div>
+                          {t(
+                            layout.mobileUsesExternalPayFlow
+                              ? '2. 点击“打开官方支付页”，系统可能新开页面或唤起支付宝。'
+                              : '2. 点击“开始支付”，在当前页面完成支付。',
+                          )}
+                        </div>
+                        <div>{t('3. 支付完成后返回当前订单页，点击“检查结果”。')}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (

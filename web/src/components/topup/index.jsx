@@ -390,7 +390,7 @@ const TopUp = () => {
         const data = res.data.data || {};
         if (data.order_id) {
           resetLdxpTopupDialog();
-          navigate(buildLdxpTopupPayPath(data.order_id));
+          navigate(buildLdxpTopupPayPath(data.order_id, { autoStart: true }));
         } else {
           showError(t('支付订单创建成功，但缺少订单号'));
           return;

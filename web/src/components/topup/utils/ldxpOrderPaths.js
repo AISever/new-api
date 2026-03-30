@@ -1,7 +1,20 @@
-export function buildLdxpTopupPayPath(tradeNo) {
-  return `/console/topup/ldxp/orders/${encodeURIComponent(tradeNo)}/pay`;
+function appendAutoStart(path, options = {}) {
+  if (!options?.autoStart) {
+    return path;
+  }
+  return `${path}?autostart=1`;
 }
 
-export function buildLdxpSubscriptionPayPath(tradeNo) {
-  return `/console/subscription/ldxp/orders/${encodeURIComponent(tradeNo)}/pay`;
+export function buildLdxpTopupPayPath(tradeNo, options = {}) {
+  return appendAutoStart(
+    `/console/topup/ldxp/orders/${encodeURIComponent(tradeNo)}/pay`,
+    options,
+  );
+}
+
+export function buildLdxpSubscriptionPayPath(tradeNo, options = {}) {
+  return appendAutoStart(
+    `/console/subscription/ldxp/orders/${encodeURIComponent(tradeNo)}/pay`,
+    options,
+  );
 }

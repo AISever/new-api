@@ -228,7 +228,7 @@ const SubscriptionPlansCard = ({
       if (res.data?.success) {
         const data = res.data.data || {};
         if (data.order_id) {
-          navigate(buildLdxpSubscriptionPayPath(data.order_id));
+          navigate(buildLdxpSubscriptionPayPath(data.order_id, { autoStart: true }));
           closeBuy();
           return;
         }
