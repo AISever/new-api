@@ -269,6 +269,15 @@ func UpdateOption(c *gin.Context) {
 			})
 			return
 		}
+	case "payment_setting.ldxp_topup_products":
+		_, err = operation_setting.ValidateLdxpTopupProductsJSON(option.Value.(string))
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "LDXP 充值档位配置无效: " + err.Error(),
+			})
+			return
+		}
 	case "console_setting.api_info":
 		err = console_setting.ValidateConsoleSettings(option.Value.(string), "ApiInfo")
 		if err != nil {

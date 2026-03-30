@@ -37,6 +37,7 @@ import {
   formatSubscriptionDuration,
   formatSubscriptionResetPeriod,
 } from '../../../helpers/subscriptionFormat';
+import { formatUserFacingLdxpPlanTitle } from '../utils/ldxpDisplay';
 
 const { Text } = Typography;
 
@@ -56,6 +57,7 @@ const SubscriptionPurchaseModal = ({
   onPayStripe,
   onPayCreem,
   onPayEpay,
+  onPayLdxp,
 }) => {
   const plan = selectedPlan?.plan;
   const totalAmount = Number(plan?.total_amount || 0);
@@ -69,7 +71,8 @@ const SubscriptionPurchaseModal = ({
   const hasStripe = enableStripeTopUp && !!plan?.stripe_price_id;
   const hasCreem = enableCreemTopUp && !!plan?.creem_product_id;
   const hasEpay = enableOnlineTopUp && epayMethods.length > 0;
-  const hasAnyPayment = hasStripe || hasCreem || hasEpay;
+  const hasLdxp = !!plan?.ldxp_available;
+  const hasAnyPayment = hasStripe || hasCreem || hasEpay || hasLdxp;
   const purchaseLimit = Number(purchaseLimitInfo?.limit || 0);
   const purchaseCount = Number(purchaseLimitInfo?.count || 0);
   const purchaseLimitReached =
@@ -103,7 +106,7 @@ const SubscriptionPurchaseModal = ({
                   className='text-slate-900 dark:text-slate-100'
                   style={{ maxWidth: 200 }}
                 >
-                  {plan.title}
+                  {formatUserFacingLdxpPlanTitle(plan.title)}
                 </Typography.Text>
               </div>
               <div className='flex justify-between items-center'>
@@ -186,12 +189,12 @@ const SubscriptionPurchaseModal = ({
               </Text>
 
               {/* Stripe / Creem */}
-              {(hasStripe || hasCreem) && (
-                <div className='flex gap-2'>
+              {(hasStripe || hasCreem || hasLdxp) && (
+                <div className='flex flex-wrap gap-2'>
                   {hasStripe && (
                     <Button
                       theme='light'
-                      className='flex-1'
+                      className='flex-1 min-w-[120px]'
                       icon={<SiStripe size={14} color='#635BFF' />}
                       onClick={onPayStripe}
                       loading={paying}
@@ -203,13 +206,25 @@ const SubscriptionPurchaseModal = ({
                   {hasCreem && (
                     <Button
                       theme='light'
-                      className='flex-1'
+                      className='flex-1 min-w-[120px]'
                       icon={<IconCreditCard />}
                       onClick={onPayCreem}
                       loading={paying}
                       disabled={purchaseLimitReached}
                     >
                       Creem
+                    </Button>
+                  )}
+                  {hasLdxp && (
+                    <Button
+                      theme='light'
+                      className='flex-1 min-w-[120px]'
+                      icon={<IconCreditCard />}
+                      onClick={onPayLdxp}
+                      loading={paying}
+                      disabled={purchaseLimitReached}
+                    >
+                      {t('在线支付')}
                     </Button>
                   )}
                 </div>

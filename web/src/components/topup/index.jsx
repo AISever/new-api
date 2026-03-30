@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useEffect, useState, useContext, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   API,
   showError,
@@ -29,7 +29,7 @@ import {
   copy,
   getQuotaPerUnit,
 } from '../../helpers';
-import { Modal, Toast } from '@douyinfe/semi-ui';
+import { Modal, Toast, Typography } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
@@ -39,9 +39,12 @@ import InvitationCard from './InvitationCard';
 import TransferModal from './modals/TransferModal';
 import PaymentConfirmModal from './modals/PaymentConfirmModal';
 import TopupHistoryModal from './modals/TopupHistoryModal';
+import { buildLdxpTopupPayPath } from './utils/ldxpOrderPaths';
+import { formatUserFacingLdxpProductLabel } from './utils/ldxpDisplay';
 
 const TopUp = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [userState, userDispatch] = useContext(UserContext);
   const [statusState] = useContext(StatusContext);
@@ -75,6 +78,11 @@ const TopUp = () => {
   const [enableWaffoTopUp, setEnableWaffoTopUp] = useState(false);
   const [waffoPayMethods, setWaffoPayMethods] = useState([]);
   const [waffoMinTopUp, setWaffoMinTopUp] = useState(1);
+  const [enableLdxpTopUp, setEnableLdxpTopUp] = useState(false);
+  const [ldxpTopupProducts, setLdxpTopupProducts] = useState([]);
+  const [ldxpTopupOpen, setLdxpTopupOpen] = useState(false);
+  const [selectedLdxpTopupProduct, setSelectedLdxpTopupProduct] =
+    useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
@@ -85,7 +93,6 @@ const TopUp = () => {
   const [payMethods, setPayMethods] = useState([]);
 
   const affFetchedRef = useRef(false);
-
   // 邀请相关状态
   const [affLink, setAffLink] = useState('');
   const [openTransfer, setOpenTransfer] = useState(false);
@@ -346,6 +353,62 @@ const TopUp = () => {
     }
   };
 
+  const ldxpTopUp = async (product) => {
+    setSelectedLdxpTopupProduct(product || null);
+    setLdxpTopupOpen(true);
+  };
+
+  const handleLdxpTopupCancel = () => {
+    if (paymentLoading) {
+      return;
+    }
+    setLdxpTopupOpen(false);
+    setSelectedLdxpTopupProduct(null);
+  };
+
+  const resetLdxpTopupDialog = () => {
+    setLdxpTopupOpen(false);
+    setSelectedLdxpTopupProduct(null);
+  };
+
+  const submitLdxpTopUp = async () => {
+    const amount = Number(selectedLdxpTopupProduct?.amount || 0);
+    if (!enableLdxpTopUp) {
+      showError(t('当前支付方式暂未开启'));
+      return;
+    }
+    if (!amount) {
+      showError(t('当前充值档位无效'));
+      return;
+    }
+    setPaymentLoading(true);
+    try {
+      const res = await API.post('/api/user/ldxp/pay', {
+        amount,
+      });
+      if (res?.data?.message === 'success') {
+        const data = res.data.data || {};
+        if (data.order_id) {
+          resetLdxpTopupDialog();
+          navigate(buildLdxpTopupPayPath(data.order_id));
+        } else {
+          showError(t('支付订单创建成功，但缺少订单号'));
+          return;
+        }
+      } else {
+        const errorMsg =
+          typeof res?.data?.data === 'string'
+            ? res.data.data
+            : res?.data?.message || t('支付请求失败');
+        showError(errorMsg);
+      }
+    } catch (e) {
+      showError(t('支付请求失败'));
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
   const processCreemCallback = (data) => {
     // 与 Stripe 保持一致的实现方式
     window.open(data.checkout_url, '_blank');
@@ -495,6 +558,12 @@ const TopUp = () => {
           setEnableWaffoTopUp(enableWaffoTopUp);
           setWaffoPayMethods(data.waffo_pay_methods || []);
           setWaffoMinTopUp(data.waffo_min_topup || 1);
+          setEnableLdxpTopUp(Boolean(data.ldxp_enabled));
+          setLdxpTopupProducts(
+            Array.isArray(data.ldxp_topup_products)
+              ? data.ldxp_topup_products
+              : [],
+          );
           setMinTopUp(minTopUpValue);
           setTopUpCount(minTopUpValue);
 
@@ -779,6 +848,34 @@ const TopUp = () => {
         )}
       </Modal>
 
+      <Modal
+        title={t('充值确认')}
+        visible={ldxpTopupOpen}
+        onOk={submitLdxpTopUp}
+        onCancel={handleLdxpTopupCancel}
+        maskClosable={!paymentLoading}
+        size='small'
+        centered
+        confirmLoading={paymentLoading}
+      >
+        {selectedLdxpTopupProduct && (
+          <div className='space-y-4'>
+            <div>
+              <Typography.Text strong>{t('充值档位')}：</Typography.Text>
+              <Typography.Text>
+                {formatUserFacingLdxpProductLabel(selectedLdxpTopupProduct.label) || t('固定档位')}
+              </Typography.Text>
+            </div>
+            <div>
+              <Typography.Text strong>{t('充值额度')}：</Typography.Text>
+              <Typography.Text>
+                {renderQuotaWithAmount(selectedLdxpTopupProduct.amount)}
+              </Typography.Text>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* 主布局区域 */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <RechargeCard
@@ -791,6 +888,9 @@ const TopUp = () => {
           enableWaffoTopUp={enableWaffoTopUp}
           waffoTopUp={waffoTopUp}
           waffoPayMethods={waffoPayMethods}
+          enableLdxpTopUp={enableLdxpTopUp}
+          ldxpTopupProducts={ldxpTopupProducts}
+          ldxpTopUp={ldxpTopUp}
           presetAmounts={presetAmounts}
           selectedPreset={selectedPreset}
           selectPresetAmount={selectPresetAmount}

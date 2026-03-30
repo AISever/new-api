@@ -98,6 +98,7 @@ const AddEditSubscriptionModal = ({
     effective_groups: [],
     stripe_price_id: '',
     creem_product_id: '',
+    ldxp_goods_key: '',
   });
 
   const buildFormValues = () => {
@@ -127,6 +128,7 @@ const AddEditSubscriptionModal = ({
         : [],
       stripe_price_id: p.stripe_price_id || '',
       creem_product_id: p.creem_product_id || '',
+      ldxp_goods_key: p.ldxp_goods_key || '',
     };
   };
 
@@ -171,6 +173,7 @@ const AddEditSubscriptionModal = ({
           effective_groups: Array.isArray(values.effective_groups)
             ? values.effective_groups
             : [],
+          ldxp_goods_key: values.ldxp_goods_key || '',
         },
       };
       if (editingPlan?.plan?.id) {
@@ -563,6 +566,15 @@ const AddEditSubscriptionModal = ({
                         field='creem_product_id'
                         label='Creem ProductId'
                         placeholder='prod_...'
+                        showClear
+                      />
+                    </Col>
+
+                    <Col span={24}>
+                      <Form.Input
+                        field='ldxp_goods_key'
+                        label='LDXP GoodsKey'
+                        placeholder='goods_key_...'
                         showClear
                       />
                     </Col>

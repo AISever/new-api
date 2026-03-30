@@ -6,6 +6,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -35,6 +36,8 @@ type SubscriptionPlanPayload struct {
 
 	StripePriceId  string `json:"stripe_price_id"`
 	CreemProductId string `json:"creem_product_id"`
+	LdxpGoodsKey   string `json:"ldxp_goods_key"`
+	LdxpAvailable  bool   `json:"ldxp_available"`
 
 	MaxPurchasePerUser int      `json:"max_purchase_per_user"`
 	UpgradeGroup       string   `json:"upgrade_group"`
@@ -71,6 +74,8 @@ func buildSubscriptionPlanPayload(plan model.SubscriptionPlan) SubscriptionPlanP
 		SortOrder:               plan.SortOrder,
 		StripePriceId:           plan.StripePriceId,
 		CreemProductId:          plan.CreemProductId,
+		LdxpGoodsKey:            strings.TrimSpace(plan.LdxpGoodsKey),
+		LdxpAvailable:           strings.TrimSpace(plan.LdxpGoodsKey) != "",
 		MaxPurchasePerUser:      plan.MaxPurchasePerUser,
 		UpgradeGroup:            plan.UpgradeGroup,
 		EffectiveGroups:         effectiveGroups,
@@ -80,6 +85,13 @@ func buildSubscriptionPlanPayload(plan model.SubscriptionPlan) SubscriptionPlanP
 		CreatedAt:               plan.CreatedAt,
 		UpdatedAt:               plan.UpdatedAt,
 	}
+}
+
+func buildPublicSubscriptionPlanPayload(plan model.SubscriptionPlan, ldxpReady bool) SubscriptionPlanPayload {
+	payload := buildSubscriptionPlanPayload(plan)
+	payload.LdxpGoodsKey = ""
+	payload.LdxpAvailable = payload.LdxpAvailable && ldxpReady
+	return payload
 }
 
 func normalizeAndValidateSubscriptionEffectiveGroups(groups []string) ([]string, bool) {
@@ -118,6 +130,7 @@ func buildSubscriptionPlanModel(payload SubscriptionPlanPayload) (model.Subscrip
 		SortOrder:               payload.SortOrder,
 		StripePriceId:           payload.StripePriceId,
 		CreemProductId:          payload.CreemProductId,
+		LdxpGoodsKey:            strings.TrimSpace(payload.LdxpGoodsKey),
 		MaxPurchasePerUser:      payload.MaxPurchasePerUser,
 		UpgradeGroup:            payload.UpgradeGroup,
 		EffectiveGroups:         effectiveGroupsRaw,
@@ -138,9 +151,10 @@ func GetSubscriptionPlans(c *gin.Context) {
 		return
 	}
 	result := make([]SubscriptionPlanDTO, 0, len(plans))
+	ldxpReady := service.GetLdxpConfig().IsReady()
 	for _, p := range plans {
 		result = append(result, SubscriptionPlanDTO{
-			Plan: buildSubscriptionPlanPayload(p),
+			Plan: buildPublicSubscriptionPlanPayload(p, ldxpReady),
 		})
 	}
 	common.ApiSuccess(c, result)
@@ -150,6 +164,12 @@ func GetSubscriptionSelf(c *gin.Context) {
 	userId := c.GetInt("id")
 	settingMap, _ := model.GetUserSetting(userId, false)
 	pref := common.NormalizeBillingPreference(settingMap.BillingPreference)
+
+	if pendingOrders, err := model.GetPendingSubscriptionOrdersByUserAndMethod(userId, "ldxp"); err == nil {
+		for _, order := range pendingOrders {
+			syncPendingLdxpSubscriptionOrder(c.Request.Context(), order)
+		}
+	}
 
 	// Get all subscriptions (including expired)
 	allSubscriptions, err := model.GetAllUserSubscriptions(userId)
@@ -352,6 +372,7 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 			"sort_order":                 plan.SortOrder,
 			"stripe_price_id":            plan.StripePriceId,
 			"creem_product_id":           plan.CreemProductId,
+			"ldxp_goods_key":             plan.LdxpGoodsKey,
 			"max_purchase_per_user":      plan.MaxPurchasePerUser,
 			"total_amount":               plan.TotalAmount,
 			"upgrade_group":              plan.UpgradeGroup,

@@ -161,6 +161,7 @@ type SubscriptionPlan struct {
 
 	StripePriceId  string `json:"stripe_price_id" gorm:"type:varchar(128);default:''"`
 	CreemProductId string `json:"creem_product_id" gorm:"type:varchar(128);default:''"`
+	LdxpGoodsKey   string `json:"ldxp_goods_key" gorm:"type:varchar(128);default:''"`
 
 	// Max purchases per user (0 = unlimited)
 	MaxPurchasePerUser int `json:"max_purchase_per_user" gorm:"type:int;default:0"`
@@ -279,11 +280,12 @@ type SubscriptionOrder struct {
 	PlanId int     `json:"plan_id" gorm:"index"`
 	Money  float64 `json:"money"`
 
-	TradeNo       string `json:"trade_no" gorm:"unique;type:varchar(255);index"`
-	PaymentMethod string `json:"payment_method" gorm:"type:varchar(50)"`
-	Status        string `json:"status"`
-	CreateTime    int64  `json:"create_time"`
-	CompleteTime  int64  `json:"complete_time"`
+	TradeNo         string `json:"trade_no" gorm:"unique;type:varchar(255);index"`
+	ProviderTradeNo string `json:"provider_trade_no" gorm:"type:varchar(255);default:'';index"`
+	PaymentMethod   string `json:"payment_method" gorm:"type:varchar(50)"`
+	Status          string `json:"status"`
+	CreateTime      int64  `json:"create_time"`
+	CompleteTime    int64  `json:"complete_time"`
 
 	ProviderPayload string `json:"provider_payload" gorm:"type:text"`
 }
@@ -308,6 +310,14 @@ func GetSubscriptionOrderByTradeNo(tradeNo string) *SubscriptionOrder {
 		return nil
 	}
 	return &order
+}
+
+func GetPendingSubscriptionOrdersByUserAndMethod(userId int, paymentMethod string) ([]*SubscriptionOrder, error) {
+	var orders []*SubscriptionOrder
+	err := DB.Where("user_id = ? AND payment_method = ? AND status = ?", userId, paymentMethod, common.TopUpStatusPending).
+		Order("id desc").
+		Find(&orders).Error
+	return orders, err
 }
 
 // User subscription instance

@@ -24,6 +24,7 @@ import SettingsPaymentGateway from '../../pages/Setting/Payment/SettingsPaymentG
 import SettingsPaymentGatewayStripe from '../../pages/Setting/Payment/SettingsPaymentGatewayStripe';
 import SettingsPaymentGatewayCreem from '../../pages/Setting/Payment/SettingsPaymentGatewayCreem';
 import SettingsPaymentGatewayWaffo from '../../pages/Setting/Payment/SettingsPaymentGatewayWaffo';
+import SettingsPaymentGatewayLDXP from '../../pages/Setting/Payment/SettingsPaymentGatewayLDXP';
 import { API, showError, toBoolean } from '../../helpers';
 import { useTranslation } from 'react-i18next';
 
@@ -41,6 +42,11 @@ const PaymentSetting = () => {
     PayMethods: '',
     AmountOptions: '',
     AmountDiscount: '',
+    LdxpEnabled: false,
+    LdxpBaseURL: '',
+    LdxpShopToken: '',
+    LdxpDefaultChannelId: 0,
+    LdxpTopupProducts: '[]',
 
     StripeApiSecret: '',
     StripeWebhookSecret: '',
@@ -92,10 +98,22 @@ const PaymentSetting = () => {
               newInputs['AmountDiscount'] = item.value;
             }
             break;
+          case 'payment_setting.ldxp_topup_products':
+            try {
+              newInputs['LdxpTopupProducts'] = JSON.stringify(
+                JSON.parse(item.value),
+                null,
+                2,
+              );
+            } catch (error) {
+              newInputs['LdxpTopupProducts'] = item.value;
+            }
+            break;
           case 'Price':
           case 'MinTopUp':
           case 'StripeUnitPrice':
           case 'StripeMinTopUp':
+          case 'LdxpDefaultChannelId':
             newInputs[item.key] = parseFloat(item.value);
             break;
           default:
@@ -146,6 +164,9 @@ const PaymentSetting = () => {
         </Card>
         <Card style={{ marginTop: '10px' }}>
           <SettingsPaymentGatewayWaffo options={inputs} refresh={onRefresh} />
+        </Card>
+        <Card style={{ marginTop: '10px' }}>
+          <SettingsPaymentGatewayLDXP options={inputs} refresh={onRefresh} />
         </Card>
       </Spin>
     </>

@@ -90,6 +90,10 @@ func InitOptionMap() {
 	common.OptionMap["CreemTestMode"] = strconv.FormatBool(setting.CreemTestMode)
 	common.OptionMap["CreemWebhookSecret"] = setting.CreemWebhookSecret
 	common.OptionMap["WaffoEnabled"] = strconv.FormatBool(setting.WaffoEnabled)
+	common.OptionMap["LdxpEnabled"] = strconv.FormatBool(setting.LdxpEnabled)
+	common.OptionMap["LdxpBaseURL"] = setting.LdxpBaseURL
+	common.OptionMap["LdxpShopToken"] = setting.LdxpShopToken
+	common.OptionMap["LdxpDefaultChannelId"] = strconv.Itoa(setting.LdxpDefaultChannelId)
 	common.OptionMap["WaffoApiKey"] = setting.WaffoApiKey
 	common.OptionMap["WaffoPrivateKey"] = setting.WaffoPrivateKey
 	common.OptionMap["WaffoPublicCert"] = setting.WaffoPublicCert
@@ -379,8 +383,16 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.CreemWebhookSecret = value
 	case "WaffoEnabled":
 		setting.WaffoEnabled = value == "true"
+	case "LdxpEnabled":
+		setting.LdxpEnabled = value == "true"
 	case "WaffoApiKey":
 		setting.WaffoApiKey = value
+	case "LdxpBaseURL":
+		setting.LdxpBaseURL = value
+	case "LdxpShopToken":
+		setting.LdxpShopToken = value
+	case "LdxpDefaultChannelId":
+		setting.LdxpDefaultChannelId, _ = strconv.Atoi(value)
 	case "WaffoPrivateKey":
 		setting.WaffoPrivateKey = value
 	case "WaffoPublicCert":

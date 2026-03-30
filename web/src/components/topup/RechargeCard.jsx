@@ -48,6 +48,7 @@ import { IconGift } from '@douyinfe/semi-icons';
 import { useMinimumLoadingTime } from '../../hooks/common/useMinimumLoadingTime';
 import { getCurrencyConfig } from '../../helpers/render';
 import SubscriptionPlansCard from './SubscriptionPlansCard';
+import { formatUserFacingLdxpProductLabel } from './utils/ldxpDisplay';
 
 const { Text } = Typography;
 
@@ -89,6 +90,9 @@ const RechargeCard = ({
   enableWaffoTopUp,
   waffoTopUp,
   waffoPayMethods,
+  enableLdxpTopUp,
+  ldxpTopupProducts,
+  ldxpTopUp,
   subscriptionLoading = false,
   subscriptionPlans = [],
   billingPreference,
@@ -104,6 +108,17 @@ const RechargeCard = ({
   const [activeTab, setActiveTab] = useState('topup');
   const shouldShowSubscription =
     !subscriptionLoading && subscriptionPlans.length > 0;
+  const hasManagedTopupChannels =
+    enableOnlineTopUp ||
+    enableStripeTopUp ||
+    enableCreemTopUp ||
+    enableWaffoTopUp ||
+    enableLdxpTopUp;
+  const showFlexibleAmountInput =
+    enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp;
+  const standardPayMethods = (payMethods || []).filter(
+    (method) => method?.type !== 'waffo' && method?.type !== 'ldxp',
+  );
 
   useEffect(() => {
     if (initialTabSetRef.current) return;
@@ -226,13 +241,13 @@ const RechargeCard = ({
           <div className='py-8 flex justify-center'>
             <Spin size='large' />
           </div>
-        ) : enableOnlineTopUp || enableStripeTopUp || enableCreemTopUp || enableWaffoTopUp ? (
+        ) : hasManagedTopupChannels ? (
           <Form
             getFormApi={(api) => (onlineFormApiRef.current = api)}
             initValues={{ topUpCount: topUpCount }}
           >
             <div className='space-y-6'>
-              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp) && (
+              {showFlexibleAmountInput && (
                 <Row gutter={12}>
                   <Col xs={24} sm={24} md={24} lg={10} xl={10}>
                     <Form.InputNumber
@@ -290,11 +305,11 @@ const RechargeCard = ({
                       style={{ width: '100%' }}
                     />
                   </Col>
-                  {payMethods && payMethods.filter(m => m.type !== 'waffo').length > 0 && (
+                  {standardPayMethods.length > 0 && (
                   <Col xs={24} sm={24} md={24} lg={14} xl={14}>
                     <Form.Slot label={t('选择支付方式')}>
                         <Space wrap>
-                          {payMethods.filter(m => m.type !== 'waffo').map((payMethod) => {
+                          {standardPayMethods.map((payMethod) => {
                             const minTopupVal = Number(payMethod.min_topup) || 0;
                             const isStripe = payMethod.type === 'stripe';
                             const disabled =
@@ -360,7 +375,7 @@ const RechargeCard = ({
                 </Row>
               )}
 
-              {(enableOnlineTopUp || enableStripeTopUp || enableWaffoTopUp) && (
+              {showFlexibleAmountInput && (
                 <Form.Slot
                   label={
                     <div className='flex items-center gap-2'>
@@ -477,6 +492,33 @@ const RechargeCard = ({
                         </Card>
                       );
                     })}
+                  </div>
+                </Form.Slot>
+              )}
+
+              {enableLdxpTopUp && ldxpTopupProducts.length > 0 && (
+                <Form.Slot label={t('固定档位充值')}>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+                    {ldxpTopupProducts.map((product) => (
+                      <Button
+                        key={`${product.goods_key || product.amount}`}
+                        theme='outline'
+                        type='tertiary'
+                        onClick={() => ldxpTopUp(product)}
+                        loading={paymentLoading}
+                        disabled={paymentLoading}
+                        className='!h-auto !rounded-lg !px-3 !py-3'
+                      >
+                        <div className='w-full text-left leading-tight'>
+                          <div className='font-medium'>
+                            {formatUserFacingLdxpProductLabel(product.label) || t('固定档位')}
+                          </div>
+                          <div className='text-xs text-[var(--semi-color-text-2)] mt-1'>
+                            {renderQuotaWithAmount(product.amount)}
+                          </div>
+                        </div>
+                      </Button>
+                    ))}
                   </div>
                 </Form.Slot>
               )}

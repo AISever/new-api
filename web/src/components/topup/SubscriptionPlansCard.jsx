@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Badge,
   Button,
@@ -38,13 +39,19 @@ import {
   formatSubscriptionDuration,
   formatSubscriptionResetPeriod,
 } from '../../helpers/subscriptionFormat';
+import { buildLdxpSubscriptionPayPath } from './utils/ldxpOrderPaths';
+import { formatUserFacingLdxpPlanTitle } from './utils/ldxpDisplay';
 
 const { Text } = Typography;
 
 // 过滤易支付方式
 function getEpayMethods(payMethods = []) {
   return (payMethods || []).filter(
-    (m) => m?.type && m.type !== 'stripe' && m.type !== 'creem',
+    (m) =>
+      m?.type &&
+      m.type !== 'stripe' &&
+      m.type !== 'creem' &&
+      m.type !== 'ldxp',
   );
 }
 
@@ -95,11 +102,11 @@ const SubscriptionPlansCard = ({
   withCard = true,
 }) => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paying, setPaying] = useState(false);
   const [selectedEpayMethod, setSelectedEpayMethod] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-
   const epayMethods = useMemo(() => getEpayMethods(payMethods), [payMethods]);
 
   const openBuy = (p) => {
@@ -208,6 +215,38 @@ const SubscriptionPlansCard = ({
     }
   };
 
+  const payLdxp = async () => {
+    if (!selectedPlan?.plan?.ldxp_available) {
+      showError(t('该套餐暂不支持当前支付方式'));
+      return;
+    }
+    setPaying(true);
+    try {
+      const res = await API.post('/api/subscription/ldxp/pay', {
+        plan_id: selectedPlan.plan.id,
+      });
+      if (res.data?.success) {
+        const data = res.data.data || {};
+        if (data.order_id) {
+          navigate(buildLdxpSubscriptionPayPath(data.order_id));
+          closeBuy();
+          return;
+        }
+        showError(t('支付订单创建成功，但缺少订单号'));
+      } else {
+        const errorMsg =
+          typeof res.data?.data === 'string'
+            ? res.data.data
+            : res.data?.message || t('支付失败');
+        showError(errorMsg);
+      }
+    } catch (e) {
+      showError(t('支付请求失败'));
+    } finally {
+      setPaying(false);
+    }
+  };
+
   // 当前订阅信息 - 支持多个订阅
   const hasActiveSubscription = activeSubscriptions.length > 0;
   const hasAnySubscription = allSubscriptions.length > 0;
@@ -237,7 +276,7 @@ const SubscriptionPlansCard = ({
     (plans || []).forEach((p) => {
       const plan = p?.plan;
       if (!plan?.id) return;
-      map.set(plan.id, plan.title || '');
+      map.set(plan.id, formatUserFacingLdxpPlanTitle(plan.title || ''));
     });
     return map;
   }, [plans]);
@@ -554,7 +593,7 @@ const SubscriptionPlansCard = ({
                           ellipsis={{ rows: 1, showTooltip: true }}
                           style={{ margin: 0 }}
                         >
-                          {plan?.title || t('订阅套餐')}
+                          {formatUserFacingLdxpPlanTitle(plan?.title) || t('订阅套餐')}
                         </Typography.Title>
                         {plan?.subtitle && (
                           <Text
@@ -688,6 +727,7 @@ const SubscriptionPlansCard = ({
         onPayStripe={payStripe}
         onPayCreem={payCreem}
         onPayEpay={payEpay}
+        onPayLdxp={payLdxp}
       />
     </>
   );
