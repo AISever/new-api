@@ -63,9 +63,43 @@ bash ops/scripts/kkidc-host-deploy.sh production
 curl https://api.aisever.cn/api/status
 ```
 
-## 3. 发布顺序
+## 3. `kkidc` 企业生产环境
+
+首次上线前备份个人生产：
+
+```bash
+bash ops/scripts/kkidc-host-backup.sh production
+```
+
+企业环境已有线上数据后的常规备份：
+
+```bash
+bash ops/scripts/kkidc-host-backup.sh enterprise
+```
+
+发布：
+
+```bash
+bash ops/scripts/kkidc-host-deploy.sh enterprise
+```
+
+验证：
+
+```bash
+curl http://114.66.47.192:3002/api/status
+```
+
+公网 DNS 切到 `114.66.47.192` 且 `.kkidc/.env.lighthouse` 已配置 `ENTERPRISE_HOSTNAME` 后，再执行：
+
+```bash
+curl https://corp-api.aisever.cn/api/status
+```
+
+说明：若本次企业发布未配置 `ENTERPRISE_HOSTNAME`，或生成的 Caddy 配置与当前远端一致，部署脚本不会重建 `snowlight-caddy`，个人版 `https://api.aisever.cn` 入口应保持不变。
+
+## 4. 发布顺序
 
 1. 先发 `kkidc` 测试并验证。
 2. 验证完成后关闭 `kkidc` 测试。
-3. 如涉及数据库、配置或数据迁移，先执行 `bash ops/scripts/kkidc-host-backup.sh production`。
-4. 再发 `kkidc` 生产。
+3. 在共享主机上首次上线企业环境前，先执行 `bash ops/scripts/kkidc-host-backup.sh production`。
+4. 再发目标生产环境（个人或企业）。
