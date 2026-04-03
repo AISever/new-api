@@ -17,9 +17,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
-import GroupRatioDualModeEditor from './components/GroupRatioDualModeEditor';
+import { useSyncExternalStore } from 'react';
+import {
+  MOBILE_BREAKPOINT,
+  useIsMobile,
+} from '../../../../hooks/common/useIsMobile';
+import { getCompactEditorLayoutMode } from '../utils/editorLayout';
 
-export default function GroupRatioSettings(props) {
-  return <GroupRatioDualModeEditor {...props} />;
+const subscribeViewportWidth = (callback) => {
+  window.addEventListener('resize', callback);
+  return () => window.removeEventListener('resize', callback);
+};
+
+const getViewportWidth = () => window.innerWidth;
+
+export default function useCompactEditorLayoutMode() {
+  const isMobile = useIsMobile();
+  const viewportWidth = useSyncExternalStore(
+    subscribeViewportWidth,
+    getViewportWidth,
+    () => MOBILE_BREAKPOINT,
+  );
+
+  return getCompactEditorLayoutMode({
+    isMobile,
+    viewportWidth,
+  });
 }
