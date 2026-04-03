@@ -77,6 +77,12 @@ bash ops/scripts/kkidc-host-backup.sh production
 bash ops/scripts/kkidc-host-backup.sh enterprise
 ```
 
+如需用生产备份初始化企业环境：
+
+```bash
+bash ops/scripts/kkidc-host-restore.sh enterprise --source-backup-dir /opt/new-api-backups/<timestamp>
+```
+
 发布：
 
 ```bash

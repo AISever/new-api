@@ -9,6 +9,7 @@
 - 确认当前操作目标是 `kkidc` 企业生产环境，而不是个人生产环境。
 - 确认待部署提交已经 push 到远端校验分支。
 - 在共享主机上首次上线企业环境前，先执行 `bash ops/scripts/kkidc-host-backup.sh production`，保留个人生产环境回滚点。
+- 若企业环境需要继承现有生产配置或素材，记录计划导入的生产备份目录，并通过 `bash ops/scripts/kkidc-host-restore.sh enterprise --source-backup-dir <production-backup-dir>` 初始化。
 - 企业环境已有线上数据后，如涉及数据库、配置、数据迁移，再执行 `bash ops/scripts/kkidc-host-backup.sh enterprise`，并记录回滚方案与备份目录。
 - 若计划直接启用公网域名，先确认 `corp-api.aisever.cn` 已解析到 `114.66.47.192`；若未完成 DNS 切流，则保持 `ENTERPRISE_HOSTNAME` 为空，仅通过 `:3002` 验证。
 - 默认走本地构建发布；只有在明确受控窗口内，才允许显式 `BUILD_STRATEGY=remote`。

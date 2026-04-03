@@ -56,6 +56,37 @@ if ! printf '%s\n' "$TEST_OUTPUT" | grep -q '^restore_logs=true$'; then
 fi
 
 set +e
+ENTERPRISE_OUTPUT="$(bash "$SCRIPT_UNDER_TEST" enterprise --config "$CONFIG_FILE" --source-backup-dir "$SOURCE_BACKUP_DIR" --dry-run 2>&1)"
+ENTERPRISE_EXIT="$?"
+set -e
+
+if [ "$ENTERPRISE_EXIT" -ne 0 ]; then
+  echo "FAIL: enterprise dry-run should succeed" >&2
+  echo "$ENTERPRISE_OUTPUT" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$ENTERPRISE_OUTPUT" | grep -q '^target_env=enterprise$'; then
+  echo "FAIL: restore output missing enterprise target env" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$ENTERPRISE_OUTPUT" | grep -q '^pg_db=new-api-enterprise$'; then
+  echo "FAIL: restore should target new-api-enterprise database" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$ENTERPRISE_OUTPUT" | grep -q '^data_dir=/opt/new-api-enterprise/data$'; then
+  echo "FAIL: restore should target enterprise data dir" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$ENTERPRISE_OUTPUT" | grep -q '^restart_via=ops/scripts/kkidc-host-deploy.sh enterprise$'; then
+  echo "FAIL: enterprise restore should restart via enterprise deploy flow" >&2
+  exit 1
+fi
+
+set +e
 PROD_OUTPUT="$(bash "$SCRIPT_UNDER_TEST" production --config "$CONFIG_FILE" --source-backup-dir "$SOURCE_BACKUP_DIR" --dry-run 2>&1)"
 PROD_EXIT="$?"
 set -e
@@ -65,7 +96,7 @@ if [ "$PROD_EXIT" -eq 0 ]; then
   exit 1
 fi
 
-if ! printf '%s\n' "$PROD_OUTPUT" | grep -F -q '[ERROR] restore currently only supports test target'; then
+if ! printf '%s\n' "$PROD_OUTPUT" | grep -F -q '[ERROR] restore does not support production target'; then
   echo "FAIL: expected production target validation message" >&2
   exit 1
 fi
@@ -85,4 +116,4 @@ if ! printf '%s\n' "$MISSING_OUTPUT" | grep -F -q '[ERROR] --source-backup-dir i
   exit 1
 fi
 
-echo "PASS: kkidc host restore dry-run validates test-only restore settings"
+echo "PASS: kkidc host restore dry-run validates test and enterprise restore settings"
