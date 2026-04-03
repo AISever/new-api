@@ -62,6 +62,7 @@ REMOTE_NETWORK="new-api_default"
 POSTGRES_CONTAINER="new-api-postgres"
 REDIS_CONTAINER="new-api-redis"
 CADDY_CONTAINER="snowlight-caddy"
+CADDY_CONFIG_STATUS="not-run"
 BUILD_STRATEGY_RESOLVED=""
 LEGACY_BUILD_DIR=""
 DURATION_STAGE_SECONDS="0"
@@ -427,6 +428,7 @@ app_container=${APP_CONTAINER}
 app_port=${APP_PORT}
 pg_db=${PG_DB}
 redis_conn_string=${REDIS_CONN_STRING}
+caddy_config_status=${CADDY_CONFIG_STATUS}
 data_dir=${DATA_DIR}
 log_dir=${LOG_DIR}
 remote_build_dir=${REMOTE_BUILD_DIR}
@@ -693,6 +695,7 @@ EOF
 configure_remote_caddy() {
   local site_block=""
   local caddyfile_content=""
+  local existing_caddyfile=""
 
   site_block="$(build_caddy_site_block "$PUBLIC_CADDY_SITE_ADDRESSES" "3000")"
   if [ -n "$site_block" ]; then
@@ -709,6 +712,14 @@ configure_remote_caddy() {
   fi
 
   if [ -z "$caddyfile_content" ]; then
+    CADDY_CONFIG_STATUS="skipped-empty"
+    return
+  fi
+
+  existing_caddyfile="$(remote_cmd "cat /opt/snowlight/Caddyfile 2>/dev/null || true")"
+  if [ "$existing_caddyfile" = "$caddyfile_content" ] && remote_cmd "docker container inspect '${CADDY_CONTAINER}' >/dev/null 2>&1"; then
+    log INFO "caddy config unchanged; skipping caddy restart"
+    CADDY_CONFIG_STATUS="unchanged"
     return
   fi
 
@@ -728,6 +739,7 @@ docker run -d \
   -v /opt/snowlight/config:/config \
   registry.cn-beijing.aliyuncs.com/yingxuesec/caddy:2-alpine >/dev/null
 EOF
+  CADDY_CONFIG_STATUS="restarted"
 }
 
 verify_remote_app() {
