@@ -17,9 +17,4 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
-import GroupRatioDualModeEditor from './components/GroupRatioDualModeEditor';
-
-export default function GroupRatioSettings(props) {
-  return <GroupRatioDualModeEditor {...props} />;
-}
+export const DEFAULT_OPTION_EDITOR_MODE = 'json';
