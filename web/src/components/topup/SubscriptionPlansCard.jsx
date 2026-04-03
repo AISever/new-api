@@ -69,6 +69,16 @@ function submitEpayForm({ url, params }) {
   document.body.removeChild(form);
 }
 
+function formatPlanEffectiveGroups(plan, t) {
+  const groups = Array.isArray(plan?.effective_groups)
+    ? plan.effective_groups.filter(Boolean)
+    : [];
+  if (groups.length === 0) {
+    return t('适用全部分组');
+  }
+  return `${t('生效分组')}: ${groups.join(', ')}`;
+}
+
 const SubscriptionPlansCard = ({
   t,
   loading = false,
@@ -506,6 +516,7 @@ const SubscriptionPlansCard = ({
                 const upgradeLabel = plan?.upgrade_group
                   ? `${t('升级分组')}: ${plan.upgrade_group}`
                   : null;
+                const effectiveGroupsLabel = formatPlanEffectiveGroups(plan, t);
                 const resetLabel =
                   formatSubscriptionResetPeriod(plan, t) === t('不重置')
                     ? null
@@ -521,6 +532,7 @@ const SubscriptionPlansCard = ({
                         tooltip: `${t('原生额度')}：${totalAmount}`,
                       }
                     : { label: totalLabel },
+                  { label: effectiveGroupsLabel },
                   limitLabel ? { label: limitLabel } : null,
                   upgradeLabel ? { label: upgradeLabel } : null,
                 ].filter(Boolean);

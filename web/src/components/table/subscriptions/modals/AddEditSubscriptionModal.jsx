@@ -95,6 +95,7 @@ const AddEditSubscriptionModal = ({
     max_purchase_per_user: 0,
     total_amount: 0,
     upgrade_group: '',
+    effective_groups: [],
     stripe_price_id: '',
     creem_product_id: '',
   });
@@ -121,6 +122,9 @@ const AddEditSubscriptionModal = ({
         quotaToDisplayAmount(p.total_amount || 0).toFixed(2),
       ),
       upgrade_group: p.upgrade_group || '',
+      effective_groups: Array.isArray(p.effective_groups)
+        ? p.effective_groups
+        : [],
       stripe_price_id: p.stripe_price_id || '',
       creem_product_id: p.creem_product_id || '',
     };
@@ -164,6 +168,9 @@ const AddEditSubscriptionModal = ({
           max_purchase_per_user: Number(values.max_purchase_per_user || 0),
           total_amount: displayAmountToQuota(values.total_amount),
           upgrade_group: values.upgrade_group || '',
+          effective_groups: Array.isArray(values.effective_groups)
+            ? values.effective_groups
+            : [],
         },
       };
       if (editingPlan?.plan?.id) {
@@ -334,6 +341,26 @@ const AddEditSubscriptionModal = ({
                         )}
                       >
                         <Select.Option value=''>{t('不升级')}</Select.Option>
+                        {(groupOptions || []).map((g) => (
+                          <Select.Option key={g} value={g}>
+                            {g}
+                          </Select.Option>
+                        ))}
+                      </Form.Select>
+                    </Col>
+
+                    <Col span={12}>
+                      <Form.Select
+                        field='effective_groups'
+                        label={t('生效分组')}
+                        multiple
+                        showClear
+                        loading={groupLoading}
+                        placeholder={t('全部分组')}
+                        extraText={t(
+                          '仅当请求实际使用这些分组时才会消耗订阅额度；留空表示全部分组都生效。',
+                        )}
+                      >
                         {(groupOptions || []).map((g) => (
                           <Select.Option key={g} value={g}>
                             {g}
