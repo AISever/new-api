@@ -24,7 +24,6 @@ import {
   Tag,
   Card,
   Button,
-  Banner,
   Skeleton,
   Form,
   Space,
@@ -551,14 +550,14 @@ const RechargeCard = ({
             </div>
           </Form>
         ) : (
-          <Banner
-            type='info'
-            description={t(
-              '管理员未开启在线充值功能，请联系管理员开启或使用兑换码充值。',
-            )}
-            className='!rounded-xl'
-            closeIcon={null}
-          />
+          <div className='flex flex-col gap-3 rounded-xl bg-blue-50 p-4 sm:flex-row sm:items-center dark:bg-blue-900/20'>
+            <img
+              src='/WeChat-qun.jpg'
+              alt={t('充值请加微信群找群主')}
+              className='h-32 w-32 rounded-lg object-cover'
+            />
+            <Text type='secondary'>{t('充值请加微信群找群主')}</Text>
+          </div>
         )}
       </Card>
 

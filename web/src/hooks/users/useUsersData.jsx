@@ -188,6 +188,32 @@ export const useUsersData = () => {
     }
   };
 
+  const topUpUser = async (user, amount) => {
+    if (!user || amount <= 0) {
+      return;
+    }
+    try {
+      const newQuota = (user.quota || 0) + amount;
+      const res = await API.put('/api/user/', {
+        id: user.id,
+        quota: newQuota,
+      });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess(t('操作成功完成！'));
+        setUsers((currentUsers) =>
+          currentUsers.map((item) =>
+            item.id === user.id ? { ...item, quota: newQuota } : item,
+          ),
+        );
+      } else {
+        showError(message || t('操作失败，请重试'));
+      }
+    } catch (error) {
+      showError(t('操作失败，请重试'));
+    }
+  };
+
   // Handle page change
   const handlePageChange = (page) => {
     setActivePage(page);
@@ -307,6 +333,7 @@ export const useUsersData = () => {
     manageUser,
     resetUserPasskey,
     resetUserTwoFA,
+    topUpUser,
     handlePageChange,
     handlePageSizeChange,
     handleRow,

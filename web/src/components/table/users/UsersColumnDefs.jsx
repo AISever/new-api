@@ -202,6 +202,7 @@ const renderOperations = (
   {
     setEditingUser,
     setShowEditUser,
+    showTopUpModal,
     showPromoteModal,
     showDemoteModal,
     showEnableDisableModal,
@@ -274,6 +275,9 @@ const renderOperations = (
       >
         {t('编辑')}
       </Button>
+      <Button type='primary' size='small' onClick={() => showTopUpModal(record)}>
+        {t('充值')}
+      </Button>
       <Button
         type='warning'
         size='small'
@@ -302,6 +306,7 @@ export const getUsersColumns = ({
   t,
   setEditingUser,
   setShowEditUser,
+  showTopUpModal,
   showPromoteModal,
   showDemoteModal,
   showEnableDisableModal,
@@ -359,6 +364,7 @@ export const getUsersColumns = ({
         renderOperations(text, record, {
           setEditingUser,
           setShowEditUser,
+          showTopUpModal,
           showPromoteModal,
           showDemoteModal,
           showEnableDisableModal,
