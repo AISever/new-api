@@ -30,10 +30,10 @@ TARGET_BACKUP_DIR=""
 
 usage() {
   cat <<EOF
-Restore a kkidc backup directory into the kkidc test environment.
+Restore a kkidc backup directory into the kkidc test or enterprise environment.
 
 Usage:
-  $(basename "$0") test [options]
+  $(basename "$0") test|enterprise [options]
 
 Options:
   --config PATH            host config file (default: .kkidc/.env.lighthouse)
@@ -64,8 +64,11 @@ parse_args() {
     test)
       TARGET_ENV="test"
       ;;
-    production|prod|enterprise)
-      die "restore currently only supports test target"
+    enterprise)
+      TARGET_ENV="enterprise"
+      ;;
+    production|prod)
+      die "restore does not support production target"
       ;;
     --help|-h)
       usage
@@ -127,15 +130,25 @@ load_host_config() {
 }
 
 resolve_target_settings() {
-  if [ "$TARGET_ENV" != "test" ]; then
-    die "restore currently only supports test target"
-  fi
-
-  APP_CONTAINER="new-api-test"
-  PG_DB="new-api-test"
-  DATA_DIR="/opt/new-api-test/data"
-  LOG_DIR="/opt/new-api-test/logs"
-  REDIS_DB_INDEX="1"
+  case "$TARGET_ENV" in
+    test)
+      APP_CONTAINER="new-api-test"
+      PG_DB="new-api-test"
+      DATA_DIR="/opt/new-api-test/data"
+      LOG_DIR="/opt/new-api-test/logs"
+      REDIS_DB_INDEX="1"
+      ;;
+    enterprise)
+      APP_CONTAINER="new-api-enterprise"
+      PG_DB="new-api-enterprise"
+      DATA_DIR="/opt/new-api-enterprise/data"
+      LOG_DIR="/opt/new-api-enterprise/logs"
+      REDIS_DB_INDEX="2"
+      ;;
+    *)
+      die "restore only supports test or enterprise target"
+      ;;
+  esac
 }
 
 resolve_source_paths() {
@@ -198,7 +211,7 @@ print_output() {
   if [ -n "$TARGET_BACKUP_DIR" ]; then
     echo "target_backup_dir=${TARGET_BACKUP_DIR}"
   fi
-  echo "restart_via=ops/scripts/kkidc-host-deploy.sh test"
+  echo "restart_via=ops/scripts/kkidc-host-deploy.sh ${TARGET_ENV}"
 }
 
 verify_source_backup() {
@@ -217,8 +230,8 @@ verify_source_backup() {
 backup_current_target() {
   local backup_output
 
-  log INFO "backing up current test environment before restore"
-  backup_output="$(bash "$SCRIPT_DIR/kkidc-host-backup.sh" test --config "$CONFIG_FILE")"
+  log INFO "backing up current ${TARGET_ENV} environment before restore"
+  backup_output="$(bash "$SCRIPT_DIR/kkidc-host-backup.sh" "$TARGET_ENV" --config "$CONFIG_FILE")"
   printf '%s\n' "$backup_output"
   TARGET_BACKUP_DIR="$(printf '%s\n' "$backup_output" | awk -F= '/^backup_dir=/{print $2}')"
   [ -n "$TARGET_BACKUP_DIR" ] || die "failed to parse target backup dir from kkidc-host-backup.sh output"
@@ -227,7 +240,7 @@ backup_current_target() {
 restore_target_from_backup() {
   local restore_logs_flag="$RESTORE_LOGS"
 
-  log INFO "stopping test app before restore"
+  log INFO "stopping ${TARGET_ENV} app before restore"
   remote_cmd "docker rm -f '${APP_CONTAINER}' >/dev/null 2>&1 || true"
 
   log INFO "restoring database, data, and cache from ${SOURCE_BACKUP_DIR}"
@@ -248,9 +261,9 @@ docker exec '${REDIS_CONTAINER}' redis-cli -n '${REDIS_DB_INDEX}' FLUSHDB >/dev/
 EOF
 }
 
-restart_test_app() {
-  log INFO "restarting test app via formal test deploy flow"
-  bash "$SCRIPT_DIR/kkidc-host-deploy.sh" test \
+restart_target_app() {
+  log INFO "restarting ${TARGET_ENV} app via formal ${TARGET_ENV} deploy flow"
+  bash "$SCRIPT_DIR/kkidc-host-deploy.sh" "$TARGET_ENV" \
     --config "$CONFIG_FILE" \
     --app-env-file "$APP_ENV_FILE"
 }
@@ -270,7 +283,7 @@ main() {
   verify_source_backup
   backup_current_target
   restore_target_from_backup
-  restart_test_app
+  restart_target_app
   print_output "restore"
 }
 
