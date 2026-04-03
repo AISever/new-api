@@ -17,9 +17,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
-import GroupRatioDualModeEditor from './components/GroupRatioDualModeEditor';
+export const resolveAppendedRowFocus = ({
+  shouldFocusNewRow,
+  previousLength,
+  rows,
+}) => {
+  if (!shouldFocusNewRow) {
+    return null;
+  }
 
-export default function GroupRatioSettings(props) {
-  return <GroupRatioDualModeEditor {...props} />;
-}
+  if (!Array.isArray(rows) || rows.length <= previousLength) {
+    return null;
+  }
+
+  return rows[rows.length - 1]?.id || null;
+};

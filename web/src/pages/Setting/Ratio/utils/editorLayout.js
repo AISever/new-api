@@ -17,9 +17,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
-import GroupRatioDualModeEditor from './components/GroupRatioDualModeEditor';
+export const getCompactEditorLayoutMode = ({ isMobile }) => {
+  return isMobile ? 'stacked' : 'desktop';
+};
 
-export default function GroupRatioSettings(props) {
-  return <GroupRatioDualModeEditor {...props} />;
-}
+export const shouldUseSharedInlineHeaders = (layoutMode) =>
+  layoutMode === 'inline';
