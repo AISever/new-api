@@ -32,14 +32,14 @@
 - 本地 Docker 测试环境统一入口：`ops/scripts/local-test-env.sh`
 - `kkidc` 新服务器统一部署：`ops/scripts/kkidc-host-deploy.sh production|enterprise|test`
 - `kkidc` 统一备份入口：`ops/scripts/kkidc-host-backup.sh production|enterprise|test`
-- `kkidc` 统一恢复入口：`ops/scripts/kkidc-host-restore.sh test --source-backup-dir <remote-backup-dir>`
+- `kkidc` 统一恢复入口：`ops/scripts/kkidc-host-restore.sh test|enterprise --source-backup-dir <remote-backup-dir>`
 
 要求：
 
 - 本地 Docker 测试环境的部署、更新、重置、备份必须通过 `ops/scripts/local-test-env.sh`。
 - `kkidc` 测试/生产环境的部署、启动、停止必须通过 `ops/scripts/kkidc-host-deploy.sh`。
 - `kkidc` 测试/生产环境的数据库与运行目录备份必须通过 `ops/scripts/kkidc-host-backup.sh`。
-- `kkidc` 测试环境如需从远端备份目录恢复数据库与运行目录，必须通过 `ops/scripts/kkidc-host-restore.sh`。
+- `kkidc` 测试/企业环境如需从远端备份目录恢复数据库与运行目录，必须通过 `ops/scripts/kkidc-host-restore.sh`。
 - `ops/scripts/kkidc-host-deploy.sh` 默认使用本地 Docker 构建镜像；本地不可构建时直接失败，不自动退回服务器构建。
 - `--build-strategy remote` / `legacy-remote` 仅保留为显式紧急选项，不作为常规发布路径。
 - 如需显式使用 `BUILD_STRATEGY=remote`，脚本会先检查远端主机当前资源；默认要求 `MemAvailable >= 2048MB` 且 `load1 <= 4.00`，否则直接拒绝远端构建。
