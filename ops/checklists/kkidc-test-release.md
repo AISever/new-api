@@ -1,0 +1,35 @@
+# kkidc 测试环境发布检查清单
+
+适用对象：`http://114.66.47.192:3001`
+
+## 发布前
+
+- 确认本次代码来自预定分支，且已明确版本/提交号。
+- 先阅读 `ops/environments/kkidc-test.md`。
+- 确认本地 Docker 可用；当前 `kkidc` 默认要求本地 `linux/amd64` 构建。
+- 如需显式 `BUILD_STRATEGY=remote`，先确认这是受控测试，并记录当前服务器可用内存与 load。
+- 如涉及数据库、计费、模型倍率、登录等核心功能，先记录回滚点。
+- 如需保留当前测试环境数据，先执行 `bash ops/scripts/kkidc-host-backup.sh test`。
+- 确认不会误操作 `kkidc` 生产环境 `:3000`。
+
+## 发布中
+
+- 按 `kkidc` 测试环境既有方式部署。
+- 记录本次部署分支、提交 SHA、部署时间。
+- 记录脚本输出的阶段耗时，至少保留 `duration_image_seconds`、`duration_image_build_seconds`、`duration_image_upload_seconds`、`duration_image_load_seconds`、`duration_total_seconds`。
+- 如有配置变更，记录是否同步修改了数据库 option / `.env` / 面板配置。
+
+## 发布后验证
+
+- `curl http://114.66.47.192:3001/api/status`
+- 若本次显式测试远端构建，同时记录生产 `https://api.aisever.cn/api/status` 的并行探活结果。
+- 登录后台并检查关键页面是否可访问。
+- 验证本次改动对应的主流程。
+- 检查错误日志、使用日志、计费日志是否正常写入。
+- 验证结束后执行：`bash ops/scripts/kkidc-host-deploy.sh test-stop`
+- 再次确认 `:3001` 已停止，但 `https://api.aisever.cn` 生产环境不受影响。
+
+## 回滚
+
+- 若出现核心异常，优先回滚到上一个可用提交或镜像。
+- 回滚后重新验证 `/api/status`、后台登录、关键页面与主流程。
