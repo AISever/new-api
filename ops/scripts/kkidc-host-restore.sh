@@ -198,7 +198,7 @@ print_output() {
   if [ -n "$TARGET_BACKUP_DIR" ]; then
     echo "target_backup_dir=${TARGET_BACKUP_DIR}"
   fi
-  echo "restart_via=ops/scripts/kkidc-host-deploy.sh test --skip-build"
+  echo "restart_via=ops/scripts/kkidc-host-deploy.sh test"
 }
 
 verify_source_backup() {
@@ -249,9 +249,8 @@ EOF
 }
 
 restart_test_app() {
-  log INFO "restarting test app without rebuilding image"
+  log INFO "restarting test app via formal test deploy flow"
   bash "$SCRIPT_DIR/kkidc-host-deploy.sh" test \
-    --skip-build \
     --config "$CONFIG_FILE" \
     --app-env-file "$APP_ENV_FILE"
 }
