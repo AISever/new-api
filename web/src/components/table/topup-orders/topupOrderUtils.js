@@ -59,11 +59,26 @@ export function isSubscriptionTopupRecord(record) {
   return Number(record?.amount || 0) === 0 && tradeNo.startsWith('sub');
 }
 
+function formatTopupAmountValue(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return '0';
+  }
+  return String(Number(numericValue.toFixed(2)));
+}
+
 export function getTopupAmountDisplay(record) {
   if (isSubscriptionTopupRecord(record)) {
     return {
       isSubscription: true,
       value: '订阅套餐',
+    };
+  }
+
+  if (Number(record?.amount_value || 0) > 0) {
+    return {
+      isSubscription: false,
+      value: formatTopupAmountValue(record.amount_value),
     };
   }
 

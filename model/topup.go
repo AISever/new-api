@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -16,6 +17,7 @@ type TopUp struct {
 	Id              int     `json:"id"`
 	UserId          int     `json:"user_id" gorm:"index"`
 	Amount          int64   `json:"amount"`
+	AmountValue     float64 `json:"amount_value,omitempty" gorm:"-"`
 	Money           float64 `json:"money"`
 	TradeNo         string  `json:"trade_no" gorm:"unique;type:varchar(255);index"`
 	ProviderTradeNo string  `json:"provider_trade_no" gorm:"type:varchar(255);default:'';index"`
@@ -38,6 +40,78 @@ type AdminTopUpItem struct {
 	DisplayName string `json:"display_name"`
 }
 
+func normalizeTopUpAmountValue(amount float64) float64 {
+	if amount <= 0 {
+		return 0
+	}
+	normalized := math.Round(amount*100) / 100
+	if math.Abs(normalized) < 0.000001 {
+		return 0
+	}
+	return normalized
+}
+
+func resolveLdxpTopupAmountValueFromProviderPayload(providerPayload string) float64 {
+	providerPayload = strings.TrimSpace(providerPayload)
+	if providerPayload == "" {
+		return 0
+	}
+
+	var payload struct {
+		TopupMeta struct {
+			Amount float64 `json:"amount"`
+		} `json:"topup_meta"`
+	}
+	if err := common.UnmarshalJsonStr(providerPayload, &payload); err != nil {
+		return 0
+	}
+	return normalizeTopUpAmountValue(payload.TopupMeta.Amount)
+}
+
+func (topUp *TopUp) ResolveAmountValue() float64 {
+	if topUp == nil {
+		return 0
+	}
+	if topUp.PaymentMethod == "ldxp" {
+		if amount := resolveLdxpTopupAmountValueFromProviderPayload(topUp.ProviderPayload); amount > 0 {
+			return amount
+		}
+		if amount := normalizeTopUpAmountValue(topUp.Money); amount > 0 {
+			return amount
+		}
+	}
+	if topUp.Amount <= 0 {
+		return 0
+	}
+	return normalizeTopUpAmountValue(float64(topUp.Amount))
+}
+
+func hydrateTopUpAmountValue(topUp *TopUp) {
+	if topUp == nil {
+		return
+	}
+	if amount := topUp.ResolveAmountValue(); amount > 0 {
+		topUp.AmountValue = amount
+	}
+}
+
+func hydrateTopUpAmountValues(topups []*TopUp) {
+	for _, topUp := range topups {
+		hydrateTopUpAmountValue(topUp)
+	}
+}
+
+func hydrateAdminTopUpAmountValues(topups []*AdminTopUpItem) {
+	for _, topUp := range topups {
+		if topUp == nil {
+			continue
+		}
+		if amount := topUp.ResolveAmountValue(); amount > 0 {
+			topUp.AmountValue = amount
+		}
+	}
+}
+
 func (topUp *TopUp) Insert() error {
 	var err error
 	err = DB.Create(topUp).Error
@@ -57,6 +131,7 @@ func GetTopUpById(id int) *TopUp {
 	if err != nil {
 		return nil
 	}
+	hydrateTopUpAmountValue(topUp)
 	return topUp
 }
 
@@ -67,6 +142,7 @@ func GetTopUpByTradeNo(tradeNo string) *TopUp {
 	if err != nil {
 		return nil
 	}
+	hydrateTopUpAmountValue(topUp)
 	return topUp
 }
 
@@ -150,6 +226,7 @@ func GetUserTopUps(userId int, pageInfo *common.PageInfo) (topups []*TopUp, tota
 		return nil, 0, err
 	}
 
+	hydrateTopUpAmountValues(topups)
 	return topups, total, nil
 }
 
@@ -179,6 +256,7 @@ func GetAllTopUps(pageInfo *common.PageInfo) (topups []*TopUp, total int64, err 
 		return nil, 0, err
 	}
 
+	hydrateTopUpAmountValues(topups)
 	return topups, total, nil
 }
 
@@ -234,6 +312,7 @@ func GetAdminTopUps(pageInfo *common.PageInfo, filter AdminTopUpFilter) (topups 
 		return nil, 0, err
 	}
 
+	hydrateAdminTopUpAmountValues(topups)
 	return topups, total, nil
 }
 
@@ -268,6 +347,7 @@ func SearchUserTopUps(userId int, keyword string, pageInfo *common.PageInfo) (to
 	if err = tx.Commit().Error; err != nil {
 		return nil, 0, err
 	}
+	hydrateTopUpAmountValues(topups)
 	return topups, total, nil
 }
 
@@ -302,6 +382,7 @@ func SearchAllTopUps(keyword string, pageInfo *common.PageInfo) (topups []*TopUp
 	if err = tx.Commit().Error; err != nil {
 		return nil, 0, err
 	}
+	hydrateTopUpAmountValues(topups)
 	return topups, total, nil
 }
 
@@ -343,7 +424,7 @@ func ManualCompleteTopUp(tradeNo string) error {
 			dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
 			quotaToAdd = int(decimal.NewFromFloat(topUp.Money).Mul(dQuotaPerUnit).IntPart())
 		} else {
-			dAmount := decimal.NewFromInt(topUp.Amount)
+			dAmount := decimal.NewFromFloat(topUp.ResolveAmountValue())
 			dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
 			quotaToAdd = int(dAmount.Mul(dQuotaPerUnit).IntPart())
 		}
@@ -474,7 +555,7 @@ func RechargeWaffo(tradeNo string) (err error) {
 			return errors.New("充值订单状态错误")
 		}
 
-		dAmount := decimal.NewFromInt(topUp.Amount)
+		dAmount := decimal.NewFromFloat(topUp.ResolveAmountValue())
 		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
 		quotaToAdd = int(dAmount.Mul(dQuotaPerUnit).IntPart())
 		if quotaToAdd <= 0 {
@@ -532,7 +613,7 @@ func RechargeLdxp(tradeNo string, providerPayload string) (err error) {
 			return errors.New("充值订单状态错误")
 		}
 
-		dAmount := decimal.NewFromInt(topUp.Amount)
+		dAmount := decimal.NewFromFloat(topUp.ResolveAmountValue())
 		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
 		quotaToAdd = int(dAmount.Mul(dQuotaPerUnit).IntPart())
 		if quotaToAdd <= 0 {

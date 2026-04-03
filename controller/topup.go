@@ -90,15 +90,15 @@ func GetTopUpInfo(c *gin.Context) {
 			}
 		}
 		if !hasLdxp {
-			minTopup := 0
+			minTopup := "0"
 			if len(ldxpTopupProducts) > 0 {
-				minTopup = ldxpTopupProducts[0].Amount
+				minTopup = operation_setting.FormatLdxpTopupAmount(ldxpTopupProducts[0].Amount)
 			}
 			ldxpMethod := map[string]string{
 				"name":      "LDXP",
 				"type":      "ldxp",
 				"color":     "rgba(var(--semi-orange-5), 1)",
-				"min_topup": strconv.Itoa(minTopup),
+				"min_topup": minTopup,
 			}
 			payMethods = append(payMethods, ldxpMethod)
 		}

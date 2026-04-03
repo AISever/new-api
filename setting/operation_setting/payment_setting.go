@@ -2,6 +2,7 @@ package operation_setting
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,11 +12,11 @@ import (
 )
 
 type LdxpTopupProduct struct {
-	Amount    int    `json:"amount"`
-	GoodsKey  string `json:"goods_key"`
-	Label     string `json:"label"`
-	Enabled   bool   `json:"enabled"`
-	SortOrder int    `json:"sort_order"`
+	Amount    float64 `json:"amount"`
+	GoodsKey  string  `json:"goods_key"`
+	Label     string  `json:"label"`
+	Enabled   bool    `json:"enabled"`
+	SortOrder int     `json:"sort_order"`
 }
 
 type PaymentSetting struct {
@@ -40,25 +41,56 @@ func GetPaymentSetting() *PaymentSetting {
 	return &paymentSetting
 }
 
+func NormalizeLdxpTopupAmount(amount float64) float64 {
+	if amount <= 0 {
+		return 0
+	}
+	normalized := math.Round(amount*100) / 100
+	if math.Abs(normalized) < 0.000001 {
+		return 0
+	}
+	return normalized
+}
+
+func FormatLdxpTopupAmount(amount float64) string {
+	normalized := NormalizeLdxpTopupAmount(amount)
+	if normalized <= 0 {
+		return "0"
+	}
+	return strconv.FormatFloat(normalized, 'f', -1, 64)
+}
+
+func LdxpTopupAmountKey(amount float64) string {
+	normalized := NormalizeLdxpTopupAmount(amount)
+	if normalized <= 0 {
+		return ""
+	}
+	return strconv.FormatInt(int64(math.Round(normalized*100)), 10)
+}
+
 func NormalizeLdxpTopupProducts(products []LdxpTopupProduct) []LdxpTopupProduct {
 	if len(products) == 0 {
 		return []LdxpTopupProduct{}
 	}
 	normalized := make([]LdxpTopupProduct, 0, len(products))
-	seenAmounts := make(map[int]struct{}, len(products))
+	seenAmounts := make(map[string]struct{}, len(products))
 	for _, product := range products {
-		product.Amount = max(product.Amount, 0)
+		product.Amount = NormalizeLdxpTopupAmount(product.Amount)
 		product.GoodsKey = strings.TrimSpace(product.GoodsKey)
 		product.Label = strings.TrimSpace(product.Label)
 		if product.Amount <= 0 || product.GoodsKey == "" {
 			continue
 		}
-		if _, ok := seenAmounts[product.Amount]; ok {
+		amountKey := LdxpTopupAmountKey(product.Amount)
+		if amountKey == "" {
 			continue
 		}
-		seenAmounts[product.Amount] = struct{}{}
+		if _, ok := seenAmounts[amountKey]; ok {
+			continue
+		}
+		seenAmounts[amountKey] = struct{}{}
 		if product.Label == "" {
-			product.Label = strconv.Itoa(product.Amount)
+			product.Label = FormatLdxpTopupAmount(product.Amount)
 		}
 		normalized = append(normalized, product)
 	}
@@ -79,10 +111,10 @@ func ValidateLdxpTopupProducts(products []LdxpTopupProduct) ([]LdxpTopupProduct,
 		return []LdxpTopupProduct{}, nil
 	}
 	validated := make([]LdxpTopupProduct, 0, len(products))
-	seenAmounts := make(map[int]struct{}, len(products))
+	seenAmounts := make(map[string]struct{}, len(products))
 	seenGoodsKeys := make(map[string]struct{}, len(products))
 	for i, product := range products {
-		product.Amount = max(product.Amount, 0)
+		product.Amount = NormalizeLdxpTopupAmount(product.Amount)
 		product.GoodsKey = strings.TrimSpace(product.GoodsKey)
 		product.Label = strings.TrimSpace(product.Label)
 		if product.Amount <= 0 {
@@ -94,13 +126,17 @@ func ValidateLdxpTopupProducts(products []LdxpTopupProduct) ([]LdxpTopupProduct,
 		if product.Label == "" {
 			return nil, fmt.Errorf("第 %d 项 label 不能为空", i+1)
 		}
-		if _, ok := seenAmounts[product.Amount]; ok {
+		amountKey := LdxpTopupAmountKey(product.Amount)
+		if amountKey == "" {
+			return nil, fmt.Errorf("第 %d 项 amount 必须大于 0", i+1)
+		}
+		if _, ok := seenAmounts[amountKey]; ok {
 			return nil, fmt.Errorf("第 %d 项 amount 重复", i+1)
 		}
 		if _, ok := seenGoodsKeys[product.GoodsKey]; ok {
 			return nil, fmt.Errorf("第 %d 项 goods_key 重复", i+1)
 		}
-		seenAmounts[product.Amount] = struct{}{}
+		seenAmounts[amountKey] = struct{}{}
 		seenGoodsKeys[product.GoodsKey] = struct{}{}
 		validated = append(validated, product)
 	}

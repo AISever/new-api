@@ -1,5 +1,7 @@
-export function shouldAutoStartLdxpPay({ isMobile, search }) {
-  if (isMobile) {
+import { shouldUseLdxpExternalPayFlow } from './ldxpPaySurface.js';
+
+export function shouldAutoStartLdxpPay({ isMobile, userAgent, search }) {
+  if (shouldUseLdxpExternalPayFlow({ isMobile, userAgent })) {
     return false;
   }
 

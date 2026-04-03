@@ -33,6 +33,8 @@ func syncPendingLdxpTopUp(ctx context.Context, topUp *model.TopUp) *model.TopUp 
 	}
 
 	payload := service.BuildLdxpProviderPayload(queryResp, orderInfo)
+	payload = service.PreserveLdxpCheckoutInProviderPayload(payload, topUp.ProviderPayload)
+	payload = service.PreserveLdxpTopupAmountInProviderPayload(payload, topUp.ProviderPayload)
 	topUp.ProviderPayload = payload
 	if queryResp.IsPaid() {
 		LockOrder(topUp.TradeNo)
@@ -72,6 +74,7 @@ func syncPendingLdxpSubscriptionOrder(ctx context.Context, order *model.Subscrip
 	}
 
 	payload := service.BuildLdxpProviderPayload(queryResp, orderInfo)
+	payload = service.PreserveLdxpCheckoutInProviderPayload(payload, order.ProviderPayload)
 	order.ProviderPayload = payload
 	if queryResp.IsPaid() {
 		LockOrder(order.TradeNo)

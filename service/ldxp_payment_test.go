@@ -94,6 +94,56 @@ func TestBuildSuggestedLdxpTopupProductsFromCatalog(t *testing.T) {
 	}
 }
 
+func TestBuildSuggestedLdxpTopupProductsSupportsDecimalAmountFromCatalog(t *testing.T) {
+	products := BuildSuggestedLdxpTopupProducts([]LdxpGoodsItem{
+		{
+			GoodsKey: "goods-01",
+			Name:     "充值0.1r",
+			Price:    0.1,
+			Category: LdxpGoodsCategory{Name: "API充值"},
+		},
+	})
+
+	if len(products) != 1 {
+		t.Fatalf("expected 1 topup product, got %d", len(products))
+	}
+	if products[0].Amount != 0.1 || products[0].GoodsKey != "goods-01" {
+		t.Fatalf("unexpected decimal product: %+v", products[0])
+	}
+}
+
+func TestFindLdxpTopupProductByAmountSupportsDecimals(t *testing.T) {
+	setting := operation_setting.GetPaymentSetting()
+	original := setting.LdxpTopupProducts
+	setting.LdxpTopupProducts = []operation_setting.LdxpTopupProduct{
+		{Amount: 0.1, GoodsKey: "goods-01", Label: "充值0.1r", Enabled: true, SortOrder: 1},
+		{Amount: 5, GoodsKey: "goods-5", Label: "充值5r", Enabled: true, SortOrder: 2},
+	}
+	defer func() {
+		setting.LdxpTopupProducts = original
+	}()
+
+	product, ok := FindLdxpTopupProductByAmount(0.1)
+	if !ok {
+		t.Fatal("expected decimal amount to resolve to configured product")
+	}
+	if product.GoodsKey != "goods-01" {
+		t.Fatalf("unexpected matched product: %+v", product)
+	}
+}
+
+func TestMergeLdxpTopupAmountIntoProviderPayloadStoresDecimalAmount(t *testing.T) {
+	payload := MergeLdxpTopupAmountIntoProviderPayload(`{"code":1}`, 0.1)
+	if amount := ResolveLdxpTopupAmountFromProviderPayload(payload); amount != 0.1 {
+		t.Fatalf("expected decimal topup amount to round-trip, got %v", amount)
+	}
+
+	preserved := PreserveLdxpTopupAmountInProviderPayload(`{"query":{"code":1}}`, payload)
+	if amount := ResolveLdxpTopupAmountFromProviderPayload(preserved); amount != 0.1 {
+		t.Fatalf("expected decimal topup amount to be preserved, got %v", amount)
+	}
+}
+
 func TestResolveLdxpTopupSettlementAmountUsesProductFaceValue(t *testing.T) {
 	product := operation_setting.LdxpTopupProduct{
 		Amount:   5,
@@ -118,6 +168,6 @@ func TestResolveLdxpTopupGrantedAmountUsesConfiguredAmount(t *testing.T) {
 
 	got := ResolveLdxpTopupGrantedAmount(product)
 	if got != 20 {
-		t.Fatalf("expected granted amount 20, got %d", got)
+		t.Fatalf("expected granted amount 20, got %v", got)
 	}
 }

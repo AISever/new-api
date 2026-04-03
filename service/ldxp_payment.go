@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"html"
 	"io"
 	"math"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -20,13 +23,34 @@ import (
 )
 
 var ldxpJUUIDPattern = regexp.MustCompile(`juuid\s*=\s*'([^']+)'`)
-var ldxpTopupAmountPattern = regexp.MustCompile(`(?i)充值\s*(\d+)\s*r`)
+var ldxpTopupAmountPattern = regexp.MustCompile(`(?i)充值\s*(\d+(?:\.\d+)?)\s*r`)
+var ldxpFormTagPattern = regexp.MustCompile(`(?is)<form\b[^>]*>`)
+var ldxpInputTagPattern = regexp.MustCompile(`(?is)<input\b[^>]*>`)
+var ldxpAttrDoubleQuotePattern = regexp.MustCompile(`(?is)([a-zA-Z_:][a-zA-Z0-9_:\-]*)\s*=\s*"([^"]*)"`)
+var ldxpAttrSingleQuotePattern = regexp.MustCompile(`(?is)([a-zA-Z_:][a-zA-Z0-9_:\-]*)\s*=\s*'([^']*)'`)
+
+const ldxpDesktopCheckoutUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
 
 type LdxpConfig struct {
 	Enabled          bool
 	BaseURL          string
 	ShopToken        string
 	DefaultChannelId int
+}
+
+type LdxpCheckoutData struct {
+	QRCode     string `json:"qr_code,omitempty"`
+	QRImageURL string `json:"qr_img_url,omitempty"`
+}
+
+type ldxpAutoSubmitForm struct {
+	Action string
+	Method string
+	Fields url.Values
+}
+
+type ldxpTopupMeta struct {
+	Amount float64 `json:"amount,omitempty"`
 }
 
 func GetLdxpConfig() LdxpConfig {
@@ -50,9 +74,13 @@ func GetEnabledLdxpTopupProducts() []operation_setting.LdxpTopupProduct {
 	return operation_setting.GetPaymentSetting().GetEnabledLdxpTopupProducts()
 }
 
-func FindLdxpTopupProductByAmount(amount int64) (*operation_setting.LdxpTopupProduct, bool) {
+func FindLdxpTopupProductByAmount(amount float64) (*operation_setting.LdxpTopupProduct, bool) {
+	normalizedAmount := operation_setting.NormalizeLdxpTopupAmount(amount)
+	if normalizedAmount <= 0 {
+		return nil, false
+	}
 	for _, product := range GetEnabledLdxpTopupProducts() {
-		if int64(product.Amount) != amount {
+		if operation_setting.LdxpTopupAmountKey(product.Amount) != operation_setting.LdxpTopupAmountKey(normalizedAmount) {
 			continue
 		}
 		productCopy := product
@@ -62,11 +90,11 @@ func FindLdxpTopupProductByAmount(amount int64) (*operation_setting.LdxpTopupPro
 }
 
 func ResolveLdxpTopupSettlementAmount(product operation_setting.LdxpTopupProduct) float64 {
-	return float64(product.Amount)
+	return operation_setting.NormalizeLdxpTopupAmount(product.Amount)
 }
 
-func ResolveLdxpTopupGrantedAmount(product operation_setting.LdxpTopupProduct) int64 {
-	return int64(product.Amount)
+func ResolveLdxpTopupGrantedAmount(product operation_setting.LdxpTopupProduct) float64 {
+	return operation_setting.NormalizeLdxpTopupAmount(product.Amount)
 }
 
 func IsLdxpTopupEnabled() bool {
@@ -135,6 +163,245 @@ func ResolveLdxpPaymentURL(baseURL string, providerTradeNo string, providerPaylo
 		normalizedBaseURL,
 		url.QueryEscape(providerTradeNo),
 	)
+}
+
+func ResolveLdxpCheckoutData(providerPayload string) LdxpCheckoutData {
+	providerPayload = strings.TrimSpace(providerPayload)
+	if providerPayload == "" {
+		return LdxpCheckoutData{}
+	}
+
+	var payload struct {
+		Checkout LdxpCheckoutData `json:"checkout"`
+	}
+	if err := common.UnmarshalJsonStr(providerPayload, &payload); err == nil {
+		if payload.Checkout.QRCode != "" || payload.Checkout.QRImageURL != "" {
+			return payload.Checkout
+		}
+	}
+	return LdxpCheckoutData{}
+}
+
+func ResolveLdxpTopupAmountFromProviderPayload(providerPayload string) float64 {
+	providerPayload = strings.TrimSpace(providerPayload)
+	if providerPayload == "" {
+		return 0
+	}
+
+	var payload struct {
+		TopupMeta ldxpTopupMeta `json:"topup_meta"`
+	}
+	if err := common.UnmarshalJsonStr(providerPayload, &payload); err != nil {
+		return 0
+	}
+	return operation_setting.NormalizeLdxpTopupAmount(payload.TopupMeta.Amount)
+}
+
+func MergeLdxpCheckoutIntoProviderPayload(providerPayload string, checkout LdxpCheckoutData) string {
+	providerPayload = strings.TrimSpace(providerPayload)
+	checkout.QRCode = strings.TrimSpace(checkout.QRCode)
+	checkout.QRImageURL = strings.TrimSpace(checkout.QRImageURL)
+
+	if checkout.QRCode == "" && checkout.QRImageURL == "" {
+		return providerPayload
+	}
+
+	if providerPayload == "" {
+		return common.GetJsonString(map[string]interface{}{
+			"checkout": checkout,
+		})
+	}
+
+	var payload map[string]interface{}
+	if err := common.UnmarshalJsonStr(providerPayload, &payload); err != nil || payload == nil {
+		return providerPayload
+	}
+
+	payload["checkout"] = checkout
+	return common.GetJsonString(payload)
+}
+
+func MergeLdxpTopupAmountIntoProviderPayload(providerPayload string, amount float64) string {
+	providerPayload = strings.TrimSpace(providerPayload)
+	normalizedAmount := operation_setting.NormalizeLdxpTopupAmount(amount)
+	if normalizedAmount <= 0 {
+		return providerPayload
+	}
+
+	if providerPayload == "" {
+		return common.GetJsonString(map[string]interface{}{
+			"topup_meta": ldxpTopupMeta{Amount: normalizedAmount},
+		})
+	}
+
+	var payload map[string]interface{}
+	if err := common.UnmarshalJsonStr(providerPayload, &payload); err != nil || payload == nil {
+		return providerPayload
+	}
+
+	payload["topup_meta"] = ldxpTopupMeta{Amount: normalizedAmount}
+	return common.GetJsonString(payload)
+}
+
+func PreserveLdxpCheckoutInProviderPayload(providerPayload string, existingProviderPayload string) string {
+	return MergeLdxpCheckoutIntoProviderPayload(
+		providerPayload,
+		ResolveLdxpCheckoutData(existingProviderPayload),
+	)
+}
+
+func PreserveLdxpTopupAmountInProviderPayload(providerPayload string, existingProviderPayload string) string {
+	return MergeLdxpTopupAmountIntoProviderPayload(
+		providerPayload,
+		ResolveLdxpTopupAmountFromProviderPayload(existingProviderPayload),
+	)
+}
+
+func FetchLdxpCheckoutData(ctx context.Context, paymentURL string) (LdxpCheckoutData, error) {
+	return fetchLdxpCheckoutData(ctx, paymentURL, nil, ldxpDesktopCheckoutUserAgent)
+}
+
+func fetchLdxpCheckoutData(ctx context.Context, paymentURL string, client *http.Client, userAgent string) (LdxpCheckoutData, error) {
+	paymentURL = strings.TrimSpace(paymentURL)
+	if paymentURL == "" {
+		return LdxpCheckoutData{}, fmt.Errorf("payment url is empty")
+	}
+	if client == nil {
+		jar, err := cookiejar.New(nil)
+		if err != nil {
+			return LdxpCheckoutData{}, err
+		}
+		client = &http.Client{
+			Timeout: 15 * time.Second,
+			Jar:     jar,
+		}
+	}
+
+	formHTML, err := fetchLdxpCheckoutDocument(ctx, client, userAgent, http.MethodGet, paymentURL, "")
+	if err != nil {
+		return LdxpCheckoutData{}, err
+	}
+	form, ok := extractLdxpAutoSubmitForm(formHTML)
+	if !ok || form.Action == "" {
+		return LdxpCheckoutData{}, fmt.Errorf("unable to parse ldxp checkout form")
+	}
+
+	checkoutHTML, err := fetchLdxpCheckoutDocument(
+		ctx,
+		client,
+		userAgent,
+		form.Method,
+		form.Action,
+		form.Fields.Encode(),
+	)
+	if err != nil {
+		return LdxpCheckoutData{}, err
+	}
+
+	data := extractAlipayCheckoutData(checkoutHTML)
+	if data.QRCode == "" && data.QRImageURL == "" {
+		return LdxpCheckoutData{}, fmt.Errorf("alipay checkout qr data missing")
+	}
+	return data, nil
+}
+
+func fetchLdxpCheckoutDocument(ctx context.Context, client *http.Client, userAgent string, method string, target string, body string) (string, error) {
+	var reader io.Reader
+	if body != "" {
+		reader = strings.NewReader(body)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, target, reader)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+	if body != "" {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("unexpected checkout status: %d", resp.StatusCode)
+	}
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(raw), nil
+}
+
+func extractLdxpAutoSubmitForm(doc string) (ldxpAutoSubmitForm, bool) {
+	tag := ldxpFormTagPattern.FindString(doc)
+	if tag == "" {
+		return ldxpAutoSubmitForm{}, false
+	}
+	attrs := extractLdxpTagAttributes(tag)
+	action := strings.TrimSpace(attrs["action"])
+	if action == "" {
+		return ldxpAutoSubmitForm{}, false
+	}
+	method := strings.ToUpper(strings.TrimSpace(attrs["method"]))
+	if method == "" {
+		method = http.MethodPost
+	}
+	fields := url.Values{}
+	for _, inputTag := range ldxpInputTagPattern.FindAllString(doc, -1) {
+		inputAttrs := extractLdxpTagAttributes(inputTag)
+		if !strings.EqualFold(strings.TrimSpace(inputAttrs["type"]), "hidden") {
+			continue
+		}
+		name := strings.TrimSpace(inputAttrs["name"])
+		if name == "" {
+			continue
+		}
+		fields.Set(name, inputAttrs["value"])
+	}
+	return ldxpAutoSubmitForm{
+		Action: action,
+		Method: method,
+		Fields: fields,
+	}, true
+}
+
+func extractAlipayCheckoutData(doc string) LdxpCheckoutData {
+	fields := make(map[string]string)
+	for _, inputTag := range ldxpInputTagPattern.FindAllString(doc, -1) {
+		inputAttrs := extractLdxpTagAttributes(inputTag)
+		name := strings.TrimSpace(inputAttrs["name"])
+		if name == "" {
+			continue
+		}
+		fields[name] = inputAttrs["value"]
+	}
+	return LdxpCheckoutData{
+		QRCode:     strings.TrimSpace(fields["qrCode"]),
+		QRImageURL: strings.TrimSpace(fields["qrImgUrl"]),
+	}
+}
+
+func extractLdxpTagAttributes(tag string) map[string]string {
+	attrs := make(map[string]string)
+	for _, match := range ldxpAttrDoubleQuotePattern.FindAllStringSubmatch(tag, -1) {
+		if len(match) < 3 {
+			continue
+		}
+		attrs[strings.ToLower(strings.TrimSpace(match[1]))] = html.UnescapeString(match[2])
+	}
+	for _, match := range ldxpAttrSingleQuotePattern.FindAllStringSubmatch(tag, -1) {
+		if len(match) < 3 {
+			continue
+		}
+		key := strings.ToLower(strings.TrimSpace(match[1]))
+		if _, exists := attrs[key]; exists {
+			continue
+		}
+		attrs[key] = html.UnescapeString(match[2])
+	}
+	return attrs
 }
 
 func ParseLdxpShopInput(baseURL string, shopInput string) (string, string, error) {
@@ -492,22 +759,26 @@ func BuildSuggestedLdxpTopupProducts(goods []LdxpGoodsItem) []operation_setting.
 		product operation_setting.LdxpTopupProduct
 	}
 
-	productByAmount := make(map[int]operation_setting.LdxpTopupProduct)
+	productByAmount := make(map[string]operation_setting.LdxpTopupProduct)
 	for _, good := range goods {
 		amount, ok := detectLdxpTopupAmount(good)
 		if !ok || amount <= 0 {
 			continue
 		}
-		existing, exists := productByAmount[amount]
+		amountKey := operation_setting.LdxpTopupAmountKey(amount)
+		if amountKey == "" {
+			continue
+		}
+		existing, exists := productByAmount[amountKey]
 		if exists && strings.TrimSpace(existing.GoodsKey) != "" {
 			continue
 		}
-		productByAmount[amount] = operation_setting.LdxpTopupProduct{
+		productByAmount[amountKey] = operation_setting.LdxpTopupProduct{
 			Amount:    amount,
 			GoodsKey:  strings.TrimSpace(good.GoodsKey),
 			Label:     strings.TrimSpace(good.Name),
 			Enabled:   true,
-			SortOrder: amount,
+			SortOrder: int(math.Round(amount * 100)),
 		}
 	}
 
@@ -515,20 +786,20 @@ func BuildSuggestedLdxpTopupProducts(goods []LdxpGoodsItem) []operation_setting.
 		return []operation_setting.LdxpTopupProduct{}
 	}
 
-	amounts := make([]int, 0, len(productByAmount))
-	for amount := range productByAmount {
-		amounts = append(amounts, amount)
+	amounts := make([]float64, 0, len(productByAmount))
+	for _, product := range productByAmount {
+		amounts = append(amounts, product.Amount)
 	}
-	sort.Ints(amounts)
+	sort.Float64s(amounts)
 
 	products := make([]operation_setting.LdxpTopupProduct, 0, len(amounts))
 	for _, amount := range amounts {
-		products = append(products, productByAmount[amount])
+		products = append(products, productByAmount[operation_setting.LdxpTopupAmountKey(amount)])
 	}
 	return operation_setting.NormalizeLdxpTopupProducts(products)
 }
 
-func detectLdxpTopupAmount(good LdxpGoodsItem) (int, bool) {
+func detectLdxpTopupAmount(good LdxpGoodsItem) (float64, bool) {
 	name := strings.TrimSpace(good.Name)
 	if name == "" {
 		return 0, false
@@ -537,9 +808,9 @@ func detectLdxpTopupAmount(good LdxpGoodsItem) (int, bool) {
 	if len(matches) != 2 {
 		return 0, false
 	}
-	amount, err := strconv.Atoi(matches[1])
+	amount, err := strconv.ParseFloat(matches[1], 64)
 	if err != nil || amount <= 0 {
 		return 0, false
 	}
-	return amount, true
+	return operation_setting.NormalizeLdxpTopupAmount(amount), true
 }

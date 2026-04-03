@@ -70,6 +70,34 @@ func TestValidateLdxpTopupProductsJSON(t *testing.T) {
 	}
 }
 
+func TestValidateLdxpTopupProductsJSONSupportsDecimalAmount(t *testing.T) {
+	products, err := ValidateLdxpTopupProductsJSON(`[
+		{
+			"amount": 0.1,
+			"goods_key": "goods-01",
+			"label": "0.1 元",
+			"enabled": true,
+			"sort_order": 1
+		},
+		{
+			"amount": 1.5,
+			"goods_key": "goods-15",
+			"label": "1.5 元",
+			"enabled": true,
+			"sort_order": 2
+		}
+	]`)
+	if err != nil {
+		t.Fatalf("expected decimal ldxp topup products json to be valid, got error: %v", err)
+	}
+	if len(products) != 2 {
+		t.Fatalf("expected 2 products, got %d", len(products))
+	}
+	if products[0].Amount != 0.1 || products[1].Amount != 1.5 {
+		t.Fatalf("expected decimal amounts to be preserved, got %+v", products)
+	}
+}
+
 func TestValidateLdxpTopupProductsJSONRequiresFields(t *testing.T) {
 	_, err := ValidateLdxpTopupProductsJSON(`[
 		{
@@ -81,5 +109,15 @@ func TestValidateLdxpTopupProductsJSONRequiresFields(t *testing.T) {
 	]`)
 	if err == nil {
 		t.Fatal("expected validation error for missing label")
+	}
+}
+
+func TestValidateLdxpTopupProductsRejectsDuplicateDecimalAmounts(t *testing.T) {
+	_, err := ValidateLdxpTopupProducts([]LdxpTopupProduct{
+		{Amount: 0.1, GoodsKey: "goods-a", Label: "0.1 A", Enabled: true, SortOrder: 1},
+		{Amount: 0.10, GoodsKey: "goods-b", Label: "0.1 B", Enabled: true, SortOrder: 2},
+	})
+	if err == nil {
+		t.Fatal("expected duplicate decimal amount validation error")
 	}
 }

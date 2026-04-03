@@ -35,6 +35,7 @@ import { Coins } from 'lucide-react';
 import { IconSearch } from '@douyinfe/semi-icons';
 import { API, timestamp2string } from '../../../helpers';
 import { useIsMobile } from '../../../hooks/common/useIsMobile';
+import { getTopupAmountDisplay } from '../../table/topup-orders/topupOrderUtils';
 const { Text } = Typography;
 
 // 状态映射配置
@@ -124,11 +125,6 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
     return <Text>{displayName ? t(displayName) : pm || '-'}</Text>;
   };
 
-  const isSubscriptionTopup = (record) => {
-    const tradeNo = (record?.trade_no || '').toLowerCase();
-    return Number(record?.amount || 0) === 0 && tradeNo.startsWith('sub');
-  };
-
   const columns = useMemo(() => {
     const baseColumns = [
       {
@@ -148,7 +144,8 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
         dataIndex: 'amount',
         key: 'amount',
         render: (amount, record) => {
-          if (isSubscriptionTopup(record)) {
+          const amountDisplay = getTopupAmountDisplay(record);
+          if (amountDisplay.isSubscription) {
             return (
               <Tag color='purple' shape='circle' size='small'>
                 {t('订阅套餐')}
@@ -158,7 +155,7 @@ const TopupHistoryModal = ({ visible, onCancel, t }) => {
           return (
             <span className='flex items-center gap-1'>
               <Coins size={16} />
-              <Text>{amount}</Text>
+              <Text>{amountDisplay.value}</Text>
             </span>
           );
         },

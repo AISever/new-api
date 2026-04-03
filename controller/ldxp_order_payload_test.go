@@ -12,17 +12,17 @@ func TestBuildLdxpTopupOrderPayloadIncludesPaymentURL(t *testing.T) {
 		ProviderTradeNo: "LD260313KK28J3",
 		PaymentMethod:   "ldxp",
 		Status:          "pending",
-		Amount:          500000,
-		Money:           5,
-		ProviderPayload: `{"code":1,"data":{"payurl":"https://pay.ldxp.cn/shopApi/Pay/payment?trade_no=LD260313KK28J3"}}`,
+		Amount:          0,
+		Money:           0.1,
+		ProviderPayload: `{"code":1,"data":{"payurl":"https://pay.ldxp.cn/shopApi/Pay/payment?trade_no=LD260313KK28J3"},"topup_meta":{"amount":0.1}}`,
 	}
 
 	payload := buildLdxpTopupOrderPayload(topUp)
 	if payload.PaymentURL != "https://pay.ldxp.cn/shopApi/Pay/payment?trade_no=LD260313KK28J3" {
 		t.Fatalf("expected payment_url to be preserved, got %q", payload.PaymentURL)
 	}
-	if payload.Amount != 500000 {
-		t.Fatalf("expected amount to be included, got %d", payload.Amount)
+	if payload.Amount != 0.1 {
+		t.Fatalf("expected decimal amount to be included, got %v", payload.Amount)
 	}
 }
 

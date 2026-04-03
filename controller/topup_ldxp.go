@@ -12,8 +12,8 @@ import (
 )
 
 type LdxpTopupPayRequest struct {
-	Amount  int64  `json:"amount"`
-	Contact string `json:"contact"`
+	Amount  float64 `json:"amount"`
+	Contact string  `json:"contact"`
 }
 
 func resolveLdxpTopupContact(username string, requestContact string, now time.Time) string {
@@ -84,11 +84,11 @@ func RequestLdxpPay(c *gin.Context) {
 	tradeNo := fmt.Sprintf("LDXPUSR%dNO%s%d", userId, common.GetRandomString(6), time.Now().Unix())
 	topUp := &model.TopUp{
 		UserId:          userId,
-		Amount:          amount,
+		Amount:          int64(amount),
 		Money:           quoteResp.Data.TotalAmount,
 		TradeNo:         tradeNo,
 		PaymentMethod:   "ldxp",
-		ProviderPayload: common.GetJsonString(quoteResp),
+		ProviderPayload: service.MergeLdxpTopupAmountIntoProviderPayload(common.GetJsonString(quoteResp), amount),
 		CreateTime:      time.Now().Unix(),
 		Status:          common.TopUpStatusPending,
 	}
@@ -114,7 +114,7 @@ func RequestLdxpPay(c *gin.Context) {
 	}
 	if createResp.Code != 1 || strings.TrimSpace(createResp.Data.TradeNo) == "" || strings.TrimSpace(createResp.Data.PayURL) == "" {
 		topUp.Status = common.TopUpStatusFailed
-		topUp.ProviderPayload = common.GetJsonString(createResp)
+		topUp.ProviderPayload = service.MergeLdxpTopupAmountIntoProviderPayload(common.GetJsonString(createResp), amount)
 		_ = topUp.Update()
 		message := strings.TrimSpace(createResp.Msg)
 		if message == "" {
@@ -125,7 +125,7 @@ func RequestLdxpPay(c *gin.Context) {
 	}
 
 	topUp.ProviderTradeNo = strings.TrimSpace(createResp.Data.TradeNo)
-	topUp.ProviderPayload = common.GetJsonString(createResp)
+	topUp.ProviderPayload = service.MergeLdxpTopupAmountIntoProviderPayload(common.GetJsonString(createResp), amount)
 	topUp.Money = createResp.Data.TotalAmount
 	if err := topUp.Update(); err != nil {
 		c.JSON(200, gin.H{"message": "error", "data": "更新订单失败"})
@@ -160,5 +160,10 @@ func GetLdxpTopupOrder(c *gin.Context) {
 
 	topUp = syncPendingLdxpTopUp(c.Request.Context(), topUp)
 
-	common.ApiSuccess(c, buildLdxpTopupOrderPayload(topUp))
+	payload := buildLdxpTopupOrderPayload(topUp)
+	if providerPayload, updated := enrichLdxpOrderPayloadWithCheckoutData(c.Request.Context(), &payload, topUp.ProviderPayload); updated {
+		topUp.ProviderPayload = providerPayload
+		_ = topUp.Update()
+	}
+	common.ApiSuccess(c, payload)
 }

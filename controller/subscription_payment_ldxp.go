@@ -176,5 +176,10 @@ func GetSubscriptionLdxpOrder(c *gin.Context) {
 		planTitle = plan.Title
 	}
 
-	common.ApiSuccess(c, buildLdxpSubscriptionOrderPayload(order, planTitle))
+	payload := buildLdxpSubscriptionOrderPayload(order, planTitle)
+	if providerPayload, updated := enrichLdxpOrderPayloadWithCheckoutData(c.Request.Context(), &payload, order.ProviderPayload); updated {
+		order.ProviderPayload = providerPayload
+		_ = order.Update()
+	}
+	common.ApiSuccess(c, payload)
 }

@@ -67,6 +67,21 @@ test('getTopupAmountDisplay keeps recharge amount aligned with list display', ()
   );
 });
 
+test('getTopupAmountDisplay prefers decimal amount_value when present', () => {
+  assert.deepEqual(
+    getTopupAmountDisplay({
+      amount: 0,
+      amount_value: 0.1,
+      payment_method: 'ldxp',
+      trade_no: 'LDXPUSR1NO123456',
+    }),
+    {
+      isSubscription: false,
+      value: '0.1',
+    },
+  );
+});
+
 test('getTopupAmountDisplay marks subscription records explicitly', () => {
   assert.deepEqual(
     getTopupAmountDisplay({

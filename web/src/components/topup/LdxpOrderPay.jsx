@@ -18,10 +18,12 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Button,
   Card,
+  ImagePreview,
   Spin,
   Tag,
   Typography,
@@ -32,6 +34,11 @@ import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { getLdxpPayLayout } from './utils/ldxpPayLayout';
 import { shouldAutoStartLdxpPay } from './utils/ldxpPayAutostart';
 import { launchLdxpExternalPay } from './utils/ldxpPayLaunch';
+import {
+  resolveLdxpDesktopPaySurfaceMode,
+  shouldUseLdxpExternalPayFlow,
+  shouldUseLdxpQrImageSurface,
+} from './utils/ldxpPaySurface';
 import { formatUserFacingLdxpPlanTitle } from './utils/ldxpDisplay';
 
 const { Text, Title } = Typography;
@@ -75,6 +82,7 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
   const [iframeStalled, setIframeStalled] = useState(false);
   const [iframeVersion, setIframeVersion] = useState(0);
   const [mobilePayLaunched, setMobilePayLaunched] = useState(false);
+  const [qrPreviewVisible, setQrPreviewVisible] = useState(false);
   const redirectingRef = useRef(false);
 
   const isSubscription = mode === 'subscription';
@@ -120,8 +128,45 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
     });
   }, [loadOrder, t]);
 
+  const layout = useMemo(() => getLdxpPayLayout(isMobile), [isMobile]);
+  const browserUserAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+  const usesExternalPayFlow = useMemo(
+    () => shouldUseLdxpExternalPayFlow({ isMobile, userAgent: browserUserAgent }),
+    [browserUserAgent, isMobile],
+  );
+  const desktopPaySurfaceMode = useMemo(
+    () => resolveLdxpDesktopPaySurfaceMode({
+      isMobile,
+      userAgent: browserUserAgent,
+      qrImageUrl: order?.qr_img_url,
+      qrCode: order?.qr_code,
+      paymentUrl: order?.payment_url,
+    }),
+    [browserUserAgent, isMobile, order?.payment_url, order?.qr_code, order?.qr_img_url],
+  );
+  const showQrImageSurface = useMemo(
+    () => (
+      showIframe
+      && shouldUseLdxpQrImageSurface({
+        isMobile,
+        userAgent: browserUserAgent,
+        qrImageUrl: order?.qr_img_url,
+      })
+    ),
+    [browserUserAgent, isMobile, order?.qr_img_url, showIframe],
+  );
+  const showQrCodeSurface = showIframe && desktopPaySurfaceMode === 'qr-code';
+  const blockUnsafeIframeFallback = showIframe && desktopPaySurfaceMode === 'blocked';
+  const shouldRenderEmbeddedIframe = (
+    showIframe
+    && !showQrImageSurface
+    && !showQrCodeSurface
+    && !blockUnsafeIframeFallback
+    && !usesExternalPayFlow
+  );
+
   useEffect(() => {
-    if (!showIframe || iframeLoaded) {
+    if (!shouldRenderEmbeddedIframe || iframeLoaded) {
       setIframeStalled(false);
       return undefined;
     }
@@ -129,7 +174,7 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
       setIframeStalled(true);
     }, 12000);
     return () => clearTimeout(timer);
-  }, [iframeLoaded, showIframe]);
+  }, [iframeLoaded, shouldRenderEmbeddedIframe]);
 
   useEffect(() => {
     if (!pollingActive || !showIframe) {
@@ -168,10 +213,9 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
     return () => clearInterval(timer);
   }, [isSubscription, loadOrder, navigate, pollingActive, showIframe, successPath, t]);
 
-  const layout = useMemo(() => getLdxpPayLayout(isMobile), [isMobile]);
   const autoStartRequested = useMemo(
-    () => shouldAutoStartLdxpPay({ isMobile, search: location.search }),
-    [isMobile, location.search],
+    () => shouldAutoStartLdxpPay({ isMobile, userAgent: browserUserAgent, search: location.search }),
+    [browserUserAgent, isMobile, location.search],
   );
 
   useEffect(() => {
@@ -187,7 +231,7 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
   }, [autoStartRequested, order, showIframe]);
 
   useEffect(() => {
-    if (!layout.mobileUsesExternalPayFlow || !mobilePayLaunched) {
+    if (!usesExternalPayFlow || !mobilePayLaunched) {
       return undefined;
     }
     const refreshAfterReturn = () => {
@@ -201,13 +245,22 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
       document.removeEventListener('visibilitychange', refreshAfterReturn);
       window.removeEventListener('focus', refreshAfterReturn);
     };
-  }, [layout.mobileUsesExternalPayFlow, loadOrder, mobilePayLaunched]);
+  }, [loadOrder, mobilePayLaunched, usesExternalPayFlow]);
 
   const payHint = useMemo(() => {
-    if (layout.mobileUsesExternalPayFlow) {
+    if (usesExternalPayFlow) {
       return mobilePayLaunched
         ? t('官方支付页已拉起，支付完成后回到当前订单页，再点击“检查结果”。')
         : t('移动端会拉起官方支付页或支付宝应用，当前订单页会保留在 new-api 中。');
+    }
+    if (showQrImageSurface) {
+      return t('桌面端已切换为站内二维码展示，请使用支付宝扫码完成支付。');
+    }
+    if (showQrCodeSurface) {
+      return t('上游未返回二维码图片，当前已切换为站内生成二维码，请使用支付宝扫码完成支付。');
+    }
+    if (blockUnsafeIframeFallback) {
+      return t('当前未能获取安全的站内二维码，系统已阻止加载高风险支付页。请点击“重新获取二维码”后重试。');
     }
     if (!showIframe) {
       return t('请先核对订单信息，确认无误后点击“开始支付”。');
@@ -219,7 +272,17 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
       return t('支付页面已加载，完成支付后请点击“我已完成支付，立即检查”。');
     }
     return t('正在加载支付页面，请稍候。');
-  }, [iframeLoaded, iframeStalled, layout.mobileUsesExternalPayFlow, mobilePayLaunched, showIframe, t]);
+  }, [
+    iframeLoaded,
+    iframeStalled,
+    mobilePayLaunched,
+    blockUnsafeIframeFallback,
+    showIframe,
+    showQrCodeSurface,
+    showQrImageSurface,
+    t,
+    usesExternalPayFlow,
+  ]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -282,13 +345,17 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
   ];
 
   const compactButtonClassName = 'w-full justify-center';
-  const startButtonLabel = layout.mobileUsesExternalPayFlow ? t('打开官方支付页') : t('开始支付');
-  const showStatusBanner = iframeStalled || (layout.mobileUsesExternalPayFlow && mobilePayLaunched);
-  const workspaceHint = layout.mobileUsesExternalPayFlow
+  const startButtonLabel = usesExternalPayFlow ? t('打开官方支付页') : t('开始支付');
+  const showStatusBanner = (
+    iframeStalled
+    || blockUnsafeIframeFallback
+    || (usesExternalPayFlow && mobilePayLaunched)
+  );
+  const workspaceHint = usesExternalPayFlow
     ? mobilePayLaunched
       ? t('支付已在官方页面或支付宝应用中发起，完成后回到当前订单页检查结果。')
       : t('支付将在官方页面或支付宝应用中完成，当前订单页会保留在 new-api 中。')
-    : t('点击左侧“开始支付”后，这里会加载支付页面。');
+    : t('点击左侧“开始支付”后，这里会展示站内支付宝二维码。');
 
   return (
     <div className={layout.pageClassName}>
@@ -339,23 +406,23 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
                         showError(t('支付链接不存在'));
                         return;
                       }
-                      if (layout.mobileUsesExternalPayFlow) {
+                      if (usesExternalPayFlow) {
                         setMobilePayLaunched(true);
                         launchLdxpExternalPay({ paymentUrl: order.payment_url });
                         return;
                       }
-                      setIframeLoaded(false);
-                      setIframeStalled(false);
-                      setIframeVersion((current) => current + 1);
                       setShowIframe(true);
                       setMobilePayLaunched(false);
                       setPollingActive(true);
+                      setIframeLoaded(false);
+                      setIframeStalled(false);
+                      setIframeVersion((current) => current + 1);
                     }}
                     disabled={!isOrderPayable(order.status) || !order.payment_url}
                   >
                     {startButtonLabel}
                   </Button>
-                  {layout.mobileUsesExternalPayFlow && (
+                  {usesExternalPayFlow && (
                     <Button
                       className={compactButtonClassName}
                       onClick={() => setMobilePayLaunched(false)}
@@ -407,9 +474,9 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
                         <div>{t('1. 先核对左侧订单金额与状态。')}</div>
                         <div>
                           {t(
-                            layout.mobileUsesExternalPayFlow
+                            usesExternalPayFlow
                               ? '2. 点击“打开官方支付页”，系统可能新开页面或唤起支付宝。'
-                              : '2. 点击“开始支付”，在当前页面完成支付。',
+                              : '2. 点击“开始支付”，在当前页面展示二维码并使用支付宝扫码。',
                           )}
                         </div>
                         <div>{t('3. 支付完成后返回当前订单页，点击“检查结果”。')}</div>
@@ -432,24 +499,114 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
                   </Tag>
                 </div>
 
-                <div className={layout.iframeWrapperClassName}>
-                  <iframe
-                    key={iframeVersion}
-                    src={order.payment_url}
-                    title={t('支付页面')}
-                    onLoad={() => {
-                      setIframeLoaded(true);
-                      setIframeStalled(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      height: `${layout.iframeHeight}px`,
-                      border: '0',
-                      background: 'var(--semi-color-bg-0)',
-                    }}
-                    sandbox={iframeSandbox}
-                  />
-                </div>
+                {showQrImageSurface || showQrCodeSurface ? (
+                  <div className='rounded-2xl border bg-[var(--semi-color-bg-0)] px-6 py-8'>
+                    <div className='mx-auto flex max-w-xl flex-col items-center gap-4 text-center'>
+                      <div className='space-y-2'>
+                        <Title heading={6} className='!mb-0'>
+                          {t('支付宝扫码支付')}
+                        </Title>
+                        <Text type='secondary'>
+                          {t(
+                            showQrCodeSurface
+                              ? '当前二维码由站内生成，请使用支付宝 App 扫描并在完成支付后返回当前订单页检查结果。'
+                              : '请使用支付宝 App 扫描下方二维码，支付完成后返回当前订单页检查结果。',
+                          )}
+                        </Text>
+                      </div>
+                      <div className='rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.18)]'>
+                        {showQrImageSurface ? (
+                          <img
+                            src={order.qr_img_url}
+                            alt={t('支付宝收款二维码')}
+                            className='block h-auto max-w-full rounded-2xl bg-white p-3 cursor-zoom-in'
+                            onClick={() => setQrPreviewVisible(true)}
+                          />
+                        ) : (
+                          <div className='rounded-2xl bg-white p-3'>
+                            <QRCodeSVG
+                              value={order.qr_code}
+                              size={260}
+                              includeMargin
+                              aria-label={t('支付宝收款二维码')}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {showQrImageSurface && (
+                        <Text type='tertiary' size='small'>
+                          {t('二维码按原图尺寸展示，点击可在站内查看原图。')}
+                        </Text>
+                      )}
+                    </div>
+                  </div>
+                ) : usesExternalPayFlow ? (
+                  <div className='rounded-2xl border border-[var(--semi-color-border)] bg-[var(--semi-color-bg-0)] px-6 py-8'>
+                    <div className='mx-auto flex max-w-xl flex-col items-center gap-4 text-center'>
+                      <div className='space-y-2'>
+                        <Title heading={6} className='!mb-0'>
+                          {t('请在官方支付页完成支付')}
+                        </Title>
+                        <Text type='secondary'>
+                          {mobilePayLaunched
+                            ? t('官方支付页已拉起。支付完成后回到当前订单页，点击“我已完成支付，立即检查”。')
+                            : t('当前设备按移动端支付流程处理。为了避免风控，系统不会在页面内嵌入支付页。')}
+                        </Text>
+                      </div>
+                      {!mobilePayLaunched && (
+                        <Button
+                          theme='solid'
+                          type='primary'
+                          onClick={() => {
+                            if (!order.payment_url) {
+                              showError(t('支付链接不存在'));
+                              return;
+                            }
+                            setMobilePayLaunched(true);
+                            launchLdxpExternalPay({ paymentUrl: order.payment_url });
+                          }}
+                        >
+                          {t('打开官方支付页')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : blockUnsafeIframeFallback ? (
+                  <div className='rounded-2xl border border-[var(--semi-color-warning)] bg-[var(--semi-color-warning-light-default)] px-6 py-8'>
+                    <div className='mx-auto flex max-w-xl flex-col items-center gap-4 text-center'>
+                      <div className='space-y-2'>
+                        <Title heading={6} className='!mb-0'>
+                          {t('正在安全获取支付二维码')}
+                        </Title>
+                        <Text type='secondary'>
+                          {t('当前未拿到可安全展示的二维码信息。为了避免触发支付风险，系统不会回退到嵌入式支付页。')}
+                        </Text>
+                      </div>
+                      <Text type='secondary'>
+                        {t('请点击下方“重新获取二维码”刷新订单信息；若持续失败，请稍后重试或联系管理员检查上游支付配置。')}
+                      </Text>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={layout.iframeWrapperClassName}>
+                    <iframe
+                      key={iframeVersion}
+                      src={order.payment_url}
+                      title={t('支付页面')}
+                      onLoad={() => {
+                        setIframeLoaded(true);
+                        setIframeStalled(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: `${layout.iframeHeight}px`,
+                        border: '0',
+                        background: 'var(--semi-color-bg-0)',
+                      }}
+                      sandbox={iframeSandbox}
+                    />
+                  </div>
+                )}
 
                 <div className={layout.iframeActionsClassName}>
                   <Button
@@ -464,12 +621,18 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
                   <Button
                     className={isMobile ? 'w-full' : undefined}
                     onClick={() => {
+                      if (showQrImageSurface || showQrCodeSurface || blockUnsafeIframeFallback) {
+                        void loadOrder(false);
+                        return;
+                      }
                       setIframeLoaded(false);
                       setIframeStalled(false);
                       setIframeVersion((current) => current + 1);
                     }}
                   >
-                    {t('重新加载支付页')}
+                    {showQrImageSurface || showQrCodeSurface || blockUnsafeIframeFallback
+                      ? t('重新获取二维码')
+                      : t('重新加载支付页')}
                   </Button>
                   <Button
                     className={isMobile ? 'w-full' : undefined}
@@ -489,6 +652,11 @@ const LdxpOrderPay = ({ mode = 'topup' }) => {
           </Card>
         </div>
       </div>
+      <ImagePreview
+        src={order?.qr_img_url}
+        visible={qrPreviewVisible}
+        onVisibleChange={(visible) => setQrPreviewVisible(visible)}
+      />
     </div>
   );
 };
