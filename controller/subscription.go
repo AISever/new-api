@@ -14,11 +14,119 @@ import (
 // ---- Shared types ----
 
 type SubscriptionPlanDTO struct {
-	Plan model.SubscriptionPlan `json:"plan"`
+	Plan SubscriptionPlanPayload `json:"plan"`
+}
+
+type SubscriptionPlanPayload struct {
+	Id int `json:"id"`
+
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+
+	PriceAmount float64 `json:"price_amount"`
+	Currency    string  `json:"currency"`
+
+	DurationUnit  string `json:"duration_unit"`
+	DurationValue int    `json:"duration_value"`
+	CustomSeconds int64  `json:"custom_seconds"`
+
+	Enabled   bool `json:"enabled"`
+	SortOrder int  `json:"sort_order"`
+
+	StripePriceId  string `json:"stripe_price_id"`
+	CreemProductId string `json:"creem_product_id"`
+
+	MaxPurchasePerUser int      `json:"max_purchase_per_user"`
+	UpgradeGroup       string   `json:"upgrade_group"`
+	EffectiveGroups    []string `json:"effective_groups"`
+	TotalAmount        int64    `json:"total_amount"`
+
+	QuotaResetPeriod        string `json:"quota_reset_period"`
+	QuotaResetCustomSeconds int64  `json:"quota_reset_custom_seconds"`
+
+	CreatedAt int64 `json:"created_at"`
+	UpdatedAt int64 `json:"updated_at"`
 }
 
 type BillingPreferenceRequest struct {
 	BillingPreference string `json:"billing_preference"`
+}
+
+func buildSubscriptionPlanPayload(plan model.SubscriptionPlan) SubscriptionPlanPayload {
+	effectiveGroups, err := plan.GetEffectiveGroups()
+	if err != nil {
+		common.SysLog("failed to parse subscription plan effective groups: " + err.Error())
+		effectiveGroups = nil
+	}
+	return SubscriptionPlanPayload{
+		Id:                      plan.Id,
+		Title:                   plan.Title,
+		Subtitle:                plan.Subtitle,
+		PriceAmount:             plan.PriceAmount,
+		Currency:                plan.Currency,
+		DurationUnit:            plan.DurationUnit,
+		DurationValue:           plan.DurationValue,
+		CustomSeconds:           plan.CustomSeconds,
+		Enabled:                 plan.Enabled,
+		SortOrder:               plan.SortOrder,
+		StripePriceId:           plan.StripePriceId,
+		CreemProductId:          plan.CreemProductId,
+		MaxPurchasePerUser:      plan.MaxPurchasePerUser,
+		UpgradeGroup:            plan.UpgradeGroup,
+		EffectiveGroups:         effectiveGroups,
+		TotalAmount:             plan.TotalAmount,
+		QuotaResetPeriod:        plan.QuotaResetPeriod,
+		QuotaResetCustomSeconds: plan.QuotaResetCustomSeconds,
+		CreatedAt:               plan.CreatedAt,
+		UpdatedAt:               plan.UpdatedAt,
+	}
+}
+
+func normalizeAndValidateSubscriptionEffectiveGroups(groups []string) ([]string, bool) {
+	normalized := model.NormalizeSubscriptionEffectiveGroups(groups)
+	if len(normalized) == 0 {
+		return nil, true
+	}
+	groupRatio := ratio_setting.GetGroupRatioCopy()
+	for _, group := range normalized {
+		if _, ok := groupRatio[group]; !ok {
+			return nil, false
+		}
+	}
+	return normalized, true
+}
+
+func buildSubscriptionPlanModel(payload SubscriptionPlanPayload) (model.SubscriptionPlan, bool) {
+	effectiveGroups, ok := normalizeAndValidateSubscriptionEffectiveGroups(payload.EffectiveGroups)
+	if !ok {
+		return model.SubscriptionPlan{}, false
+	}
+	effectiveGroupsRaw, err := model.SerializeSubscriptionEffectiveGroups(effectiveGroups)
+	if err != nil {
+		return model.SubscriptionPlan{}, false
+	}
+	return model.SubscriptionPlan{
+		Id:                      payload.Id,
+		Title:                   payload.Title,
+		Subtitle:                payload.Subtitle,
+		PriceAmount:             payload.PriceAmount,
+		Currency:                payload.Currency,
+		DurationUnit:            payload.DurationUnit,
+		DurationValue:           payload.DurationValue,
+		CustomSeconds:           payload.CustomSeconds,
+		Enabled:                 payload.Enabled,
+		SortOrder:               payload.SortOrder,
+		StripePriceId:           payload.StripePriceId,
+		CreemProductId:          payload.CreemProductId,
+		MaxPurchasePerUser:      payload.MaxPurchasePerUser,
+		UpgradeGroup:            payload.UpgradeGroup,
+		EffectiveGroups:         effectiveGroupsRaw,
+		TotalAmount:             payload.TotalAmount,
+		QuotaResetPeriod:        payload.QuotaResetPeriod,
+		QuotaResetCustomSeconds: payload.QuotaResetCustomSeconds,
+		CreatedAt:               payload.CreatedAt,
+		UpdatedAt:               payload.UpdatedAt,
+	}, true
 }
 
 // ---- User APIs ----
@@ -32,7 +140,7 @@ func GetSubscriptionPlans(c *gin.Context) {
 	result := make([]SubscriptionPlanDTO, 0, len(plans))
 	for _, p := range plans {
 		result = append(result, SubscriptionPlanDTO{
-			Plan: p,
+			Plan: buildSubscriptionPlanPayload(p),
 		})
 	}
 	common.ApiSuccess(c, result)
@@ -97,14 +205,14 @@ func AdminListSubscriptionPlans(c *gin.Context) {
 	result := make([]SubscriptionPlanDTO, 0, len(plans))
 	for _, p := range plans {
 		result = append(result, SubscriptionPlanDTO{
-			Plan: p,
+			Plan: buildSubscriptionPlanPayload(p),
 		})
 	}
 	common.ApiSuccess(c, result)
 }
 
 type AdminUpsertSubscriptionPlanRequest struct {
-	Plan model.SubscriptionPlan `json:"plan"`
+	Plan SubscriptionPlanPayload `json:"plan"`
 }
 
 func AdminCreateSubscriptionPlan(c *gin.Context) {
@@ -113,56 +221,61 @@ func AdminCreateSubscriptionPlan(c *gin.Context) {
 		common.ApiErrorMsg(c, "参数错误")
 		return
 	}
-	req.Plan.Id = 0
-	if strings.TrimSpace(req.Plan.Title) == "" {
+	plan, ok := buildSubscriptionPlanModel(req.Plan)
+	if !ok {
+		common.ApiErrorMsg(c, "生效分组不存在或配置无效")
+		return
+	}
+	plan.Id = 0
+	if strings.TrimSpace(plan.Title) == "" {
 		common.ApiErrorMsg(c, "套餐标题不能为空")
 		return
 	}
-	if req.Plan.PriceAmount < 0 {
+	if plan.PriceAmount < 0 {
 		common.ApiErrorMsg(c, "价格不能为负数")
 		return
 	}
-	if req.Plan.PriceAmount > 9999 {
+	if plan.PriceAmount > 9999 {
 		common.ApiErrorMsg(c, "价格不能超过9999")
 		return
 	}
-	if req.Plan.Currency == "" {
-		req.Plan.Currency = "USD"
+	if plan.Currency == "" {
+		plan.Currency = "USD"
 	}
-	req.Plan.Currency = "USD"
-	if req.Plan.DurationUnit == "" {
-		req.Plan.DurationUnit = model.SubscriptionDurationMonth
+	plan.Currency = "USD"
+	if plan.DurationUnit == "" {
+		plan.DurationUnit = model.SubscriptionDurationMonth
 	}
-	if req.Plan.DurationValue <= 0 && req.Plan.DurationUnit != model.SubscriptionDurationCustom {
-		req.Plan.DurationValue = 1
+	if plan.DurationValue <= 0 && plan.DurationUnit != model.SubscriptionDurationCustom {
+		plan.DurationValue = 1
 	}
-	if req.Plan.MaxPurchasePerUser < 0 {
+	if plan.MaxPurchasePerUser < 0 {
 		common.ApiErrorMsg(c, "购买上限不能为负数")
 		return
 	}
-	if req.Plan.TotalAmount < 0 {
+	if plan.TotalAmount < 0 {
 		common.ApiErrorMsg(c, "总额度不能为负数")
 		return
 	}
-	req.Plan.UpgradeGroup = strings.TrimSpace(req.Plan.UpgradeGroup)
-	if req.Plan.UpgradeGroup != "" {
-		if _, ok := ratio_setting.GetGroupRatioCopy()[req.Plan.UpgradeGroup]; !ok {
+	plan.UpgradeGroup = strings.TrimSpace(plan.UpgradeGroup)
+	if plan.UpgradeGroup != "" {
+		if _, ok := ratio_setting.GetGroupRatioCopy()[plan.UpgradeGroup]; !ok {
 			common.ApiErrorMsg(c, "升级分组不存在")
 			return
 		}
 	}
-	req.Plan.QuotaResetPeriod = model.NormalizeResetPeriod(req.Plan.QuotaResetPeriod)
-	if req.Plan.QuotaResetPeriod == model.SubscriptionResetCustom && req.Plan.QuotaResetCustomSeconds <= 0 {
+	plan.QuotaResetPeriod = model.NormalizeResetPeriod(plan.QuotaResetPeriod)
+	if plan.QuotaResetPeriod == model.SubscriptionResetCustom && plan.QuotaResetCustomSeconds <= 0 {
 		common.ApiErrorMsg(c, "自定义重置周期需大于0秒")
 		return
 	}
-	err := model.DB.Create(&req.Plan).Error
+	err := model.DB.Create(&plan).Error
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
-	model.InvalidateSubscriptionPlanCache(req.Plan.Id)
-	common.ApiSuccess(c, req.Plan)
+	model.InvalidateSubscriptionPlanCache(plan.Id)
+	common.ApiSuccess(c, buildSubscriptionPlanPayload(plan))
 }
 
 func AdminUpdateSubscriptionPlan(c *gin.Context) {
@@ -176,46 +289,51 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		common.ApiErrorMsg(c, "参数错误")
 		return
 	}
-	if strings.TrimSpace(req.Plan.Title) == "" {
+	plan, ok := buildSubscriptionPlanModel(req.Plan)
+	if !ok {
+		common.ApiErrorMsg(c, "生效分组不存在或配置无效")
+		return
+	}
+	if strings.TrimSpace(plan.Title) == "" {
 		common.ApiErrorMsg(c, "套餐标题不能为空")
 		return
 	}
-	if req.Plan.PriceAmount < 0 {
+	if plan.PriceAmount < 0 {
 		common.ApiErrorMsg(c, "价格不能为负数")
 		return
 	}
-	if req.Plan.PriceAmount > 9999 {
+	if plan.PriceAmount > 9999 {
 		common.ApiErrorMsg(c, "价格不能超过9999")
 		return
 	}
-	req.Plan.Id = id
-	if req.Plan.Currency == "" {
-		req.Plan.Currency = "USD"
+	plan.Id = id
+	if plan.Currency == "" {
+		plan.Currency = "USD"
 	}
-	req.Plan.Currency = "USD"
-	if req.Plan.DurationUnit == "" {
-		req.Plan.DurationUnit = model.SubscriptionDurationMonth
+	plan.Currency = "USD"
+	if plan.DurationUnit == "" {
+		plan.DurationUnit = model.SubscriptionDurationMonth
 	}
-	if req.Plan.DurationValue <= 0 && req.Plan.DurationUnit != model.SubscriptionDurationCustom {
-		req.Plan.DurationValue = 1
+	if plan.DurationValue <= 0 && plan.DurationUnit != model.SubscriptionDurationCustom {
+		plan.DurationValue = 1
 	}
-	if req.Plan.MaxPurchasePerUser < 0 {
+	if plan.MaxPurchasePerUser < 0 {
 		common.ApiErrorMsg(c, "购买上限不能为负数")
 		return
 	}
-	if req.Plan.TotalAmount < 0 {
+	if plan.TotalAmount < 0 {
 		common.ApiErrorMsg(c, "总额度不能为负数")
 		return
 	}
-	req.Plan.UpgradeGroup = strings.TrimSpace(req.Plan.UpgradeGroup)
-	if req.Plan.UpgradeGroup != "" {
-		if _, ok := ratio_setting.GetGroupRatioCopy()[req.Plan.UpgradeGroup]; !ok {
+	plan.UpgradeGroup = strings.TrimSpace(plan.UpgradeGroup)
+	if plan.UpgradeGroup != "" {
+		if _, ok := ratio_setting.GetGroupRatioCopy()[plan.UpgradeGroup]; !ok {
 			common.ApiErrorMsg(c, "升级分组不存在")
 			return
 		}
 	}
-	req.Plan.QuotaResetPeriod = model.NormalizeResetPeriod(req.Plan.QuotaResetPeriod)
-	if req.Plan.QuotaResetPeriod == model.SubscriptionResetCustom && req.Plan.QuotaResetCustomSeconds <= 0 {
+	plan.QuotaResetPeriod = model.NormalizeResetPeriod(plan.QuotaResetPeriod)
+	if plan.QuotaResetPeriod == model.SubscriptionResetCustom && plan.QuotaResetCustomSeconds <= 0 {
 		common.ApiErrorMsg(c, "自定义重置周期需大于0秒")
 		return
 	}
@@ -223,22 +341,23 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 	err := model.DB.Transaction(func(tx *gorm.DB) error {
 		// update plan (allow zero values updates with map)
 		updateMap := map[string]interface{}{
-			"title":                      req.Plan.Title,
-			"subtitle":                   req.Plan.Subtitle,
-			"price_amount":               req.Plan.PriceAmount,
-			"currency":                   req.Plan.Currency,
-			"duration_unit":              req.Plan.DurationUnit,
-			"duration_value":             req.Plan.DurationValue,
-			"custom_seconds":             req.Plan.CustomSeconds,
-			"enabled":                    req.Plan.Enabled,
-			"sort_order":                 req.Plan.SortOrder,
-			"stripe_price_id":            req.Plan.StripePriceId,
-			"creem_product_id":           req.Plan.CreemProductId,
-			"max_purchase_per_user":      req.Plan.MaxPurchasePerUser,
-			"total_amount":               req.Plan.TotalAmount,
-			"upgrade_group":              req.Plan.UpgradeGroup,
-			"quota_reset_period":         req.Plan.QuotaResetPeriod,
-			"quota_reset_custom_seconds": req.Plan.QuotaResetCustomSeconds,
+			"title":                      plan.Title,
+			"subtitle":                   plan.Subtitle,
+			"price_amount":               plan.PriceAmount,
+			"currency":                   plan.Currency,
+			"duration_unit":              plan.DurationUnit,
+			"duration_value":             plan.DurationValue,
+			"custom_seconds":             plan.CustomSeconds,
+			"enabled":                    plan.Enabled,
+			"sort_order":                 plan.SortOrder,
+			"stripe_price_id":            plan.StripePriceId,
+			"creem_product_id":           plan.CreemProductId,
+			"max_purchase_per_user":      plan.MaxPurchasePerUser,
+			"effective_groups":           plan.EffectiveGroups,
+			"total_amount":               plan.TotalAmount,
+			"upgrade_group":              plan.UpgradeGroup,
+			"quota_reset_period":         plan.QuotaResetPeriod,
+			"quota_reset_custom_seconds": plan.QuotaResetCustomSeconds,
 			"updated_at":                 common.GetTimestamp(),
 		}
 		if err := tx.Model(&model.SubscriptionPlan{}).Where("id = ?", id).Updates(updateMap).Error; err != nil {

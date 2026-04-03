@@ -64,6 +64,16 @@ function formatResetPeriod(plan, t) {
   return t('不重置');
 }
 
+function formatEffectiveGroups(plan, t) {
+  const groups = Array.isArray(plan?.effective_groups)
+    ? plan.effective_groups.filter(Boolean)
+    : [];
+  if (groups.length === 0) {
+    return t('全部分组');
+  }
+  return groups.join(', ');
+}
+
 const renderPlanTitle = (text, record, t) => {
   const subtitle = record?.plan?.subtitle;
   const plan = record?.plan;
@@ -91,6 +101,8 @@ const renderPlanTitle = (text, record, t) => {
         )}
         <Text type='tertiary'>{t('升级分组')}</Text>
         <Text>{plan?.upgrade_group ? plan.upgrade_group : t('不升级')}</Text>
+        <Text type='tertiary'>{t('生效分组')}</Text>
+        <Text>{formatEffectiveGroups(plan, t)}</Text>
         <Text type='tertiary'>{t('购买上限')}</Text>
         <Text>
           {plan?.max_purchase_per_user > 0
@@ -188,6 +200,16 @@ const renderUpgradeGroup = (text, record, t) => {
   return (
     <Text type={group ? 'secondary' : 'tertiary'}>
       {group ? group : t('不升级')}
+    </Text>
+  );
+};
+
+const renderEffectiveGroups = (text, record, t) => {
+  const groups = record?.plan?.effective_groups || [];
+  const hasGroups = Array.isArray(groups) && groups.length > 0;
+  return (
+    <Text type={hasGroups ? 'secondary' : 'tertiary'}>
+      {formatEffectiveGroups(record?.plan, t)}
     </Text>
   );
 };
@@ -344,6 +366,11 @@ export const getSubscriptionsColumns = ({
       title: t('升级分组'),
       width: 100,
       render: (text, record) => renderUpgradeGroup(text, record, t),
+    },
+    {
+      title: t('生效分组'),
+      width: 140,
+      render: (text, record) => renderEffectiveGroups(text, record, t),
     },
     {
       title: t('操作'),

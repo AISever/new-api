@@ -168,6 +168,9 @@ type SubscriptionPlan struct {
 	// Upgrade user group after purchase (empty = no change)
 	UpgradeGroup string `json:"upgrade_group" gorm:"type:varchar(64);default:''"`
 
+	// Effective groups for request-time subscription billing (empty = all groups)
+	EffectiveGroups string `json:"effective_groups" gorm:"type:text"`
+
 	// Total quota (amount in quota units, 0 = unlimited)
 	TotalAmount int64 `json:"total_amount" gorm:"type:bigint;not null;default:0"`
 
@@ -177,6 +180,84 @@ type SubscriptionPlan struct {
 
 	CreatedAt int64 `json:"created_at" gorm:"bigint"`
 	UpdatedAt int64 `json:"updated_at" gorm:"bigint"`
+}
+
+func NormalizeSubscriptionEffectiveGroups(groups []string) []string {
+	if len(groups) == 0 {
+		return nil
+	}
+	normalized := make([]string, 0, len(groups))
+	seen := make(map[string]struct{}, len(groups))
+	for _, group := range groups {
+		group = strings.TrimSpace(group)
+		if group == "" {
+			continue
+		}
+		if _, ok := seen[group]; ok {
+			continue
+		}
+		seen[group] = struct{}{}
+		normalized = append(normalized, group)
+	}
+	if len(normalized) == 0 {
+		return nil
+	}
+	return normalized
+}
+
+func SerializeSubscriptionEffectiveGroups(groups []string) (string, error) {
+	normalized := NormalizeSubscriptionEffectiveGroups(groups)
+	if len(normalized) == 0 {
+		return "", nil
+	}
+	data, err := common.Marshal(normalized)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func ParseSubscriptionEffectiveGroups(raw string) ([]string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil
+	}
+	var groups []string
+	if err := common.UnmarshalJsonStr(raw, &groups); err != nil {
+		return nil, err
+	}
+	return NormalizeSubscriptionEffectiveGroups(groups), nil
+}
+
+func (p *SubscriptionPlan) GetEffectiveGroups() ([]string, error) {
+	if p == nil {
+		return nil, errors.New("plan is nil")
+	}
+	return ParseSubscriptionEffectiveGroups(p.EffectiveGroups)
+}
+
+func (p *SubscriptionPlan) SupportsUsingGroup(usingGroup string) bool {
+	if p == nil {
+		return false
+	}
+	groups, err := p.GetEffectiveGroups()
+	if err != nil {
+		common.SysLog(fmt.Sprintf("invalid subscription effective_groups config, plan_id=%d: %s", p.Id, err.Error()))
+		return false
+	}
+	if len(groups) == 0 {
+		return true
+	}
+	usingGroup = strings.TrimSpace(usingGroup)
+	if usingGroup == "" {
+		return false
+	}
+	for _, group := range groups {
+		if group == usingGroup {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *SubscriptionPlan) BeforeCreate(tx *gorm.DB) error {
@@ -682,6 +763,29 @@ func HasActiveUserSubscription(userId int) (bool, error) {
 	return count > 0, nil
 }
 
+func HasActiveUserSubscriptionForGroup(userId int, usingGroup string) (bool, error) {
+	if userId <= 0 {
+		return false, errors.New("invalid userId")
+	}
+	now := common.GetTimestamp()
+	var subs []UserSubscription
+	if err := DB.Where("user_id = ? AND status = ? AND end_time > ?", userId, "active", now).
+		Order("end_time desc, id desc").
+		Find(&subs).Error; err != nil {
+		return false, err
+	}
+	for _, sub := range subs {
+		plan, err := GetSubscriptionPlanById(sub.PlanId)
+		if err != nil {
+			return false, err
+		}
+		if plan.SupportsUsingGroup(usingGroup) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // GetAllUserSubscriptions returns all subscriptions (active and expired) for a user.
 func GetAllUserSubscriptions(userId int) ([]SubscriptionSummary, error) {
 	if userId <= 0 {
@@ -953,7 +1057,7 @@ func maybeResetUserSubscriptionWithPlanTx(tx *gorm.DB, sub *UserSubscription, pl
 }
 
 // PreConsumeUserSubscription pre-consumes from any active subscription total quota.
-func PreConsumeUserSubscription(requestId string, userId int, modelName string, quotaType int, amount int64) (*SubscriptionPreConsumeResult, error) {
+func PreConsumeUserSubscription(requestId string, userId int, usingGroup string, modelName string, quotaType int, amount int64) (*SubscriptionPreConsumeResult, error) {
 	if userId <= 0 {
 		return nil, errors.New("invalid userId")
 	}
@@ -1004,6 +1108,9 @@ func PreConsumeUserSubscription(requestId string, userId int, modelName string, 
 			plan, err := getSubscriptionPlanByIdTx(tx, sub.PlanId)
 			if err != nil {
 				return err
+			}
+			if !plan.SupportsUsingGroup(usingGroup) {
+				continue
 			}
 			if err := maybeResetUserSubscriptionWithPlanTx(tx, &sub, plan, now); err != nil {
 				return err
