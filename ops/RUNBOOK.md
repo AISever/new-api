@@ -35,6 +35,14 @@ bash ops/scripts/kkidc-host-deploy.sh test-stop
 说明：`test-stop` 只停止 `new-api-test`，保留 `new-api-test` 数据库、Redis `db 1`、`/opt/new-api-test/data`、`/opt/new-api-test/logs`。
 近期实测：2026-03-25 本地构建 + 上传测试环境总耗时约 `372s`，其中镜像构建阶段约 `355s`。
 
+从远端备份导入生产数据到测试环境：
+
+```bash
+bash ops/scripts/kkidc-host-restore.sh test --source-backup-dir /opt/new-api-backups/<timestamp>
+```
+
+说明：该入口会先备份当前测试环境，再恢复指定备份目录中的 `db.dump`、`data.tgz`，默认同时恢复 `logs.tgz`，最后使用当前已推送分支对应的远端镜像重新启动测试环境。
+
 ## 2. `kkidc` 生产环境
 
 备份：
