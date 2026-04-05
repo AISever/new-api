@@ -13,7 +13,7 @@
 ## 1. 当前环境口径
 
 - `kkidc` 个人生产环境：`https://api.aisever.cn`
-- `kkidc` 企业生产环境：独立容器部署，建议域名 `https://corp-api.aisever.cn`，公网切流前可先通过 `http://114.66.47.192:3002` 验证
+- `kkidc` 企业生产环境：`https://corp-api.aisever.cn`
 - `kkidc` 测试环境：`http://114.66.47.192:3001`
 在执行任何部署、恢复、迁移、切流之前，请先阅读：
 
