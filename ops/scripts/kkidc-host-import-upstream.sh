@@ -282,14 +282,18 @@ class JsonSession:
     def __init__(self):
         self.cookie_jar = CookieJar()
         self.ssl_context = make_ssl_context()
+        self.default_headers = {"Accept": "application/json"}
         self.opener = urllib.request.build_opener(
             urllib.request.HTTPCookieProcessor(self.cookie_jar),
             urllib.request.HTTPSHandler(context=self.ssl_context),
         )
 
+    def set_default_header(self, key: str, value: str):
+        self.default_headers[key] = value
+
     def request(self, method: str, url: str, data=None, headers=None):
         payload = None
-        request_headers = {"Accept": "application/json"}
+        request_headers = dict(self.default_headers)
         if headers:
             request_headers.update(headers)
         if data is not None:
@@ -629,7 +633,7 @@ def ensure_target_setup_and_login():
             "target setup",
         )
 
-    ensure_success(
+    login_res = ensure_success(
         client.request(
             "POST",
             f"{TARGET_BASE_URL}/api/user/login",
@@ -637,6 +641,10 @@ def ensure_target_setup_and_login():
         ),
         "target root login",
     )
+    user_id = ((login_res.get("data") or {}).get("id"))
+    if not user_id:
+        raise RuntimeError("target root login response missing user id")
+    client.set_default_header("New-Api-User", str(int(user_id)))
     return client
 
 
