@@ -17,17 +17,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-export * from './history';
-export * from './auth';
-export * from './utils';
-export * from './base64';
-export * from './api';
-export * from './render';
-export * from './log';
-export * from './data';
-export * from './token';
-export * from './boolean';
-export * from './dashboard';
-export * from './passkey';
-export * from './statusCodeRules';
-export * from './branding';
+export function applyBrandingToDocument(
+  documentObject,
+  { systemName, logo } = {},
+) {
+  if (!documentObject) {
+    return;
+  }
+
+  if (systemName) {
+    documentObject.title = systemName;
+  }
+
+  const linkElement = documentObject.querySelector("link[rel~='icon']");
+  if (!linkElement) {
+    return;
+  }
+
+  linkElement.href = logo || '/logo.png';
+}

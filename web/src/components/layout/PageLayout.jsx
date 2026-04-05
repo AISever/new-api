@@ -29,6 +29,7 @@ import { useSidebarCollapsed } from '../../hooks/common/useSidebarCollapsed';
 import { useTranslation } from 'react-i18next';
 import {
   API,
+  applyBrandingToDocument,
   getLogo,
   getSystemName,
   showError,
@@ -92,6 +93,10 @@ const PageLayout = () => {
       if (success) {
         statusDispatch({ type: 'set', payload: data });
         setStatusData(data);
+        applyBrandingToDocument(document, {
+          systemName: data.system_name,
+          logo: data.logo,
+        });
       } else {
         showError('Unable to connect to server');
       }
@@ -103,17 +108,10 @@ const PageLayout = () => {
   useEffect(() => {
     loadUser();
     loadStatus().catch(console.error);
-    let systemName = getSystemName();
-    if (systemName) {
-      document.title = systemName;
-    }
-    let logo = getLogo();
-    if (logo) {
-      let linkElement = document.querySelector("link[rel~='icon']");
-      if (linkElement) {
-        linkElement.href = logo;
-      }
-    }
+    applyBrandingToDocument(document, {
+      systemName: getSystemName(),
+      logo: getLogo(),
+    });
   }, []);
 
   useEffect(() => {
