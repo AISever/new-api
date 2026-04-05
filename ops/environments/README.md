@@ -36,5 +36,7 @@
 1. **功能发布顺序**：先 `kkidc` 测试环境，之后再进对应的 `kkidc` 生产环境（个人或企业）。
 2. **部署前先看本目录**：需要判断“该操作到底影响哪个环境”时，先读本目录，再进入对应环境文档。
 3. **新 `kkidc` 服务器**：使用 `ops/scripts/kkidc-host-deploy.sh production|enterprise|test`，默认读取 `.kkidc/.env.lighthouse` 和 `.env.local`，并只部署已经 push 到远端校验分支的已提交 `HEAD`。
-4. **共享主机上的企业环境**：企业域名已通过 `ENTERPRISE_HOSTNAME` 接入 Caddy；如后续调整企业域名，仍需先确认 DNS，再重新部署，并验证 `https://api.aisever.cn` 不受影响。
-5. **测试环境收尾**：`kkidc` 用 `ops/scripts/kkidc-host-deploy.sh test-stop`；只停测试应用，不清空测试数据。
+4. **git worktree 兼容**：`kkidc-host-deploy.sh`、`kkidc-host-backup.sh`、`kkidc-host-restore.sh`、`kkidc-host-reset.sh`、`kkidc-host-import-upstream.sh` 会优先从 git common root 查找共享私有配置，因此在 release worktree 中执行时也应沿用主仓库私有配置。
+5. **共享主机上的企业环境**：企业域名已通过 `ENTERPRISE_HOSTNAME` 接入 Caddy；如后续调整企业域名，仍需先确认 DNS，再重新部署，并验证 `https://api.aisever.cn` 不受影响。
+6. **企业/测试环境重置与导入**：如需清空测试或企业环境并重新接入新的上游，先备份，再使用 `ops/scripts/kkidc-host-reset.sh` 与 `ops/scripts/kkidc-host-import-upstream.sh`，禁止手工删库或绕过仓库脚本。
+7. **测试环境收尾**：`kkidc` 用 `ops/scripts/kkidc-host-deploy.sh test-stop`；只停测试应用，不清空测试数据。

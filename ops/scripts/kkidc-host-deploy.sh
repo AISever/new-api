@@ -5,8 +5,30 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 REPO_DIR="${REPO_DIR:-$PROJECT_ROOT}"
 
-CONFIG_FILE="$PROJECT_ROOT/.kkidc/.env.lighthouse"
-APP_ENV_FILE="${APP_ENV_FILE:-$PROJECT_ROOT/.env.local}"
+resolve_shared_repo_root() {
+  local common_dir=""
+  common_dir="$(git -C "$PROJECT_ROOT" rev-parse --git-common-dir 2>/dev/null || true)"
+  if [ -z "$common_dir" ]; then
+    printf '%s\n' "$PROJECT_ROOT"
+    return
+  fi
+  cd "$common_dir/.." && pwd
+}
+
+resolve_default_repo_file() {
+  local relative_path="$1"
+  local shared_root="$2"
+
+  if [ -e "$PROJECT_ROOT/$relative_path" ]; then
+    printf '%s\n' "$PROJECT_ROOT/$relative_path"
+    return
+  fi
+  printf '%s\n' "$shared_root/$relative_path"
+}
+
+SHARED_REPO_ROOT="$(resolve_shared_repo_root)"
+CONFIG_FILE="${CONFIG_FILE:-$(resolve_default_repo_file ".kkidc/.env.lighthouse" "$SHARED_REPO_ROOT")}"
+APP_ENV_FILE="${APP_ENV_FILE:-$(resolve_default_repo_file ".env.local" "$SHARED_REPO_ROOT")}"
 FRONTEND_BUILD_NODE_OPTIONS="${FRONTEND_BUILD_NODE_OPTIONS:---max-old-space-size=4096}"
 BUILD_STRATEGY_REQUESTED="${BUILD_STRATEGY:-auto}"
 TARGET_IMAGE_PLATFORM="${TARGET_IMAGE_PLATFORM:-linux/amd64}"
