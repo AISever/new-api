@@ -18,18 +18,32 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useMemo, useState, useContext } from 'react';
-import { Tabs, TabPane, Card, Typography, Collapse, Tag, Banner, Toast } from '@douyinfe/semi-ui';
+import {
+  Tabs,
+  TabPane,
+  Card,
+  Typography,
+  Collapse,
+  Tag,
+  Banner,
+  Toast,
+  Button,
+  Empty,
+} from '@douyinfe/semi-ui';
 import { IconCode, IconTerminal, IconDesktop, IconApps, IconCopy } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
 import { useActualTheme } from '../../context/Theme';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { buildDisplayHelpGroupCards } from '../../components/settings/utils/helpGroupCards';
+import { getDocsAvailability } from '../../helpers';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
 
 const Help = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [statusState] = useContext(StatusContext);
   const [activeTab, setActiveTab] = useState('claude-code');
   const [activePlatform, setActivePlatform] = useState('windows');
@@ -41,6 +55,10 @@ const Help = () => {
   const helpGroupCards = useMemo(
     () => buildDisplayHelpGroupCards(statusState?.status?.help_group_cards || []),
     [statusState?.status?.help_group_cards],
+  );
+  const docsAvailability = useMemo(
+    () => getDocsAvailability(statusState?.status || {}),
+    [statusState?.status],
   );
 
   const CodeBlock = ({ children }) => {
@@ -622,6 +640,74 @@ EOF`}</CodeBlock>
           ))}
         </div>
       ) : null}
+
+      <Card className="mb-6" title={t('文档中心')}>
+        {docsAvailability.hasLocalDocs ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: 'space-between',
+              gap: '20px',
+              alignItems: isMobile ? 'flex-start' : 'center',
+            }}
+          >
+            <div>
+              <Tag color="green" style={{ marginBottom: '8px' }}>
+                {t('企业版本地托管')}
+              </Tag>
+              <Title heading={4} style={{ margin: 0 }}>
+                {t('企业 API 文档')}
+              </Title>
+              <Paragraph style={{ marginTop: '8px', color: 'var(--semi-color-text-2)' }}>
+                {t(
+                  '完整接口文档已经作为企业版自身的一部分托管在当前系统内，包含目录、示例、参数说明与请求格式。',
+                )}
+              </Paragraph>
+            </div>
+            <Button theme="solid" type="primary" onClick={() => navigate('/docs')}>
+              {t('进入 API 文档')}
+            </Button>
+          </div>
+        ) : docsAvailability.hasLegacyDocsLink ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: 'space-between',
+              gap: '20px',
+              alignItems: isMobile ? 'flex-start' : 'center',
+            }}
+          >
+            <div>
+              <Title heading={4} style={{ margin: 0 }}>
+                {t('文档入口')}
+              </Title>
+              <Paragraph style={{ marginTop: '8px', color: 'var(--semi-color-text-2)' }}>
+                {t('当前环境尚未启用本地文档托管，仍使用兼容模式文档入口。')}
+              </Paragraph>
+            </div>
+            <Button
+              theme="solid"
+              type="primary"
+              onClick={() =>
+                window.open(
+                  docsAvailability.docsLink,
+                  '_blank',
+                  'noopener,noreferrer',
+                )
+              }
+            >
+              {t('打开文档')}
+            </Button>
+          </div>
+        ) : (
+          <Empty
+            title={t('暂无文档')}
+            description={t('管理员尚未配置企业文档清单，当前页面仍可查看基础接入教程。')}
+          />
+        )}
+      </Card>
 
       <Title heading={2} className="mb-6">{t('AI 编程工具使用指南')}</Title>
       

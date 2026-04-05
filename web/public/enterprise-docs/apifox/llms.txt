@@ -1,0 +1,172 @@
+# 钱多多-全链路API聚合
+
+## Docs
+- [发出请求](https://ob6nfbpu76.apifox.cn/3248625m0.md): 
+- [完成对象](https://ob6nfbpu76.apifox.cn/3899651m0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI [ChatCompletions格式](https://ob6nfbpu76.apifox.cn/24657805f0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI [Responses格式](https://ob6nfbpu76.apifox.cn/68461619f0.md): 
+- 模型接口 > 聊天(Chat) > Anthropic Claude [原生Claude格式(推荐)](https://ob6nfbpu76.apifox.cn/60892769f0.md): 
+- 模型接口 > 音乐(Music) [Suno](https://ob6nfbpu76.apifox.cn/45939985f0.md): 
+- 模型接口 [重排序 (Rerank)](https://ob6nfbpu76.apifox.cn/42713026f0.md): 
+- 模型接口 [实时对话(Realtime)](https://ob6nfbpu76.apifox.cn/43587270f0.md): 
+- Python配置方式 [Python基础对话](https://ob6nfbpu76.apifox.cn/5341405m0.md): 
+- Python配置方式 [Python使用gpt-4o识别图片](https://ob6nfbpu76.apifox.cn/5341472m0.md): 
+- Python配置方式 [Python使用Claude识别图片](https://ob6nfbpu76.apifox.cn/5341484m0.md): 
+
+## API Docs
+- 模型接口 > 列出模型 [原生OpenAI格式](https://ob6nfbpu76.apifox.cn/124951878e0.md): 获取当前可用的模型列表。
+- 模型接口 > 列出模型 [原生Gemini格式](https://ob6nfbpu76.apifox.cn/394017335e0.md): 以 Gemini API 格式返回可用模型列表
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [基础文本对话](https://ob6nfbpu76.apifox.cn/124951880e0.md): 本中转所有模型均已适配v1/chat/completions
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [流式响应 ](https://ob6nfbpu76.apifox.cn/361071375e0.md): 本中转所有模型均已适配v1/chat/completions
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [图片理解](https://ob6nfbpu76.apifox.cn/126569015e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [函数调用](https://ob6nfbpu76.apifox.cn/213010142e0.md): 官方结构化输出
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [Logprobs 请求](https://ob6nfbpu76.apifox.cn/361071819e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [内容补全接口](https://ob6nfbpu76.apifox.cn/124951881e0.md): 给定一个提示，该模型将返回一个或多个预测的完成，并且还可以返回每个位置的替代标记的概率。
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [联网搜索](https://ob6nfbpu76.apifox.cn/361866753e0.md): 本中转所有模型均已适配v1/chat/completions
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [PDF文件分析](https://ob6nfbpu76.apifox.cn/309643478e0.md): PDF转成base64替换到${base64String}
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [Codex](https://ob6nfbpu76.apifox.cn/297067108e0.md): 官方文档：https://openai.com/index/introducing-codex/
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [response_format](https://ob6nfbpu76.apifox.cn/213010146e0.md): 官方结构化输出
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [N测试](https://ob6nfbpu76.apifox.cn/213011724e0.md): 官方结构化输出
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [gpt-4-all（分析图片）](https://ob6nfbpu76.apifox.cn/126524859e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [Completions旧格式](https://ob6nfbpu76.apifox.cn/424430257e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > ChatCompletions格式 [令牌用量查询（Token Usage）](https://ob6nfbpu76.apifox.cn/340414253e0.md): 通过认证查询当前 Bearer Token 的额度使用情况：授予总量、已用、剩余、是否无限、模型限额及到期时间。
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [基础文本响应](https://ob6nfbpu76.apifox.cn/291767948e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [图像分析响应](https://ob6nfbpu76.apifox.cn/361071892e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [网络搜索工具](https://ob6nfbpu76.apifox.cn/292904095e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [文件搜索工具](https://ob6nfbpu76.apifox.cn/361071903e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [Computer use](https://ob6nfbpu76.apifox.cn/402176352e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [流式响应](https://ob6nfbpu76.apifox.cn/361071909e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [deep-research / 深度研究](https://ob6nfbpu76.apifox.cn/314672641e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [函数调用](https://ob6nfbpu76.apifox.cn/361071911e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [推理能力](https://ob6nfbpu76.apifox.cn/361071915e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [推理总结](https://ob6nfbpu76.apifox.cn/406987996e0.md): 
+- 模型接口 > 聊天(Chat) > OpenAI > Responses格式 [xAI联网搜索](https://ob6nfbpu76.apifox.cn/299243994e0.md): 
+- 模型接口 > 聊天(Chat) > Anthropic Claude > 原生Claude格式(推荐) [文本生成](https://ob6nfbpu76.apifox.cn/313863783e0.md): 支持官方原生格式，模型名称和官方一致
+- 模型接口 > 聊天(Chat) > Anthropic Claude > 原生Claude格式(推荐) [图片理解](https://ob6nfbpu76.apifox.cn/313863820e0.md): 支持官方原生格式，模型名称和官方一致
+- 模型接口 > 聊天(Chat) > Anthropic Claude > 原生Claude格式(推荐) [文本生成 / 强制返回思考](https://ob6nfbpu76.apifox.cn/313863785e0.md): Claude原生格式请求，强制思考请使用模型后缀-thinking，如claude-sonnet-4-20250514-thinking
+- 模型接口 > 聊天(Chat) > Anthropic Claude > 原生Claude格式(推荐) [函数调用](https://ob6nfbpu76.apifox.cn/313863786e0.md): 支持官方原生格式，模型名称和官方一致
+- 模型接口 > 聊天(Chat) > Anthropic Claude > 原生Claude格式(推荐) [多轮函数调用](https://ob6nfbpu76.apifox.cn/327451767e0.md): 支持官方原生格式，模型名称和官方一致
+- 模型接口 > 聊天(Chat) > Anthropic Claude > 原生Claude格式(推荐) [Web search / 联网搜索](https://ob6nfbpu76.apifox.cn/313863787e0.md): 支持官方原生格式，模型名称和官方一致
+- 模型接口 > 聊天(Chat) > Anthropic Claude > OpenAI兼容格式 [文本生成](https://ob6nfbpu76.apifox.cn/154774613e0.md): 已修改为OpenAI格式进行中转，模型名称和官方一致
+- 模型接口 > 聊天(Chat) > Anthropic Claude > OpenAI兼容格式 [图片理解](https://ob6nfbpu76.apifox.cn/220132533e0.md): 已修改为OpenAI格式进行中转，模型名称和官方一致
+- 模型接口 > 聊天(Chat) > Anthropic Claude > OpenAI兼容格式 [文本生成 / 强制返回思考](https://ob6nfbpu76.apifox.cn/299864181e0.md): 强制思考请使用模型后缀-thinking，如claude-sonnet-4-20250514-thinking
+- 模型接口 > 聊天(Chat) > Anthropic Claude > OpenAI兼容格式 [函数调用](https://ob6nfbpu76.apifox.cn/223417237e0.md): 已修改为OpenAI格式进行中转，模型名称和官方一致，函数建议使用官方v1/messages接口
+- 模型接口 > 聊天(Chat) > Anthropic Claude > OpenAI兼容格式 [多轮函数调用](https://ob6nfbpu76.apifox.cn/327451711e0.md): 已修改为OpenAI格式进行中转，模型名称和官方一致，函数建议使用官方v1/messages接口
+- 模型接口 > 聊天(Chat) > Google Gemini > 原生Gemini格式 [Gemini文本聊天](https://ob6nfbpu76.apifox.cn/307616192e0.md): 代理 Gemini API 请求。
+- 模型接口 > 聊天(Chat) > Google Gemini > 原生Gemini格式 [Gemini媒体识别](https://ob6nfbpu76.apifox.cn/394018854e0.md): Gemini图像、PDF、音频、视频识别请求
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [文本生成](https://ob6nfbpu76.apifox.cn/134703528e0.md): 
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [文本生成 / 强制返回思考](https://ob6nfbpu76.apifox.cn/302707947e0.md): 强制思考请使用模型后缀-thinking【gemini-2.5-flash-thinking】
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [文本生成 / 自定义思考预算](https://ob6nfbpu76.apifox.cn/393185536e0.md): 和Claude不同，默认情况下Gemini的思考模型会自动决定要不要思考，可使用【-thinking-预算数字】格式来精确传递思考预算，例如gemini-2.5-pro-preview-06-05-thinking-128
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [图片理解](https://ob6nfbpu76.apifox.cn/220132539e0.md): 
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [函数调用](https://ob6nfbpu76.apifox.cn/299087590e0.md): 
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [全能多模态版本](https://ob6nfbpu76.apifox.cn/305585040e0.md): 【gemini-2.5-flash-all】多模态版本的 gemini 模型，支持文件，视频，图片等分析，支持画图，支持实时联网
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [联网搜索](https://ob6nfbpu76.apifox.cn/293658162e0.md): 
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [文本转语音 / TTS](https://ob6nfbpu76.apifox.cn/318152603e0.md): 
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [音频理解](https://ob6nfbpu76.apifox.cn/293081025e0.md): 
+- 模型接口 > 聊天(Chat) > Google Gemini > OpenAI兼容格式 [视频理解](https://ob6nfbpu76.apifox.cn/293090260e0.md): 
+- 模型接口 > Midjourney [1.文生图（Imagine）接口](https://ob6nfbpu76.apifox.cn/221374686e0.md): 执行Imagine操作，提交绘图任务。提交任务后，获取到任务id，使用查询接口查询任务状态。
+- 模型接口 > Midjourney [2.按钮点击（Action）接口](https://ob6nfbpu76.apifox.cn/221374683e0.md): 该接口是用于点击图片下方的按钮，customId通过任务查询接口可以获取到。
+- 模型接口 > Midjourney [3.图片融合（Blend）接口](https://ob6nfbpu76.apifox.cn/221374684e0.md): 执行Blend操作，提交融图任务。
+- 模型接口 > Midjourney [4.窗口执行（Modal）接口](https://ob6nfbpu76.apifox.cn/221374687e0.md): 当执行其他任务，code返回21时，需要执行modal接口，传入新的提示词用来修改细节。
+- 模型接口 > Midjourney [5.图生文（Describe）接口](https://ob6nfbpu76.apifox.cn/221374685e0.md): 执行Describe操作，提交图生文任务。
+- 模型接口 > Midjourney [6.缩短提示词（Shorten）接口](https://ob6nfbpu76.apifox.cn/307620342e0.md): 执行shorten操作，识别在关键词中有哪些单词在生成图像时发挥关键因素，哪些单词则不太重要。
+- 模型接口 > Midjourney [7.换脸（FaceSwap）接口](https://ob6nfbpu76.apifox.cn/221374682e0.md): 提交FaceSwap任务，进行换脸操作。
+- 模型接口 > Midjourney [8.上传（upload）接口](https://ob6nfbpu76.apifox.cn/221374689e0.md): 上传图片到discord，可用于垫图、serf、cerf等使用
+- 模型接口 > Midjourney [9.查询接口](https://ob6nfbpu76.apifox.cn/221374691e0.md): 通过任务id，查询任务信息。（可以通过轮询调用该接口，实现任务进行的查询。也可以通过回调接口获取）
+- 模型接口 > Midjourney [10.批量查询接口](https://ob6nfbpu76.apifox.cn/221374690e0.md): 通过任务id数组，查询任务信息。（可以通过轮询调用该接口，实现任务进行的查询。也可以通过回调接口获取）
+- 模型接口 > Midjourney [11.获取种子（Seed）接口](https://ob6nfbpu76.apifox.cn/221374692e0.md): 获取图片的seed值，用于绘图时--seed参数使用
+- 模型接口 > Midjourney [13.编辑图片（Edit）接口](https://ob6nfbpu76.apifox.cn/318138875e0.md): 执行edit接口，可以编辑外部传入的图片，可以进行局部重绘，也可以直接改图
+- 模型接口 > Midjourney [14.生成视频（Video）接口](https://ob6nfbpu76.apifox.cn/318138866e0.md): 执行video操作，提交绘图任务。提交任务后，获取到任务id，使用查询接口查询任务状态。（视频的按钮可以使用action进行点击）
+- 模型接口 > Midjourney [文生图 / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/308349437e0.md): 适配兼容OpeniAI格式输出，直接对话即可
+- 模型接口 > 图像(Images) > OpenAI格式 [图片生成 / gpt-image-1.5](https://ob6nfbpu76.apifox.cn/289133993e0.md): 根据提示词以及其他参数创建图片
+- 模型接口 > 图像(Images) > OpenAI格式 [图片生成 / dall-e-3](https://ob6nfbpu76.apifox.cn/124951883e0.md): 根据提示词以及其他参数创建图片
+- 模型接口 > 图像(Images) > OpenAI格式 [图片编辑 / edits接口](https://ob6nfbpu76.apifox.cn/289135312e0.md): 根据一个或多个原始图片和提示创建编辑或扩展的图片。此端点支持 dall-e-2 和 gpt-image-1 模型。
+- 模型接口 > 图像(Images) > OpenAI格式 [图片编辑 / 网页版](https://ob6nfbpu76.apifox.cn/290809188e0.md): 为满足用户的强烈需求，我们特别推出了两个逆向接口：gpt-4o-image 与 gpt-4o-image-vip。其中，VIP 模型在性能和稳定性方面表现更为出色。
+- 模型接口 > 图像(Images) > OpenAI格式 [图片变体生成](https://ob6nfbpu76.apifox.cn/292914774e0.md): 创建给定图片的变体。
+- 模型接口 > 图像(Images) > OpenAI格式 [gpt-4-all（生成图片）](https://ob6nfbpu76.apifox.cn/126544482e0.md): 
+- 模型接口 > 图像(Images) > OpenAI格式 [xAI](https://ob6nfbpu76.apifox.cn/362813052e0.md): 
+- 模型接口 > 图像(Images) > Google Gemini > OpenAI聊天格式 [图片生成（Nano-banana2）](https://ob6nfbpu76.apifox.cn/341608699e0.md): Gemini 也提供了图像生成能力，作为一种替代方案。与 Imagen 3.0 相比，Gemini 的图像生成更适合于需要上下文理解和推理的场景，而非追求极致的艺术表现和视觉质量。
+- 模型接口 > 图像(Images) > Google Gemini > OpenAI聊天格式 [图片生成 / Imagen 4](https://ob6nfbpu76.apifox.cn/299087558e0.md): Gemini 绘图和视频生成指引
+- 模型接口 > 图像(Images) > Google Gemini > OpenAI聊天格式 [图片编辑（Nano-banana）](https://ob6nfbpu76.apifox.cn/341608706e0.md): Gemini 也提供了图像生成能力，作为一种替代方案。与 Imagen 3.0 相比，Gemini 的图像生成更适合于需要上下文理解和推理的场景，而非追求极致的艺术表现和视觉质量。
+- 模型接口 > 图像(Images) > Google Gemini > OpenAI聊天格式 [图片生成](https://ob6nfbpu76.apifox.cn/294023439e0.md): Gemini 也提供了图像生成能力，作为一种替代方案。与 Imagen 3.0 相比，Gemini 的图像生成更适合于需要上下文理解和推理的场景，而非追求极致的艺术表现和视觉质量。
+- 模型接口 > 图像(Images) > Google Gemini > OpenAI聊天格式 [图片编辑](https://ob6nfbpu76.apifox.cn/312255834e0.md): 
+- 模型接口 > 图像(Images) > Google Gemini > Gemini原生格式 [图像生成](https://ob6nfbpu76.apifox.cn/394015634e0.md): 
+- 模型接口 > 图像(Images) > 豆包(Doubao) [文生图(纯文本输入单图输出)](https://ob6nfbpu76.apifox.cn/361733651e0.md): 通过文字描述来生成对应图像。
+- 模型接口 > 图像(Images) > 豆包(Doubao) [图文生图(单图输入单图输出)](https://ob6nfbpu76.apifox.cn/364590563e0.md): 基于已有图片，结合文字指令进行图像编辑，包括图像元素增删、风格转化、材质替换、色调迁移、改变背景/视角/尺寸等。
+- 模型接口 > 图像(Images) > 豆包(Doubao) [多图融合(多图输入单图输出)](https://ob6nfbpu76.apifox.cn/364590699e0.md): 根据您输入的文本描述和多张参考图片，融合它们的风格、元素等特征来生成新图像。如衣裤鞋帽与模特图融合成穿搭图，人物与风景融合为人物风景图等。
+- 模型接口 > 图像(Images) > 豆包(Doubao) [组图输出(多图输出)](https://ob6nfbpu76.apifox.cn/364590755e0.md): 支持通过一张或者多张图片和文字信息，生成漫画分镜、品牌视觉等一组内容关联的图片。
+- 模型接口 > 图像(Images) > 阿里通义千问 [图像生成与编辑2.7](https://ob6nfbpu76.apifox.cn/437883798e0.md): 官方文档：https://help.aliyun.com/zh/model-studio/wan-image-generation-and-editing-api-reference?spm=a2c4g.11186623.help-menu-2400256.d_2_2_6.204b2897pwSGH6&scm=20140722.H_3026980._.OR_help-T_cn~zh-V_1
+- 模型接口 > 图像(Images) > 阿里通义千问 [文生图-Z-Image](https://ob6nfbpu76.apifox.cn/398553308e0.md): 官方文档：https://help.aliyun.com/zh/model-studio/z-image-api-reference?spm=a2c4g.11186623.help-menu-2400256.d_2_2_3.5183699dL6MJpu&scm=20140722.H_3002354._.OR_help-T_cn~zh-V_1
+- 模型接口 > 图像(Images) > 阿里通义千问 [文生图](https://ob6nfbpu76.apifox.cn/361069096e0.md): 官方文档：https://help.aliyun.com/zh/model-studio/qwen-image-api?spm=a2c4g.11186623.help-menu-2400256.d_2_2_0.450d699diqRpDg&scm=20140722.H_2975126._.OR_help-T_cn~zh-V_1
+- 模型接口 > 图像(Images) > 阿里通义千问 [文生图V2版](https://ob6nfbpu76.apifox.cn/398553333e0.md): 官方文档：https://help.aliyun.com/zh/model-studio/text-to-image-v2-api-reference?spm=a2c4g.11186623.help-menu-2400256.d_2_2_4.216454bczcrWRa&scm=20140722.H_2862677._.OR_help-T_cn~zh-V_1
+- 模型接口 > 图像(Images) > 阿里通义千问 [文生图V1](https://ob6nfbpu76.apifox.cn/377276491e0.md): 官方文档：https://help.aliyun.com/zh/model-studio/text-to-image-api-reference?spm=a2c4g.11186623.help-menu-2400256.d_2_2_5.122e699dcGSAQT&scm=20140722.H_2712483._.OR_help-T_cn~zh-V_1
+- 模型接口 > 图像(Images) > 阿里通义千问 [图像生成与编辑2.6](https://ob6nfbpu76.apifox.cn/398553359e0.md): 官方文档：https://help.aliyun.com/zh/model-studio/wan-image-generation-api-reference?spm=a2c4g.11186623.help-menu-2400256.d_2_2_6.3beb206eLMraI2&scm=20140722.H_3001143._.OR_help-T_cn~zh-V_1
+- 模型接口 > 图像(Images) > 阿里通义千问 [通用图像编辑2.5](https://ob6nfbpu76.apifox.cn/377276471e0.md): 官方文档：https://help.aliyun.com/zh/model-studio/wan2-5-image-edit-api-reference?spm=a2c4g.11186623.help-menu-2400256.d_2_2_7.36fa95e52PaUYv&scm=20140722.H_2982258._.OR_help-T_cn~zh-V_1
+- 模型接口 > 图像(Images) [xAI / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/294023570e0.md): 
+- 模型接口 > 图像(Images) [flux / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/239451054e0.md): image_size Available options: 1024x1024, 512x1024, 768x512, 768x1024, 1024x576, 576x1024 
+- 模型接口 > 图像(Images) [flux-kontext-pro / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/220210351e0.md): Flux AI 文生图模型，效果堪比 Midjourney，碾压 StableDiffusion；生成图片接口
+- 模型接口 > 图像(Images) [stable-diffusion / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/236068878e0.md): image_size Available options: 1024x1024, 512x1024, 768x512, 768x1024, 1024x576, 576x1024 
+- 模型接口 > 图像(Images) [ideogram / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/305756664e0.md): 模型名称：ideogram-v3-turbo、ideogram-v3-balanced、ideogram-v3-quality
+- 模型接口 > 图像(Images) [recraftv3 / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/229000600e0.md): model 支持
+- 模型接口 > 图像(Images) [flux携带参考图 / OpenAI兼容接口](https://ob6nfbpu76.apifox.cn/303151691e0.md): 仅部分模型支持 图片 参考
+- 模型接口 > 视频(Videos) > Sora-2 [Sora-2（创建视频）](https://ob6nfbpu76.apifox.cn/359435381e0.md): 官方文档：https://platform.openai.com/docs/api-reference/videos/create
+- 模型接口 > 视频(Videos) > Sora-2 [Sora-2（创建视频-带 Character）](https://ob6nfbpu76.apifox.cn/370015651e0.md): 支持角色客串功能
+- 模型接口 > 视频(Videos) > Sora-2 [Sora-2（编辑视频remix）](https://ob6nfbpu76.apifox.cn/410082110e0.md): 
+- 模型接口 > 视频(Videos) > Sora-2 [Sora2官方接口（Chat格式）](https://ob6nfbpu76.apifox.cn/359788465e0.md): 
+- 模型接口 > 视频(Videos) > Sora-2 [查询视频1（异步任务）](https://ob6nfbpu76.apifox.cn/361077312e0.md): 
+- 模型接口 > 视频(Videos) > Sora-2 [查询视频2（异步任务）](https://ob6nfbpu76.apifox.cn/359875342e0.md): 官方文档：https://platform.openai.com/docs/api-reference/videos/create
+- 模型接口 > 视频(Videos) > Sora-2 [获取视频内容](https://ob6nfbpu76.apifox.cn/394026004e0.md): 获取已完成视频任务的视频文件内容。
+- 模型接口 > 视频(Videos) > Veo 3 [Veo 3（官方格式）](https://ob6nfbpu76.apifox.cn/370286202e0.md): 
+- 模型接口 > 视频(Videos) > Veo 3 [Veo 3](https://ob6nfbpu76.apifox.cn/305191319e0.md): 
+- 模型接口 > 视频(Videos) > Veo 3 [查询视频](https://ob6nfbpu76.apifox.cn/361073694e0.md): 
+- 模型接口 > 视频(Videos) > Veo 3 [查询视频（官方格式）](https://ob6nfbpu76.apifox.cn/373217550e0.md): 仅全模型专线分组可用
+- 模型接口 > 视频(Videos) > 豆包(Doubao) [豆包-文生视频Doubao-Seedance-2.0](https://ob6nfbpu76.apifox.cn/437882212e0.md): API文档：https://www.volcengine.com/docs/82379/1520757?lang=zh
+- 模型接口 > 视频(Videos) > 豆包(Doubao) [豆包-文生视频](https://ob6nfbpu76.apifox.cn/360474590e0.md): API文档：https://www.volcengine.com/docs/85621/1538636
+- 模型接口 > 视频(Videos) > 豆包(Doubao) [查询视频](https://ob6nfbpu76.apifox.cn/360474591e0.md): 
+- 模型接口 > 视频(Videos) > 即梦(Jimeng) [即梦AI-文生视频S2.0Pro](https://ob6nfbpu76.apifox.cn/333641627e0.md): API文档：https://www.volcengine.com/docs/85621/1538636
+- 模型接口 > 视频(Videos) > 即梦(Jimeng) [查询视频](https://ob6nfbpu76.apifox.cn/333643867e0.md): 
+- 模型接口 > 视频(Videos) > 可灵AI(Kling) [可灵AI-文生视频](https://ob6nfbpu76.apifox.cn/333645251e0.md): 使用 Kling 模型从文本描述生成视频。
+- 模型接口 > 视频(Videos) > 可灵AI(Kling) [可灵AI-文生视频kling-video-o1](https://ob6nfbpu76.apifox.cn/395411057e0.md): 使用 Kling 模型从文本描述生成视频。
+- 模型接口 > 视频(Videos) > 可灵AI(Kling) [可灵AI-带参考视频kling-video-o1](https://ob6nfbpu76.apifox.cn/395440706e0.md): 使用 Kling 模型从文本描述生成视频。
+- 模型接口 > 视频(Videos) > 可灵AI(Kling) [可灵AI-图生视频](https://ob6nfbpu76.apifox.cn/394028495e0.md): 使用 Kling 模型从图片生成视频。
+- 模型接口 > 视频(Videos) > 可灵AI(Kling) [查询视频](https://ob6nfbpu76.apifox.cn/333645252e0.md): 
+- 模型接口 > 视频(Videos) > 阿里通义千问 [通义万相2.6（创建视频）](https://ob6nfbpu76.apifox.cn/398553372e0.md): 
+- 模型接口 > 视频(Videos) > 阿里通义千问 [通义万相2.5（创建视频）](https://ob6nfbpu76.apifox.cn/370148362e0.md): 
+- 模型接口 > 视频(Videos) > 阿里通义千问 [查询视频（异步任务）](https://ob6nfbpu76.apifox.cn/370149296e0.md): 
+- 模型接口 > 视频(Videos) > Vidu [Vidu-文生视频](https://ob6nfbpu76.apifox.cn/333648422e0.md): API文档：
+- 模型接口 > 视频(Videos) > Vidu [查询视频](https://ob6nfbpu76.apifox.cn/333648423e0.md): 
+- 模型接口 > 视频(Videos) > OpenAI兼容接口 [veo3](https://ob6nfbpu76.apifox.cn/305770124e0.md): 提供和官方效果一致但费率更低的逆向调用方式。但请注意，任何逆向的调用方式都不能保障稳定的生成，推荐在开发环境作为早期实验或仅用于个人体验。
+- 模型接口 > 视频(Videos) > OpenAI兼容接口 [luma](https://ob6nfbpu76.apifox.cn/185791199e0.md): 文生视频模型，已统一接口，可直接chat格式调用：luma-vip-video（VIP版，极速、免排队、无水印）、pika-text-to-video
+- 模型接口 > 视频(Videos) > OpenAI兼容接口 [runway](https://ob6nfbpu76.apifox.cn/220097541e0.md): 文生视频模型，已统一接口，可直接chat格式调用：runway-video、runway-vip-video（更快无水印）
+- 模型接口 > 视频(Videos) > OpenAI兼容接口 [智谱清言GLM](https://ob6nfbpu76.apifox.cn/220132543e0.md): 
+- 模型接口 > 视频(Videos) > OpenAI兼容接口 [可灵](https://ob6nfbpu76.apifox.cn/238000703e0.md): 文生视频模型，已统一接口，可直接chat格式调用：runway-video、runway-vip-video（更快无水印）
+- 模型接口 > 视频(Videos) [海螺（创建视频）](https://ob6nfbpu76.apifox.cn/432236011e0.md): 
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [文本转语音 / TTS](https://ob6nfbpu76.apifox.cn/126515460e0.md): 了解如何将文本转换为音频。
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [语音转文本 / whisper-1](https://ob6nfbpu76.apifox.cn/124951887e0.md): 了解如何将音频转换为文本。
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [语音转文本 / gpt-4o-transcribe](https://ob6nfbpu76.apifox.cn/294033839e0.md): 官方文档：https://platform.openai.com/docs/api-reference/audio/createTranscription
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [音频翻译 ](https://ob6nfbpu76.apifox.cn/124951888e0.md): 将音频翻译成英文。
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [Audio接口 / 输出](https://ob6nfbpu76.apifox.cn/243692853e0.md): 
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [Audio接口 / 输入](https://ob6nfbpu76.apifox.cn/243693522e0.md): 
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [MiniMax语音合成TTS](https://ob6nfbpu76.apifox.cn/370015604e0.md): 
+- 模型接口 > 音频(Audio) > 原生OpenAI格式 [豆包语音2.0](https://ob6nfbpu76.apifox.cn/363015509e0.md): 每个音色能支持的情感不同,
+- 模型接口 > 音频(Audio) [原生Gemini格式](https://ob6nfbpu76.apifox.cn/394022973e0.md): Gemini 音频生成接口。
+- 模型接口 > 音乐(Music) > Suno [生成歌曲](https://ob6nfbpu76.apifox.cn/188576745e0.md): Suno v5版本更新公告
+- 模型接口 > 音乐(Music) > Suno [生成歌词](https://ob6nfbpu76.apifox.cn/188576746e0.md): 
+- 模型接口 > 音乐(Music) > Suno [上传音乐](https://ob6nfbpu76.apifox.cn/361070914e0.md): 
+- 模型接口 > 音乐(Music) > Suno [歌曲拼接](https://ob6nfbpu76.apifox.cn/361071028e0.md): 
+- 模型接口 > 音乐(Music) > Suno [单个查询任务](https://ob6nfbpu76.apifox.cn/188576747e0.md): 
+- 模型接口 > 音乐(Music) > Suno [批量查询任务](https://ob6nfbpu76.apifox.cn/361071032e0.md): 
+- 模型接口 > 音乐(Music) > Udio [Udio(Chat格式)](https://ob6nfbpu76.apifox.cn/237516210e0.md): 文生视频模型，已统一接口，可直接chat格式调用：luma-vip-video（VIP版，极速、免排队、无水印）、pika-text-to-video
+- 模型接口 > 嵌入(Embeddings) [创建文本嵌入(OpenAI)](https://ob6nfbpu76.apifox.cn/124951886e0.md): 获取给定输入的矢量表示，机器学习模型和算法可以轻松使用该表示。
+- 模型接口 > 嵌入(Embeddings) [批量创建嵌入(OpenAI)](https://ob6nfbpu76.apifox.cn/292908306e0.md): 获取给定输入的矢量表示，机器学习模型和算法可以轻松使用该表示。
+- 模型接口 > 嵌入(Embeddings) [创建文本嵌入(Gemini)](https://ob6nfbpu76.apifox.cn/326736771e0.md): 
+- 模型接口 > 重排序 (Rerank) [Jina AI 重排序格式](https://ob6nfbpu76.apifox.cn/191417781e0.md): 官方文档：https://jina.ai/reranker
+- 模型接口 > 重排序 (Rerank) [Cohere 重排序格式](https://ob6nfbpu76.apifox.cn/292907379e0.md): 重要提示：cohere 的 Rerank 模型接口和 Jina的Rerank模型接口格式 是一样的。
+- 模型接口 > 重排序 (Rerank) [Xinference 重排序格式](https://ob6nfbpu76.apifox.cn/292905541e0.md): 重要提示：Xinference的rerank响应结构将被格式化为Jina的rerank响应结构，使用方式和Jina的rerank相同。对于Dify等客户端用户：在配置时请选择 Jina AI 作为供应商类型，而不是Xinference，并使用Xinference支持的模型名称。
+- 模型接口 > 审查(Moderations) [创建内容审核](https://ob6nfbpu76.apifox.cn/220883470e0.md): 对文本是否违反 OpenAI 的内容政策进行分类
+- 模型接口 > 实时对话(Realtime) [Realtime API](https://ob6nfbpu76.apifox.cn/3565605w0.md): 
+- 模型接口 > GPTs 相关 [GPTs对话](https://ob6nfbpu76.apifox.cn/220132509e0.md): gpts目前已支持自动识别
+- 模型接口 > GPTs 相关 [ 搜索相关 GPTs](https://ob6nfbpu76.apifox.cn/220132510e0.md): 
+- 模型接口 > GPTs 相关 [查询 GPTs 详情](https://ob6nfbpu76.apifox.cn/220132513e0.md): 
+- 模型接口 > GPTs 相关 [批量查询 GPTs 详情](https://ob6nfbpu76.apifox.cn/220132515e0.md): 
+- 回收站 [图片生成（Nano-banana2-4K）](https://ob6nfbpu76.apifox.cn/380474436e0.md): Gemini 也提供了图像生成能力，作为一种替代方案。与 Imagen 3.0 相比，Gemini 的图像生成更适合于需要上下文理解和推理的场景，而非追求极致的艺术表现和视觉质量。

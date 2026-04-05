@@ -25,7 +25,13 @@ import {
   ScrollList,
   ScrollItem,
 } from '@douyinfe/semi-ui';
-import { API, showError, copy, showSuccess } from '../../helpers';
+import {
+  API,
+  showError,
+  copy,
+  showSuccess,
+  getDocsAvailability,
+} from '../../helpers';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { API_ENDPOINTS } from '../../constants/common.constant';
 import { StatusContext } from '../../context/Status';
@@ -38,7 +44,7 @@ import {
   IconFile,
   IconCopy,
 } from '@douyinfe/semi-icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import NoticeModal from '../../components/layout/NoticeModal';
 import {
   Moonshot,
@@ -67,6 +73,7 @@ const { Text } = Typography;
 
 const Home = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [statusState] = useContext(StatusContext);
   const actualTheme = useActualTheme();
   const [homePageContentLoaded, setHomePageContentLoaded] = useState(false);
@@ -74,7 +81,9 @@ const Home = () => {
   const [noticeVisible, setNoticeVisible] = useState(false);
   const isMobile = useIsMobile();
   const isDemoSiteMode = statusState?.status?.demo_site_enabled || false;
-  const docsLink = statusState?.status?.docs_link || '';
+  const docsAvailability = getDocsAvailability(statusState?.status);
+  const docsAvailable =
+    docsAvailability.hasLocalDocs || docsAvailability.hasLegacyDocsLink;
   const serverAddress =
     statusState?.status?.server_address || `${window.location.origin}`;
   const endpointItems = API_ENDPOINTS.map((e) => ({ value: e }));
@@ -147,6 +156,10 @@ const Home = () => {
     }, 3000);
     return () => clearInterval(timer);
   }, [endpointItems.length]);
+
+  const handleOpenDocs = () => {
+    navigate('/help');
+  };
 
   return (
     <div className='w-full overflow-x-hidden'>
@@ -239,12 +252,12 @@ const Home = () => {
                       {statusState.status.version}
                     </Button>
                   ) : (
-                    docsLink && (
+                    docsAvailable && (
                       <Button
                         size={isMobile ? 'default' : 'large'}
                         className='flex items-center !rounded-3xl px-6 py-2'
                         icon={<IconFile />}
-                        onClick={() => window.open(docsLink, '_blank')}
+                        onClick={handleOpenDocs}
                       >
                         {t('文档')}
                       </Button>

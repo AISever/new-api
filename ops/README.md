@@ -44,6 +44,7 @@
 - `kkidc` 测试/企业环境如需从远端备份目录恢复数据库与运行目录，必须通过 `ops/scripts/kkidc-host-restore.sh`。
 - `kkidc` 测试/企业环境如需整库清空并重新初始化，必须通过 `ops/scripts/kkidc-host-reset.sh`，禁止手工删库或手工清目录。
 - `kkidc` 测试/企业环境如需从外部上游批量导入分组、模型、倍率与渠道，必须通过 `ops/scripts/kkidc-host-import-upstream.sh`。
+- 企业版本地文档通过 `bun run sync:enterprise-docs` 生成到 `web/public/enterprise-docs/apifox/`，并通过后台选项 `general_setting.docs_manifest_path` 单独启用；调整企业文档入口时，不要把该配置同步覆盖到个人生产环境。
 - `ops/scripts/kkidc-host-deploy.sh` 默认使用本地 Docker 构建镜像；本地不可构建时直接失败，不自动退回服务器构建。
 - `--build-strategy remote` / `legacy-remote` 仅保留为显式紧急选项，不作为常规发布路径。
 - 如需显式使用 `BUILD_STRATEGY=remote`，脚本会先检查远端主机当前资源；默认要求 `MemAvailable >= 2048MB` 且 `load1 <= 4.00`，否则直接拒绝远端构建。

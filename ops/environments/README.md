@@ -40,3 +40,4 @@
 5. **共享主机上的企业环境**：企业域名已通过 `ENTERPRISE_HOSTNAME` 接入 Caddy；如后续调整企业域名，仍需先确认 DNS，再重新部署，并验证 `https://api.aisever.cn` 不受影响。
 6. **企业/测试环境重置与导入**：如需清空测试或企业环境并重新接入新的上游，先备份，再使用 `ops/scripts/kkidc-host-reset.sh` 与 `ops/scripts/kkidc-host-import-upstream.sh`，禁止手工删库或绕过仓库脚本。
 7. **测试环境收尾**：`kkidc` 用 `ops/scripts/kkidc-host-deploy.sh test-stop`；只停测试应用，不清空测试数据。
+8. **企业文档配置隔离**：企业版 `/docs` 页面依赖本地同步产物 `web/public/enterprise-docs/apifox/` 与环境级 option `general_setting.docs_manifest_path`；默认只在企业环境配置，除非明确需要，否则不要复制到个人生产环境。
