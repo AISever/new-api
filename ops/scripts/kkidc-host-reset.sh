@@ -31,8 +31,6 @@ APP_ENV_FILE="${APP_ENV_FILE:-$(resolve_default_repo_file ".env.local" "$SHARED_
 
 TARGET_ENV=""
 DRY_RUN="false"
-RESTORE_LOGS="true"
-SOURCE_BACKUP_DIR=""
 
 REMOTE_HOST=""
 REMOTE_USER=""
@@ -44,25 +42,19 @@ DATA_DIR=""
 LOG_DIR=""
 REDIS_CONTAINER="new-api-redis"
 REDIS_DB_INDEX=""
-
-SOURCE_DB_DUMP=""
-SOURCE_DATA_ARCHIVE=""
-SOURCE_LOG_ARCHIVE=""
 TARGET_BACKUP_DIR=""
 
 usage() {
   cat <<EOF
-Restore a kkidc backup directory into the kkidc test or enterprise environment.
+Reset a kkidc test or enterprise environment to a clean state.
 
 Usage:
   $(basename "$0") test|enterprise [options]
 
 Options:
   --config PATH            host config file (default: .kkidc/.env.lighthouse)
-  --app-env-file PATH      app env file used when restarting test app (default: .env.local)
-  --source-backup-dir PATH remote backup directory created by kkidc-host-backup.sh
-  --no-logs                skip restoring log archive
-  --dry-run                print resolved settings without performing restore
+  --app-env-file PATH      app env file used when restarting target app (default: .env.local)
+  --dry-run                print resolved settings without performing reset
   --help                   show this help
 EOF
 }
@@ -90,7 +82,7 @@ parse_args() {
       TARGET_ENV="enterprise"
       ;;
     production|prod)
-      die "restore does not support production target"
+      die "reset does not support production target"
       ;;
     --help|-h)
       usage
@@ -111,14 +103,6 @@ parse_args() {
       --app-env-file)
         APP_ENV_FILE="$2"
         shift 2
-        ;;
-      --source-backup-dir)
-        SOURCE_BACKUP_DIR="$2"
-        shift 2
-        ;;
-      --no-logs)
-        RESTORE_LOGS="false"
-        shift
         ;;
       --dry-run)
         DRY_RUN="true"
@@ -168,16 +152,9 @@ resolve_target_settings() {
       REDIS_DB_INDEX="2"
       ;;
     *)
-      die "restore only supports test or enterprise target"
+      die "reset only supports test or enterprise target"
       ;;
   esac
-}
-
-resolve_source_paths() {
-  [ -n "$SOURCE_BACKUP_DIR" ] || die "--source-backup-dir is required"
-  SOURCE_DB_DUMP="${SOURCE_BACKUP_DIR}/db.dump"
-  SOURCE_DATA_ARCHIVE="${SOURCE_BACKUP_DIR}/data.tgz"
-  SOURCE_LOG_ARCHIVE="${SOURCE_BACKUP_DIR}/logs.tgz"
 }
 
 check_dependencies() {
@@ -218,67 +195,38 @@ print_output() {
   echo "remote_user=${REMOTE_USER}"
   echo "app_container=${APP_CONTAINER}"
   echo "pg_db=${PG_DB}"
+  echo "redis_container=${REDIS_CONTAINER}"
+  echo "redis_db_index=${REDIS_DB_INDEX}"
   echo "data_dir=${DATA_DIR}"
   echo "log_dir=${LOG_DIR}"
-  echo "source_backup_dir=${SOURCE_BACKUP_DIR}"
-  echo "source_db_dump=${SOURCE_DB_DUMP}"
-  echo "source_data_archive=${SOURCE_DATA_ARCHIVE}"
-  if [ "$RESTORE_LOGS" = "true" ]; then
-    echo "restore_logs=true"
-    echo "source_log_archive=${SOURCE_LOG_ARCHIVE}"
-  else
-    echo "restore_logs=false"
-    echo "source_log_archive=disabled"
-  fi
   if [ -n "$TARGET_BACKUP_DIR" ]; then
     echo "target_backup_dir=${TARGET_BACKUP_DIR}"
   fi
   echo "restart_via=ops/scripts/kkidc-host-deploy.sh ${TARGET_ENV}"
 }
 
-verify_source_backup() {
-  local remote_script=""
-
-  remote_script+="set -euo pipefail; "
-  remote_script+="[ -f '${SOURCE_DB_DUMP}' ] || { echo 'missing ${SOURCE_DB_DUMP}' >&2; exit 1; }; "
-  remote_script+="[ -f '${SOURCE_DATA_ARCHIVE}' ] || { echo 'missing ${SOURCE_DATA_ARCHIVE}' >&2; exit 1; }; "
-  if [ "$RESTORE_LOGS" = "true" ]; then
-    remote_script+="[ -f '${SOURCE_LOG_ARCHIVE}' ] || { echo 'missing ${SOURCE_LOG_ARCHIVE}' >&2; exit 1; }; "
-  fi
-
-  remote_cmd "$remote_script" >/dev/null
-}
-
 backup_current_target() {
   local backup_output
 
-  log INFO "backing up current ${TARGET_ENV} environment before restore"
+  log INFO "backing up current ${TARGET_ENV} environment before reset"
   backup_output="$(bash "$SCRIPT_DIR/kkidc-host-backup.sh" "$TARGET_ENV" --config "$CONFIG_FILE")"
   printf '%s\n' "$backup_output"
   TARGET_BACKUP_DIR="$(printf '%s\n' "$backup_output" | awk -F= '/^backup_dir=/{print $2}')"
   [ -n "$TARGET_BACKUP_DIR" ] || die "failed to parse target backup dir from kkidc-host-backup.sh output"
 }
 
-restore_target_from_backup() {
-  local restore_logs_flag="$RESTORE_LOGS"
-
-  log INFO "stopping ${TARGET_ENV} app before restore"
+reset_target() {
+  log INFO "stopping ${TARGET_ENV} app before reset"
   remote_cmd "docker rm -f '${APP_CONTAINER}' >/dev/null 2>&1 || true"
 
-  log INFO "restoring database, data, and cache from ${SOURCE_BACKUP_DIR}"
+  log INFO "dropping target data, database, and cache for ${TARGET_ENV}"
   remote_bash <<EOF
 set -euo pipefail
 docker exec '${REDIS_CONTAINER}' redis-cli -n '${REDIS_DB_INDEX}' FLUSHDB >/dev/null
-docker exec '${REDIS_CONTAINER}' redis-cli -n '${REDIS_DB_INDEX}' FLUSHDB >/dev/null
-docker exec 'new-api-postgres' psql -U newapi -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '${PG_DB}'" | grep -q 1 || \
+docker exec 'new-api-postgres' psql -U newapi -d postgres -c "DROP DATABASE IF EXISTS \"${PG_DB}\";"
 docker exec 'new-api-postgres' psql -U newapi -d postgres -c "CREATE DATABASE \"${PG_DB}\";"
 rm -rf '${DATA_DIR}' '${LOG_DIR}'
 mkdir -p '$(dirname "$DATA_DIR")' '$(dirname "$LOG_DIR")'
-tar -xzf '${SOURCE_DATA_ARCHIVE}' -C '$(dirname "$DATA_DIR")'
-if [ "$restore_logs_flag" = "true" ]; then
-  tar -xzf '${SOURCE_LOG_ARCHIVE}' -C '$(dirname "$LOG_DIR")'
-fi
-docker exec -i 'new-api-postgres' pg_restore -U newapi -d '${PG_DB}' --clean --if-exists --no-owner --no-privileges < '${SOURCE_DB_DUMP}' >/dev/null
 docker exec '${REDIS_CONTAINER}' redis-cli -n '${REDIS_DB_INDEX}' FLUSHDB >/dev/null
 EOF
 }
@@ -294,19 +242,17 @@ main() {
   parse_args "$@"
   load_host_config
   resolve_target_settings
-  resolve_source_paths
   check_dependencies
 
   if [ "$DRY_RUN" = "true" ]; then
-    print_output "restore-dry-run"
+    print_output "reset-dry-run"
     exit 0
   fi
 
-  verify_source_backup
   backup_current_target
-  restore_target_from_backup
+  reset_target
   restart_target_app
-  print_output "restore"
+  print_output "reset"
 }
 
 main "$@"
