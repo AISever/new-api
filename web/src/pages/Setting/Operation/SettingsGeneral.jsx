@@ -47,6 +47,7 @@ export default function GeneralSettings(props) {
   const [inputs, setInputs] = useState({
     TopUpLink: '',
     'general_setting.docs_link': '',
+    'general_setting.docs_manifest_path': '',
     'general_setting.quota_display_type': 'USD',
     'general_setting.custom_currency_symbol': '¤',
     'general_setting.custom_currency_exchange_rate': '',
@@ -261,6 +262,21 @@ export default function GeneralSettings(props) {
                   onChange={handleFieldChange('general_setting.docs_link')}
                   showClear
                 />
+              </Col>
+              <Col xs={24} sm={24} md={24} lg={16} xl={16}>
+                <Form.Input
+                  field={'general_setting.docs_manifest_path'}
+                  label={t('企业文档清单路径')}
+                  initValue={''}
+                  placeholder={t('例如 /enterprise-docs/apifox/manifest.json')}
+                  onChange={handleFieldChange('general_setting.docs_manifest_path')}
+                  showClear
+                />
+                <Text type='tertiary' size='small'>
+                  {t(
+                    '仅企业环境建议设置。该路径指向随当前项目一起部署的本地静态文档清单，而不是外部站点链接。',
+                  )}
+                </Text>
               </Col>
               {/* 单位美元额度已合入汇率组合控件（TOKENS 模式下编辑），不再单独展示 */}
               <Col xs={24} sm={12} md={8} lg={8} xl={8}>

@@ -446,7 +446,7 @@ function _MarkdownContent(props) {
               </video>
             );
           }
-          const isInternal = /^\/#/i.test(href);
+          const isInternal = /^#/.test(href) || /^\/(?!\/)/.test(href);
           const target = isInternal ? '_self' : (aProps.target ?? '_blank');
           return (
             <a
