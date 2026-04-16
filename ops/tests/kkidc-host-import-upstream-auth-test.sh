@@ -328,4 +328,9 @@ if ! printf '%s\n' "$OUTPUT" | grep -q '"upstream_tokens_created": 1'; then
   exit 1
 fi
 
+if ! printf '%s\n' "$OUTPUT" | grep -q '"target_docs_manifest_path": "/enterprise-docs/apifox/manifest.json"'; then
+  echo "FAIL: import should configure enterprise docs manifest path" >&2
+  exit 1
+fi
+
 echo "PASS: kkidc host import sync includes target admin New-Api-User header"

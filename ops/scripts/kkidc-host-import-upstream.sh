@@ -46,6 +46,7 @@ TARGET_ROOT_PASSWORD="${TARGET_ROOT_PASSWORD:-}"
 TARGET_SYSTEM_NAME="${TARGET_SYSTEM_NAME:-Aisever 企业版}"
 UPSTREAM_TOKEN_NAME_PREFIX="${UPSTREAM_TOKEN_NAME_PREFIX:-enterprise-sync}"
 SYNC_LOCALE="${SYNC_LOCALE:-zh-CN}"
+DOCS_MANIFEST_PATH="${DOCS_MANIFEST_PATH:-/enterprise-docs/apifox/manifest.json}"
 
 usage() {
   cat <<EOF
@@ -220,7 +221,7 @@ main() {
   export TARGET_ENV DRY_RUN
   export TARGET_BASE_URL UPSTREAM_BASE_URL UPSTREAM_USERNAME UPSTREAM_PASSWORD
   export TARGET_ROOT_USERNAME TARGET_ROOT_PASSWORD TARGET_SYSTEM_NAME
-  export UPSTREAM_TOKEN_NAME_PREFIX SYNC_LOCALE
+  export UPSTREAM_TOKEN_NAME_PREFIX SYNC_LOCALE DOCS_MANIFEST_PATH
 
   python3 - <<'PY'
 import json
@@ -244,6 +245,7 @@ TARGET_ROOT_PASSWORD = os.environ.get("TARGET_ROOT_PASSWORD", "")
 TARGET_SYSTEM_NAME = os.environ["TARGET_SYSTEM_NAME"]
 UPSTREAM_TOKEN_NAME_PREFIX = os.environ["UPSTREAM_TOKEN_NAME_PREFIX"]
 SYNC_LOCALE = os.environ["SYNC_LOCALE"]
+DOCS_MANIFEST_PATH = os.environ["DOCS_MANIFEST_PATH"]
 
 OPENAI_FAMILY = "openai"
 ANTHROPIC_FAMILY = "anthropic"
@@ -800,6 +802,7 @@ summary = {
         for item in pricing_payloads["channel_plan"]
     ],
     "public_target_setup_status": target_setup_status,
+    "target_docs_manifest_path": DOCS_MANIFEST_PATH,
 }
 
 if DRY_RUN:
@@ -814,6 +817,7 @@ target_client = ensure_target_setup_and_login()
 
 update_option(target_client, "SystemName", TARGET_SYSTEM_NAME)
 update_option(target_client, "ServerAddress", TARGET_BASE_URL)
+update_option(target_client, "general_setting.docs_manifest_path", DOCS_MANIFEST_PATH)
 update_option(target_client, "UserUsableGroups", json.dumps(usable_group_descriptions, ensure_ascii=False))
 update_option(target_client, "AutoGroups", json.dumps(pricing_payloads["auto_groups"], ensure_ascii=False))
 update_option(target_client, "GroupRatio", json.dumps(pricing_payloads["group_ratio"], ensure_ascii=False))
