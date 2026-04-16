@@ -194,6 +194,11 @@ if ! printf '%s\n' "$TEST_OUTPUT" | grep -q '^server_address=http://114.66.47.19
   exit 1
 fi
 
+if ! printf '%s\n' "$TEST_OUTPUT" | grep -q '^docs_manifest_path=/enterprise-docs/apifox/manifest.json$'; then
+  echo "FAIL: test docs manifest path mismatch" >&2
+  exit 1
+fi
+
 set +e
 ENTERPRISE_OUTPUT="$(REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" enterprise --config "$CONFIG_FILE" --dry-run 2>&1)"
 ENTERPRISE_EXIT="$?"
@@ -232,6 +237,11 @@ fi
 
 if ! printf '%s\n' "$ENTERPRISE_OUTPUT" | grep -q '^server_address=https://corp-api.aisever.cn$'; then
   echo "FAIL: enterprise server address mismatch" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$ENTERPRISE_OUTPUT" | grep -q '^docs_manifest_path=/enterprise-docs/apifox/manifest.json$'; then
+  echo "FAIL: enterprise docs manifest path mismatch" >&2
   exit 1
 fi
 

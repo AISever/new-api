@@ -80,6 +80,7 @@ REDIS_CONN_STRING=""
 DATA_DIR=""
 LOG_DIR=""
 SERVER_ADDRESS=""
+DOCS_MANIFEST_PATH=""
 REMOTE_NETWORK="new-api_default"
 POSTGRES_CONTAINER="new-api-postgres"
 REDIS_CONTAINER="new-api-redis"
@@ -348,6 +349,7 @@ resolve_target_settings() {
     else
       SERVER_ADDRESS="http://${REMOTE_HOST}:${APP_PORT}"
     fi
+    DOCS_MANIFEST_PATH=""
   elif [ "$TARGET_ENV" = "enterprise" ]; then
     APP_CONTAINER="new-api-enterprise"
     APP_PORT="3002"
@@ -365,6 +367,7 @@ resolve_target_settings() {
     else
       SERVER_ADDRESS="http://${REMOTE_HOST}:${APP_PORT}"
     fi
+    DOCS_MANIFEST_PATH="/enterprise-docs/apifox/manifest.json"
   else
     APP_CONTAINER="new-api-test"
     APP_PORT="3001"
@@ -382,6 +385,7 @@ resolve_target_settings() {
     else
       SERVER_ADDRESS="http://${REMOTE_HOST}:${APP_PORT}"
     fi
+    DOCS_MANIFEST_PATH="/enterprise-docs/apifox/manifest.json"
   fi
 
   if [ "$REDIS_DB_INDEX" = "0" ]; then
@@ -457,6 +461,7 @@ remote_build_dir=${REMOTE_BUILD_DIR}
 image_name=${IMAGE_NAME}
 version_value=${VERSION_VALUE}
 server_address=${SERVER_ADDRESS}
+docs_manifest_path=${DOCS_MANIFEST_PATH}
 deploy_git_remote=${DEPLOY_GIT_REMOTE_NAME}
 deploy_git_ref=${DEPLOY_GIT_REF_NAME}
 head_pushed_verified=${HEAD_PUSH_VERIFIED}
@@ -777,13 +782,19 @@ exit 1
 EOF
 }
 
-update_server_address_option() {
+update_runtime_options() {
   remote_bash <<EOF
 set -euo pipefail
 docker exec -i '${POSTGRES_CONTAINER}' psql -U newapi -d '${PG_DB}' <<'SQL' >/dev/null 2>&1 || exit 0
 INSERT INTO options (key, value)
 VALUES ('ServerAddress', '${SERVER_ADDRESS}')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+$(if [ -n "$DOCS_MANIFEST_PATH" ]; then cat <<EOF2
+INSERT INTO options (key, value)
+VALUES ('general_setting.docs_manifest_path', '${DOCS_MANIFEST_PATH}')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+EOF2
+fi)
 SQL
 docker restart '${APP_CONTAINER}' >/dev/null
 EOF
@@ -963,7 +974,7 @@ main() {
 
   verify_started_at="$SECONDS"
   verify_remote_app
-  update_server_address_option
+  update_runtime_options
   configure_remote_caddy
   verify_remote_entrypoint
   clear_remote_cache
