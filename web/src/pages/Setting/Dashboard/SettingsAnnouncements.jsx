@@ -45,6 +45,10 @@ import {
   formatDateTimeString,
 } from '../../../helpers';
 import { useTranslation } from 'react-i18next';
+import {
+  ensureOptionUpdateSucceeded,
+  normalizeAnnouncementPublishDate,
+} from './utils/announcements';
 
 const { Text } = Typography;
 
@@ -202,13 +206,9 @@ const SettingsAnnouncements = ({ options, refresh }) => {
       key,
       value,
     });
-    const { success, message } = res.data;
-    if (success) {
-      showSuccess('系统公告已更新');
-      if (refresh) refresh();
-    } else {
-      showError(message);
-    }
+    ensureOptionUpdateSucceeded(res.data);
+    showSuccess('系统公告已更新');
+    if (refresh) refresh();
   };
 
   const submitAnnouncements = async () => {
@@ -219,7 +219,7 @@ const SettingsAnnouncements = ({ options, refresh }) => {
       setHasChanges(false);
     } catch (error) {
       console.error('系统公告更新失败', error);
-      showError('系统公告更新失败');
+      showError(error.message || '系统公告更新失败');
     } finally {
       setLoading(false);
     }
@@ -279,7 +279,9 @@ const SettingsAnnouncements = ({ options, refresh }) => {
       // 将publishDate转换为ISO字符串保存
       const formData = {
         ...announcementForm,
-        publishDate: announcementForm.publishDate.toISOString(),
+        publishDate: normalizeAnnouncementPublishDate(
+          announcementForm.publishDate,
+        ),
       };
 
       let newList;
