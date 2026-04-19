@@ -46,6 +46,7 @@
 - `kkidc` 测试/企业环境如需从外部上游批量导入分组、模型、倍率与渠道，必须通过 `ops/scripts/kkidc-host-import-upstream.sh`。
 - 企业版本地文档通过 `bun run sync:enterprise-docs` 生成到 `web/public/enterprise-docs/apifox/`；`ops/scripts/kkidc-host-deploy.sh test|enterprise` 与 `ops/scripts/kkidc-host-import-upstream.sh test|enterprise` 会自动写入 `general_setting.docs_manifest_path=/enterprise-docs/apifox/manifest.json`，不要把该配置同步覆盖到个人生产环境。
 - `ops/scripts/kkidc-host-deploy.sh` 默认使用本地 Docker 构建镜像；本地不可构建时直接失败，不自动退回服务器构建。
+- 若目标环境已存在同一 `SHA` 的镜像标签，`ops/scripts/kkidc-host-deploy.sh` 会默认直接复用远端镜像并跳过重复构建；如需强制重建，显式传 `--rebuild`。
 - `--build-strategy remote` / `legacy-remote` 仅保留为显式紧急选项，不作为常规发布路径。
 - 如需显式使用 `BUILD_STRATEGY=remote`，脚本会先检查远端主机当前资源；默认要求 `MemAvailable >= 2048MB` 且 `load1 <= 4.00`，否则直接拒绝远端构建。
 - 当前 `kkidc` 本地构建默认使用 `linux/amd64` 目标平台，避免 Apple Silicon 本地镜像直接推到 `amd64` 服务器后出现 `exec format error`。

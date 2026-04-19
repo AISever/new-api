@@ -19,18 +19,18 @@ git init --bare "$REMOTE_REPO_DIR" >/dev/null
 git init "$REPO_DIR" >/dev/null
 git -C "$REPO_DIR" config user.name test
 git -C "$REPO_DIR" config user.email test@example.com
-git -C "$REPO_DIR" branch -M codex/release-v0.11.7-p1
+git -C "$REPO_DIR" branch -M codex/release-v0.12.12-p1
 git -C "$REPO_DIR" remote add origin "$REMOTE_REPO_DIR"
 
 cat > "$REPO_DIR/Dockerfile" <<'EOF'
 FROM scratch
 RUN go mod download
-RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) bun run build
+RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) npm run build
 EOF
 echo "seed" > "$REPO_DIR/payload.txt"
 git -C "$REPO_DIR" add Dockerfile payload.txt
 git -C "$REPO_DIR" commit -m "seed" >/dev/null
-git -C "$REPO_DIR" push -u origin codex/release-v0.11.7-p1 >/dev/null
+git -C "$REPO_DIR" push -u origin codex/release-v0.12.12-p1 >/dev/null
 
 cat > "$CONFIG_FILE" <<'EOF'
 IP_1=114.66.47.192
@@ -52,11 +52,7 @@ case "$1" in
   info)
     exit 0
     ;;
-  build)
-    exit 0
-    ;;
-  save)
-    printf 'fake-image-stream'
+  build|save)
     exit 0
     ;;
   *)
@@ -78,44 +74,56 @@ done
 printf '%s\n' "$last_arg" >> "$SSH_LOG"
 case "$last_arg" in
   *"docker image inspect 'new-api:kkidc-test-"*)
-    exit 1
+    exit 0
+    ;;
+  *)
+    cat >/dev/null || true
+    exit 0
     ;;
 esac
-cat >/dev/null || true
-exit 0
 EOF
 chmod +x "$FAKEBIN_DIR/sshpass"
 
-OUTPUT="$(DOCKER_LOG="$DOCKER_LOG" SSH_LOG="$SSH_LOG" PATH="$FAKEBIN_DIR:$PATH" REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" test --config "$CONFIG_FILE")"
+OUTPUT_REUSE="$(DOCKER_LOG="$DOCKER_LOG" SSH_LOG="$SSH_LOG" PATH="$FAKEBIN_DIR:$PATH" REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" test --config "$CONFIG_FILE")"
 
-if ! grep -q -- "--platform linux/amd64 -t new-api:kkidc-test-" "$DOCKER_LOG"; then
-  echo "FAIL: local docker build should target linux/amd64" >&2
+if grep -q '^build ' "$DOCKER_LOG"; then
+  echo "FAIL: deploy should reuse existing remote image instead of rebuilding" >&2
   cat "$DOCKER_LOG" >&2
   exit 1
 fi
 
-if ! grep -q "^save -o .* new-api:kkidc-test-" "$DOCKER_LOG"; then
-  echo "FAIL: expected local image export step" >&2
+if grep -q '^save ' "$DOCKER_LOG"; then
+  echo "FAIL: deploy should not export image archive when remote image is reused" >&2
   cat "$DOCKER_LOG" >&2
   exit 1
 fi
 
-if ! grep -q "docker load -i '/opt/new-api-build-test/new-api-kkidc-test-" "$SSH_LOG"; then
-  echo "FAIL: expected remote docker load step using transferred archive" >&2
+if ! printf '%s\n' "$OUTPUT_REUSE" | grep -q '^image_source=reused-remote$'; then
+  echo "FAIL: expected reused-remote image source in final output" >&2
+  echo "$OUTPUT_REUSE" >&2
+  exit 1
+fi
+
+if ! grep -q "docker image inspect 'new-api:kkidc-test-" "$SSH_LOG"; then
+  echo "FAIL: deploy should check whether the remote image already exists" >&2
   cat "$SSH_LOG" >&2
   exit 1
 fi
 
-if ! printf '%s\n' "$OUTPUT" | grep -q '^build_strategy=local$'; then
-  echo "FAIL: expected local build strategy in final output" >&2
+: > "$DOCKER_LOG"
+
+OUTPUT_REBUILD="$(DOCKER_LOG="$DOCKER_LOG" SSH_LOG="$SSH_LOG" PATH="$FAKEBIN_DIR:$PATH" REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" test --config "$CONFIG_FILE" --rebuild)"
+
+if ! grep -q '^build --platform linux/amd64 -t new-api:kkidc-test-' "$DOCKER_LOG"; then
+  echo "FAIL: --rebuild should force a fresh local image build" >&2
+  cat "$DOCKER_LOG" >&2
   exit 1
 fi
 
-for field in duration_image_build_seconds duration_image_export_seconds duration_image_upload_seconds duration_image_load_seconds; do
-  if ! printf '%s\n' "$OUTPUT" | grep -Eq "^${field}=[0-9]+$"; then
-    echo "FAIL: expected ${field} in final output" >&2
-    exit 1
-  fi
-done
+if ! printf '%s\n' "$OUTPUT_REBUILD" | grep -q '^image_source=built-local$'; then
+  echo "FAIL: expected built-local image source after --rebuild" >&2
+  echo "$OUTPUT_REBUILD" >&2
+  exit 1
+fi
 
-echo "PASS: kkidc host deploy local build targets linux/amd64 before remote load"
+echo "PASS: kkidc host deploy reuses same-SHA remote images unless --rebuild is requested"

@@ -40,6 +40,7 @@ ACTION="deploy"
 DRY_RUN="false"
 KEEP_STAGE_DIR="false"
 SKIP_BUILD="false"
+FORCE_REBUILD="false"
 CLEAR_CACHE="false"
 SYNC_PROD_DATA_FROM_LEGACY="false"
 
@@ -101,6 +102,7 @@ DURATION_TOTAL_SECONDS="0"
 DEPLOY_GIT_REMOTE_NAME="${DEPLOY_GIT_REMOTE:-origin}"
 DEPLOY_GIT_REF_NAME="${DEPLOY_GIT_REF:-}"
 HEAD_PUSH_VERIFIED="false"
+IMAGE_SOURCE="unknown"
 
 usage() {
   cat <<EOF
@@ -115,6 +117,7 @@ Options:
   --dry-run             print resolved settings and staged source path
   --keep-stage-dir      keep staged archive directory after exit
   --skip-build          reuse existing remote image tag for current HEAD
+  --rebuild             force rebuilding even if the same-SHA image already exists remotely
   --build-strategy MODE auto | local | legacy-remote | remote (default: auto -> local)
   --clear-cache         flush Redis DB for the target environment after deploy
   --sync-prod-data-from-legacy
@@ -196,6 +199,10 @@ parse_args() {
         ;;
       --skip-build)
         SKIP_BUILD="true"
+        shift
+        ;;
+      --rebuild)
+        FORCE_REBUILD="true"
         shift
         ;;
       --build-strategy)
@@ -418,6 +425,10 @@ resolve_build_strategy() {
   esac
 }
 
+remote_image_exists() {
+  remote_cmd "docker image inspect '$IMAGE_NAME' >/dev/null 2>&1"
+}
+
 stage_clean_repo() {
   STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/kkidc-${TARGET_ENV}-XXXXXX")"
   git -C "$REPO_DIR" archive --format=tar HEAD | tar -xf - -C "$STAGE_DIR"
@@ -467,6 +478,7 @@ deploy_git_ref=${DEPLOY_GIT_REF_NAME}
 head_pushed_verified=${HEAD_PUSH_VERIFIED}
 stage_dir=${STAGE_DIR}
 build_strategy=${BUILD_STRATEGY_RESOLVED}
+image_source=${IMAGE_SOURCE}
 target_image_platform=${TARGET_IMAGE_PLATFORM}
 sync_prod_data_from_legacy=${SYNC_PROD_DATA_FROM_LEGACY}
 EOF
@@ -622,8 +634,18 @@ build_remote_image() {
 
   case "$BUILD_STRATEGY_RESOLVED" in
     skip)
+      IMAGE_SOURCE="skip-build"
       return
       ;;
+  esac
+
+  if [ "$FORCE_REBUILD" != "true" ] && remote_image_exists; then
+    log INFO "remote image already exists for ${IMAGE_NAME}; reusing without rebuild"
+    IMAGE_SOURCE="reused-remote"
+    return
+  fi
+
+  case "$BUILD_STRATEGY_RESOLVED" in
     local)
       step_started_at="$SECONDS"
       docker build --platform "$TARGET_IMAGE_PLATFORM" -t "$IMAGE_NAME" -f "$STAGE_DIR/Dockerfile.deploy" "$STAGE_DIR"
@@ -645,6 +667,7 @@ build_remote_image() {
       DURATION_IMAGE_LOAD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
 
       rm -f "$image_archive_path"
+      IMAGE_SOURCE="built-local"
       ;;
     legacy-remote)
       LEGACY_BUILD_DIR="/tmp/new-api-build-${TARGET_ENV}-${SHA}"
@@ -655,12 +678,14 @@ build_remote_image() {
       step_started_at="$SECONDS"
       legacy_cmd "docker save '$IMAGE_NAME'" | remote_cmd "docker load >/dev/null"
       DURATION_IMAGE_UPLOAD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
+      IMAGE_SOURCE="built-legacy-remote"
       ;;
     remote)
       sync_stage_to_host "$REMOTE_HOST" "$REMOTE_USER" "$REMOTE_PASSWORD" "$REMOTE_BUILD_DIR"
       step_started_at="$SECONDS"
       remote_cmd "cd '$REMOTE_BUILD_DIR' && docker build -t '$IMAGE_NAME' -f Dockerfile.deploy ."
       DURATION_IMAGE_BUILD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
+      IMAGE_SOURCE="built-remote"
       ;;
   esac
 }
