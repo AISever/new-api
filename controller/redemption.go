@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
@@ -81,16 +82,22 @@ func AddRedemption(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"success": false, "message": msg})
 		return
 	}
+	if valid, msg := validateRedemptionPayload(c, &redemption); !valid {
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": msg})
+		return
+	}
 	var keys []string
 	for i := 0; i < redemption.Count; i++ {
 		key := common.GetUUID()
 		cleanRedemption := model.Redemption{
-			UserId:      c.GetInt("id"),
-			Name:        redemption.Name,
-			Key:         key,
-			CreatedTime: common.GetTimestamp(),
-			Quota:       redemption.Quota,
-			ExpiredTime: redemption.ExpiredTime,
+			UserId:             c.GetInt("id"),
+			Name:               redemption.Name,
+			Key:                key,
+			CreatedTime:        common.GetTimestamp(),
+			Quota:              redemption.Quota,
+			RedeemType:         redemption.RedeemType,
+			SubscriptionPlanId: redemption.SubscriptionPlanId,
+			ExpiredTime:        redemption.ExpiredTime,
 		}
 		err = cleanRedemption.Insert()
 		if err != nil {
@@ -144,9 +151,15 @@ func UpdateRedemption(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"success": false, "message": msg})
 			return
 		}
+		if valid, msg := validateRedemptionPayload(c, &redemption); !valid {
+			c.JSON(http.StatusOK, gin.H{"success": false, "message": msg})
+			return
+		}
 		// If you add more fields, please also update redemption.Update()
 		cleanRedemption.Name = redemption.Name
 		cleanRedemption.Quota = redemption.Quota
+		cleanRedemption.RedeemType = redemption.RedeemType
+		cleanRedemption.SubscriptionPlanId = redemption.SubscriptionPlanId
 		cleanRedemption.ExpiredTime = redemption.ExpiredTime
 	}
 	if statusOnly != "" {
@@ -182,6 +195,33 @@ func DeleteInvalidRedemption(c *gin.Context) {
 func validateExpiredTime(c *gin.Context, expired int64) (bool, string) {
 	if expired != 0 && expired < common.GetTimestamp() {
 		return false, i18n.T(c, i18n.MsgRedemptionExpireTimeInvalid)
+	}
+	return true, ""
+}
+
+func validateRedemptionPayload(c *gin.Context, redemption *model.Redemption) (bool, string) {
+	if redemption == nil {
+		return false, "参数错误"
+	}
+	redeemType := model.NormalizeRedemptionType(strings.TrimSpace(redemption.RedeemType))
+	switch redeemType {
+	case common.RedemptionTypeQuota:
+		if redemption.Quota <= 0 {
+			return false, "额度必须大于0"
+		}
+		redemption.RedeemType = common.RedemptionTypeQuota
+		redemption.SubscriptionPlanId = 0
+	case common.RedemptionTypeSubscription:
+		if redemption.SubscriptionPlanId <= 0 {
+			return false, "请选择订阅套餐"
+		}
+		if _, err := model.GetSubscriptionPlanById(redemption.SubscriptionPlanId); err != nil {
+			return false, "订阅套餐不存在"
+		}
+		redemption.RedeemType = common.RedemptionTypeSubscription
+		redemption.Quota = 0
+	default:
+		return false, "不支持的兑换码类型"
 	}
 	return true, ""
 }

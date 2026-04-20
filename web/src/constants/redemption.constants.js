@@ -23,6 +23,11 @@ export const REDEMPTION_STATUS = {
   USED: 3, // Used
 };
 
+export const REDEMPTION_TYPES = {
+  QUOTA: 'quota',
+  SUBSCRIPTION: 'subscription',
+};
+
 // Redemption code status display mapping
 export const REDEMPTION_STATUS_MAP = {
   [REDEMPTION_STATUS.UNUSED]: {

@@ -25,6 +25,7 @@ import {
   REDEMPTION_STATUS,
   REDEMPTION_STATUS_MAP,
   REDEMPTION_ACTIONS,
+  REDEMPTION_TYPES,
 } from '../../../constants/redemption.constants';
 
 /**
@@ -43,6 +44,47 @@ export const isExpired = (record) => {
  */
 const renderTimestamp = (timestamp) => {
   return <>{timestamp2string(timestamp)}</>;
+};
+
+const normalizeRedemptionType = (record) => {
+  return record?.redeem_type || REDEMPTION_TYPES.QUOTA;
+};
+
+const renderRedeemType = (record, t) => {
+  const redeemType = normalizeRedemptionType(record);
+  if (redeemType === REDEMPTION_TYPES.SUBSCRIPTION) {
+    return (
+      <Tag color='blue' shape='circle'>
+        {t('订阅套餐')}
+      </Tag>
+    );
+  }
+  return (
+    <Tag color='green' shape='circle'>
+      {t('金额兑换')}
+    </Tag>
+  );
+};
+
+const renderRedeemContent = (record, t) => {
+  const redeemType = normalizeRedemptionType(record);
+  if (redeemType === REDEMPTION_TYPES.SUBSCRIPTION) {
+    return (
+      <div>
+        <Tag color='blue' shape='circle'>
+          {record.subscription_plan_title ||
+            `${t('套餐')} #${record.subscription_plan_id || '-'}`}
+        </Tag>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <Tag color='grey' shape='circle'>
+        {renderQuota(parseInt(record.quota))}
+      </Tag>
+    </div>
+  );
 };
 
 /**
@@ -97,6 +139,11 @@ export const getRedemptionsColumns = ({
       dataIndex: 'name',
     },
     {
+      title: t('兑换类型'),
+      key: 'redeem_type',
+      render: (text, record) => renderRedeemType(record, t),
+    },
+    {
       title: t('状态'),
       dataIndex: 'status',
       key: 'status',
@@ -105,17 +152,9 @@ export const getRedemptionsColumns = ({
       },
     },
     {
-      title: t('额度'),
-      dataIndex: 'quota',
-      render: (text) => {
-        return (
-          <div>
-            <Tag color='grey' shape='circle'>
-              {renderQuota(parseInt(text))}
-            </Tag>
-          </div>
-        );
-      },
+      title: t('兑换内容'),
+      key: 'redeem_content',
+      render: (text, record) => renderRedeemContent(record, t),
     },
     {
       title: t('创建时间'),

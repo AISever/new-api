@@ -122,21 +122,35 @@ const TopUp = () => {
       const res = await API.post('/api/user/topup', {
         key: redemptionCode,
       });
-      const { success, message, data } = res.data;
+      const { success, message, data, redeem_result: redeemResult } = res.data;
       if (success) {
         showSuccess(t('兑换成功！'));
-        Modal.success({
-          title: t('兑换成功！'),
-          content: t('成功兑换额度：') + renderQuota(data),
-          centered: true,
-        });
-        if (userState.user) {
-          const updatedUser = {
-            ...userState.user,
-            quota: userState.user.quota + data,
-          };
-          userDispatch({ type: 'login', payload: updatedUser });
+        const normalizedResult = redeemResult || {
+          redeem_type: 'quota',
+          quota: data || 0,
+        };
+        if (
+          normalizedResult.redeem_type === 'subscription' &&
+          normalizedResult.subscription
+        ) {
+          Modal.success({
+            title: t('兑换成功！'),
+            content:
+              t('成功兑换订阅套餐：') +
+              (normalizedResult.subscription.plan_title || t('订阅套餐')),
+            centered: true,
+          });
+        } else {
+          Modal.success({
+            title: t('兑换成功！'),
+            content:
+              t('成功兑换额度：') +
+              renderQuota(normalizedResult.quota || data || 0),
+            centered: true,
+          });
         }
+        await getUserQuota();
+        await getSubscriptionSelf();
         setRedemptionCode('');
       } else {
         showError(message);

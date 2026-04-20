@@ -11,7 +11,10 @@ func GetDBTimestamp() int64 {
 	case common.UsingPostgreSQL:
 		err = DB.Raw("SELECT EXTRACT(EPOCH FROM NOW())::bigint").Scan(&ts).Error
 	case common.UsingSQLite:
-		err = DB.Raw("SELECT strftime('%s','now')").Scan(&ts).Error
+		// SQLite tests commonly run with a single in-memory connection.
+		// Querying database time from inside an open transaction can self-block,
+		// while SQLite and application time are effectively the same process clock.
+		return common.GetTimestamp()
 	default:
 		err = DB.Raw("SELECT UNIX_TIMESTAMP()").Scan(&ts).Error
 	}
