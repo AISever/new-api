@@ -189,14 +189,17 @@ export const useUsersData = () => {
   };
 
   const topUpUser = async (user, amount) => {
-    if (!user || amount <= 0) {
+    const quotaDelta = parseInt(amount, 10) || 0;
+    if (!user || quotaDelta <= 0) {
       return;
     }
     try {
-      const newQuota = (user.quota || 0) + amount;
-      const res = await API.put('/api/user/', {
+      const newQuota = (user.quota || 0) + quotaDelta;
+      const res = await API.post('/api/user/manage', {
         id: user.id,
-        quota: newQuota,
+        action: 'add_quota',
+        mode: 'add',
+        value: quotaDelta,
       });
       const { success, message } = res.data;
       if (success) {

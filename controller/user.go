@@ -572,6 +572,14 @@ func UpdateUser(c *gin.Context) {
 	if updatedUser.Password == "$I_LOVE_U" {
 		updatedUser.Password = "" // rollback to what it should be
 	}
+	if shouldPreserveExistingUserFieldsOnSparseUpdate(&updatedUser) {
+		// Compatibility fallback for legacy quota-only updates that do not send
+		// the editable identity fields expected by this endpoint.
+		updatedUser.Username = originUser.Username
+		updatedUser.DisplayName = originUser.DisplayName
+		updatedUser.Group = originUser.Group
+		updatedUser.Remark = originUser.Remark
+	}
 	updatePassword := updatedUser.Password != ""
 	if err := updatedUser.Edit(updatePassword); err != nil {
 		common.ApiError(c, err)
@@ -582,6 +590,16 @@ func UpdateUser(c *gin.Context) {
 		"message": "",
 	})
 	return
+}
+
+func shouldPreserveExistingUserFieldsOnSparseUpdate(user *model.User) bool {
+	if user == nil {
+		return false
+	}
+	return user.Username == "" &&
+		user.DisplayName == "" &&
+		user.Group == "" &&
+		user.Remark == ""
 }
 
 func AdminClearUserBinding(c *gin.Context) {
