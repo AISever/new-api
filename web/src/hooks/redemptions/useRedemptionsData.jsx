@@ -252,8 +252,49 @@ export const useRedemptionsData = () => {
     await copyText(keys);
   };
 
-  // Batch delete redemption codes (clear invalid)
-  const batchDeleteRedemptions = async () => {
+  // Batch delete selected redemption codes
+  const batchDeleteSelectedRedemptions = async () => {
+    if (selectedKeys.length === 0) {
+      showError(t('请至少选择一个兑换码！'));
+      return;
+    }
+
+    Modal.confirm({
+      title: t('确定要删除所选的 {{count}} 个兑换码吗？', {
+        count: selectedKeys.length,
+      }),
+      content: t('此修改将不可逆'),
+      okButtonProps: {
+        type: 'danger',
+      },
+      onOk: async () => {
+        setLoading(true);
+        try {
+          const res = await API.post('/api/redemption/batch', {
+            ids: selectedKeys.map((item) => item.id),
+          });
+          const { success, message, data } = res.data;
+          if (success) {
+            showSuccess(t('已删除 {{count}} 个兑换码', { count: data }));
+            setSelectedKeys([]);
+            const nextPage =
+              redemptions.length === selectedKeys.length && activePage > 1
+                ? activePage - 1
+                : activePage;
+            await refresh(nextPage);
+          } else {
+            showError(message);
+          }
+        } catch (error) {
+          showError(error.message);
+        }
+        setLoading(false);
+      },
+    });
+  };
+
+  // Clear invalid redemption codes
+  const clearInvalidRedemptions = async () => {
     Modal.confirm({
       title: t('确定清除所有失效兑换码？'),
       content: t('将删除已使用、已禁用及过期的兑换码，此操作不可撤销。'),
@@ -352,7 +393,8 @@ export const useRedemptionsData = () => {
 
     // Batch operations
     batchCopyRedemptions,
-    batchDeleteRedemptions,
+    batchDeleteSelectedRedemptions,
+    clearInvalidRedemptions,
 
     // Translation function
     t,

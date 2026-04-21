@@ -201,3 +201,52 @@ func TestRedeemSubscriptionRedemptionRollsBackWhenPlanMissing(t *testing.T) {
 	assert.Equal(t, 0, reloaded.UsedUserId)
 	assert.Equal(t, int64(0), reloaded.RedeemedTime)
 }
+
+func TestBatchDeleteRedemptionsDeletesOnlySelectedRecords(t *testing.T) {
+	ensureRedemptionTestSchema(t)
+
+	first := &Redemption{
+		UserId:      1,
+		Key:         "batch-delete-first",
+		Status:      common.RedemptionCodeStatusEnabled,
+		Name:        "first",
+		Quota:       100,
+		CreatedTime: time.Now().Unix(),
+	}
+	second := &Redemption{
+		UserId:      1,
+		Key:         "batch-delete-second",
+		Status:      common.RedemptionCodeStatusEnabled,
+		Name:        "second",
+		Quota:       200,
+		CreatedTime: time.Now().Unix(),
+	}
+	third := &Redemption{
+		UserId:      1,
+		Key:         "batch-delete-third",
+		Status:      common.RedemptionCodeStatusEnabled,
+		Name:        "third",
+		Quota:       300,
+		CreatedTime: time.Now().Unix(),
+	}
+	require.NoError(t, first.Insert())
+	require.NoError(t, second.Insert())
+	require.NoError(t, third.Insert())
+
+	count, err := BatchDeleteRedemptions([]int{first.Id, third.Id})
+	require.NoError(t, err)
+	assert.Equal(t, 2, count)
+
+	var remaining []Redemption
+	require.NoError(t, DB.Order("id asc").Find(&remaining).Error)
+	require.Len(t, remaining, 1)
+	assert.Equal(t, second.Id, remaining[0].Id)
+}
+
+func TestBatchDeleteRedemptionsRejectsEmptySelection(t *testing.T) {
+	ensureRedemptionTestSchema(t)
+
+	count, err := BatchDeleteRedemptions(nil)
+	require.Error(t, err)
+	assert.Equal(t, 0, count)
+}
