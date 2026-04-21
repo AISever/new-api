@@ -6,6 +6,7 @@
 
 - 先阅读 `ops/environments/kkidc-enterprise-production.md`。
 - 确认本次改动已经在 `kkidc` 测试环境验证通过。
+- 如果本次属于“官方稳定版升级”，确认 `ops/scripts/kkidc-host-upgrade-gate.sh test` 已通过，并记录对应分支与提交号。
 - 确认当前操作目标是 `kkidc` 企业生产环境，而不是个人生产环境。
 - 确认待部署提交已经 push 到远端校验分支。
 - 在共享主机上首次上线企业环境前，先执行 `bash ops/scripts/kkidc-host-backup.sh production`，保留个人生产环境回滚点。

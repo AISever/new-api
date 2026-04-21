@@ -6,6 +6,7 @@
 
 - 确认本次代码来自预定分支，且已明确版本/提交号。
 - 先阅读 `ops/environments/kkidc-test.md`。
+- 如果本次属于“官方稳定版升级”，先执行 `bash ops/scripts/kkidc-host-upgrade-gate.sh local`；准备进入测试环境时，再执行 `bash ops/scripts/kkidc-host-upgrade-gate.sh test`，不要跳过升级门禁。
 - 确认本地 Docker 可用；当前 `kkidc` 默认要求本地 `linux/amd64` 构建。
 - 如需显式 `BUILD_STRATEGY=remote`，先确认这是受控测试，并记录当前服务器可用内存与 load。
 - 如涉及数据库、计费、模型倍率、登录等核心功能，先记录回滚点。

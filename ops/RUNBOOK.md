@@ -12,6 +12,22 @@
 - 如需显式远端构建，先确认当前远端主机资源满足门禁：默认 `MemAvailable >= 2048MB` 且 `load1 <= 4.00`。
 - 生产环境如需显式远端构建，只能在受控窗口执行，并在发布期间并行探测 `https://api.aisever.cn/api/status`。
 
+## 0. 官方稳定版升级门禁
+
+如果本次操作属于“跟随官方稳定版升级”，先执行：
+
+```bash
+bash ops/scripts/kkidc-host-upgrade-gate.sh local
+bash ops/scripts/kkidc-host-upgrade-gate.sh test
+```
+
+说明：
+
+- `local` 只跑本地门禁，不触发服务器环境。
+- `test` 会在本地门禁通过后，委托正式脚本 `ops/scripts/kkidc-host-deploy.sh test` 部署测试环境，并在验证通过后默认执行 `test-stop`。
+- 如需保留测试环境给人工继续验证，显式加 `--keep-test-running`。
+- 本门禁不替代现有生产发布命令；测试通过后，仍需回到对应生产环境检查清单继续执行。
+
 ## 1. `kkidc` 测试环境
 
 启动 / 更新：

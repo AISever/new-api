@@ -23,6 +23,7 @@
 ## 2. 日常操作入口
 
 - 最小运维手册：`ops/RUNBOOK.md`
+- 官方稳定版升级清单：`ops/checklists/kkidc-upstream-stable-upgrade.md`
 - `kkidc` 测试发布：`ops/checklists/kkidc-test-release.md`
 - `kkidc` 个人生产发布：`ops/checklists/kkidc-production-release.md`
 - `kkidc` 企业生产发布：`ops/checklists/kkidc-enterprise-production-release.md`
@@ -35,10 +36,12 @@
 - `kkidc` 统一恢复入口：`ops/scripts/kkidc-host-restore.sh test|enterprise --source-backup-dir <remote-backup-dir>`
 - `kkidc` 测试/企业环境统一重置入口：`ops/scripts/kkidc-host-reset.sh test|enterprise`
 - `kkidc` 测试/企业环境上游导入入口：`ops/scripts/kkidc-host-import-upstream.sh test|enterprise --upstream-base-url <url> --upstream-username <user> --upstream-password <pass>`
+- 官方稳定版升级门禁：`ops/scripts/kkidc-host-upgrade-gate.sh local|test`
 
 要求：
 
 - 本地 Docker 测试环境的部署、更新、重置、备份必须通过 `ops/scripts/local-test-env.sh`。
+- 官方稳定版升级如果需要触发 `kkidc` 测试环境验证，应先通过 `ops/scripts/kkidc-host-upgrade-gate.sh`，再由门禁脚本委托 `ops/scripts/kkidc-host-deploy.sh test` / `test-stop`；不要手工改写升级专用部署流程。
 - `kkidc` 测试/生产环境的部署、启动、停止必须通过 `ops/scripts/kkidc-host-deploy.sh`。
 - `kkidc` 测试/生产环境的数据库与运行目录备份必须通过 `ops/scripts/kkidc-host-backup.sh`。
 - `kkidc` 测试/企业环境如需从远端备份目录恢复数据库与运行目录，必须通过 `ops/scripts/kkidc-host-restore.sh`。
@@ -63,12 +66,15 @@
 ## 5. 推荐流程
 
 1. 新功能或修复先在 `kkidc` 测试环境验证。
-2. 验证通过后，再根据目标客户群部署到对应生产环境：
+2. 如果本次是官方稳定版升级，先执行：
+   - `bash ops/scripts/kkidc-host-upgrade-gate.sh local`
+   - `bash ops/scripts/kkidc-host-upgrade-gate.sh test`
+3. 验证通过后，再根据目标客户群部署到对应生产环境：
   - 个人用户：`https://api.aisever.cn`
   - 企业用户：建议 `https://corp-api.aisever.cn`
-3. 在共享主机上首次上线企业环境前，先执行 `bash ops/scripts/kkidc-host-backup.sh production` 备份当前个人生产数据；企业环境已有线上数据后，再额外执行 `bash ops/scripts/kkidc-host-backup.sh enterprise`。
-4. `kkidc` 测试环境默认不常驻，验证结束后必须执行 stop 关闭测试应用。
-5. 如需将企业环境重置并重新接入新的上游，先执行 `bash ops/scripts/kkidc-host-backup.sh enterprise`，再执行 `bash ops/scripts/kkidc-host-reset.sh enterprise`，最后执行 `bash ops/scripts/kkidc-host-import-upstream.sh enterprise ...`；导入前后都额外验证 `https://api.aisever.cn/api/status` 正常。
+4. 在共享主机上首次上线企业环境前，先执行 `bash ops/scripts/kkidc-host-backup.sh production` 备份当前个人生产数据；企业环境已有线上数据后，再额外执行 `bash ops/scripts/kkidc-host-backup.sh enterprise`。
+5. `kkidc` 测试环境默认不常驻，验证结束后必须执行 stop 关闭测试应用。
+6. 如需将企业环境重置并重新接入新的上游，先执行 `bash ops/scripts/kkidc-host-backup.sh enterprise`，再执行 `bash ops/scripts/kkidc-host-reset.sh enterprise`，最后执行 `bash ops/scripts/kkidc-host-import-upstream.sh enterprise ...`；导入前后都额外验证 `https://api.aisever.cn/api/status` 正常。
 
 参考耗时：
 
