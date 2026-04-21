@@ -651,7 +651,11 @@ build_remote_image() {
       docker build --platform "$TARGET_IMAGE_PLATFORM" -t "$IMAGE_NAME" -f "$STAGE_DIR/Dockerfile.deploy" "$STAGE_DIR"
       DURATION_IMAGE_BUILD_SECONDS="$(elapsed_seconds "$step_started_at" "$SECONDS")"
 
-      image_archive_path="$(mktemp "${TMPDIR:-/tmp}/kkidc-image-${TARGET_ENV}-${SHA}-XXXXXX.tar")"
+      # macOS/BSD mktemp requires the X placeholders to be at the end of the
+      # template, so create a temporary stem first and then add the .tar suffix.
+      image_archive_path="$(mktemp "${TMPDIR:-/tmp}/kkidc-image-${TARGET_ENV}-${SHA}-XXXXXX")"
+      rm -f "$image_archive_path"
+      image_archive_path="${image_archive_path}.tar"
       remote_image_archive_path="${REMOTE_BUILD_DIR}/${IMAGE_NAME//[:\/]/-}.tar"
 
       step_started_at="$SECONDS"
