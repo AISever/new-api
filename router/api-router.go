@@ -46,6 +46,27 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/oauth/:provider", middleware.CriticalRateLimit(), controller.HandleOAuth)
 		apiRouter.GET("/ratio_config", middleware.CriticalRateLimit(), controller.GetRatioConfig)
 
+		clientRoute := apiRouter.Group("/client")
+		clientRoute.Use(middleware.ClientVersionCheck())
+		{
+			clientRoute.GET("/bootstrap", controller.ClientBootstrap)
+			clientRoute.GET("/health", controller.ClientHealth)
+			clientRoute.POST("/auth/device/start", controller.ClientDeviceStart)
+			clientRoute.POST("/auth/device/poll", controller.ClientDevicePoll)
+			clientRoute.POST("/auth/device/authorize", middleware.UserAuth(), controller.ClientDeviceAuthorize)
+
+			clientAuthRoute := clientRoute.Group("")
+			clientAuthRoute.Use(middleware.ClientAuth())
+			{
+				clientAuthRoute.GET("/profile", controller.ClientProfile)
+				clientAuthRoute.GET("/groups", controller.ClientGroups)
+				clientAuthRoute.GET("/models", controller.ClientModels)
+				clientAuthRoute.POST("/tokens/ensure", controller.ClientEnsureToken)
+				clientAuthRoute.GET("/tokens/status", controller.ClientTokenStatus)
+				clientAuthRoute.GET("/usage/summary", controller.ClientUsageSummary)
+			}
+		}
+
 		apiRouter.POST("/stripe/webhook", controller.StripeWebhook)
 		apiRouter.POST("/creem/webhook", controller.CreemWebhook)
 		apiRouter.POST("/waffo/webhook", controller.WaffoWebhook)
