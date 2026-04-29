@@ -18,6 +18,7 @@ import (
 type billingChargeTestResponse struct {
 	Object        string  `json:"object"`
 	Model         string  `json:"model"`
+	Quantity      int     `json:"quantity"`
 	Quota         int     `json:"quota"`
 	BillingSource string  `json:"billing_source"`
 	TokenId       int     `json:"token_id"`
@@ -135,6 +136,7 @@ func TestBillingChargeByTokenAndModelConsumesWalletAndTokenQuota(t *testing.T) {
 	expectedQuota := int(0.04 * common.QuotaPerUnit)
 	require.Equal(t, "billing_charge", response.Object)
 	require.Equal(t, "dall-e-3", response.Model)
+	require.Equal(t, 1, response.Quantity)
 	require.Equal(t, expectedQuota, response.Quota)
 	require.Equal(t, "wallet", response.BillingSource)
 	require.Equal(t, token.Id, response.TokenId)
@@ -169,6 +171,82 @@ func TestBillingChargeByTokenAndModelConsumesWalletAndTokenQuota(t *testing.T) {
 	require.Equal(t, true, other["manual_charge"])
 	require.Equal(t, "wallet", other["billing_source"])
 	require.Equal(t, "/v1/billing/charge", other["request_path"])
+	require.Equal(t, float64(1), other["quantity"])
+}
+
+func TestBillingChargeByTokenAndModelAppliesQuantity(t *testing.T) {
+	setupBillingChargeTestDB(t)
+	token := seedBillingChargeUserAndToken(t, 1_000_000, 1_000_000)
+
+	recorder := performBillingChargeRequest(t, map[string]any{
+		"model":    "dall-e-3",
+		"quantity": 3,
+	}, token.Key)
+
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+	var response billingChargeTestResponse
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+
+	expectedQuota := int(0.04 * common.QuotaPerUnit * 3)
+	require.Equal(t, "billing_charge", response.Object)
+	require.Equal(t, "dall-e-3", response.Model)
+	require.Equal(t, 3, response.Quantity)
+	require.Equal(t, expectedQuota, response.Quota)
+	require.Equal(t, "wallet", response.BillingSource)
+	require.Equal(t, token.Id, response.TokenId)
+	require.Equal(t, token.Name, response.TokenName)
+
+	var updatedUser model.User
+	require.NoError(t, model.DB.First(&updatedUser, token.UserId).Error)
+	require.Equal(t, 1_000_000-expectedQuota, updatedUser.Quota)
+	require.Equal(t, expectedQuota, updatedUser.UsedQuota)
+	require.Equal(t, 1, updatedUser.RequestCount)
+
+	var updatedToken model.Token
+	require.NoError(t, model.DB.First(&updatedToken, token.Id).Error)
+	require.Equal(t, 1_000_000-expectedQuota, updatedToken.RemainQuota)
+	require.Equal(t, expectedQuota, updatedToken.UsedQuota)
+
+	var log model.Log
+	require.NoError(t, model.LOG_DB.Where("type = ?", model.LogTypeConsume).First(&log).Error)
+	require.Equal(t, expectedQuota, log.Quota)
+	require.Contains(t, log.Content, "quantity 3")
+
+	var other map[string]interface{}
+	require.NoError(t, common.UnmarshalJsonStr(log.Other, &other))
+	require.Equal(t, float64(3), other["quantity"])
+}
+
+func TestBillingChargeByTokenAndModelAcceptsNAsQuantityAlias(t *testing.T) {
+	setupBillingChargeTestDB(t)
+	token := seedBillingChargeUserAndToken(t, 1_000_000, 1_000_000)
+
+	recorder := performBillingChargeRequest(t, map[string]any{
+		"model": "dall-e-3",
+		"n":     2,
+	}, token.Key)
+
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+	var response billingChargeTestResponse
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+
+	expectedQuota := int(0.04 * common.QuotaPerUnit * 2)
+	require.Equal(t, 2, response.Quantity)
+	require.Equal(t, expectedQuota, response.Quota)
+
+	var updatedUser model.User
+	require.NoError(t, model.DB.First(&updatedUser, token.UserId).Error)
+	require.Equal(t, 1_000_000-expectedQuota, updatedUser.Quota)
+
+	var log model.Log
+	require.NoError(t, model.LOG_DB.Where("type = ?", model.LogTypeConsume).First(&log).Error)
+	require.Equal(t, expectedQuota, log.Quota)
+
+	var other map[string]interface{}
+	require.NoError(t, common.UnmarshalJsonStr(log.Other, &other))
+	require.Equal(t, float64(2), other["quantity"])
 }
 
 func TestBillingChargeByTokenAndModelRejectsMissingModel(t *testing.T) {

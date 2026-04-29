@@ -20,12 +20,15 @@ import (
 )
 
 type billingChargeRequest struct {
-	Model string `json:"model"`
+	Model    string `json:"model"`
+	Quantity *int   `json:"quantity,omitempty"`
+	N        *int   `json:"n,omitempty"`
 }
 
 type billingChargeResponse struct {
 	Object        string  `json:"object"`
 	Model         string  `json:"model"`
+	Quantity      int     `json:"quantity"`
 	Quota         int     `json:"quota"`
 	BillingSource string  `json:"billing_source,omitempty"`
 	TokenId       int     `json:"token_id"`
@@ -51,6 +54,12 @@ func ChargeBillingByTokenAndModel(c *gin.Context) {
 		return
 	}
 
+	quantity, err := resolveBillingChargeQuantity(req)
+	if err != nil {
+		writeBillingChargeError(c, types.NewErrorWithStatusCode(err, types.ErrorCodeInvalidRequest, http.StatusBadRequest))
+		return
+	}
+
 	if !ensureBillingChargeTokenModelAllowed(c, modelName) {
 		return
 	}
@@ -59,6 +68,10 @@ func ChargeBillingByTokenAndModel(c *gin.Context) {
 	priceData, err := helper.ModelPriceHelperPerCall(c, relayInfo)
 	if err != nil {
 		writeBillingChargeError(c, types.NewErrorWithStatusCode(err, types.ErrorCodeModelPriceError, http.StatusBadRequest))
+		return
+	}
+	if err := applyBillingChargeQuantity(&priceData, quantity); err != nil {
+		writeBillingChargeError(c, types.NewErrorWithStatusCode(err, types.ErrorCodeInvalidRequest, http.StatusBadRequest))
 		return
 	}
 	relayInfo.PriceData = priceData
@@ -74,11 +87,12 @@ func ChargeBillingByTokenAndModel(c *gin.Context) {
 		}
 	}
 
-	recordBillingChargeConsumption(c, relayInfo, priceData)
+	recordBillingChargeConsumption(c, relayInfo, priceData, quantity)
 
 	c.JSON(http.StatusOK, billingChargeResponse{
 		Object:        "billing_charge",
 		Model:         modelName,
+		Quantity:      quantity,
 		Quota:         priceData.Quota,
 		BillingSource: relayInfo.BillingSource,
 		TokenId:       relayInfo.TokenId,
@@ -124,6 +138,32 @@ func ensureBillingChargeTokenModelAllowed(c *gin.Context, modelName string) bool
 	return true
 }
 
+func resolveBillingChargeQuantity(req billingChargeRequest) (int, error) {
+	quantity := 1
+	if req.N != nil {
+		quantity = *req.N
+	}
+	if req.Quantity != nil {
+		quantity = *req.Quantity
+	}
+	if quantity <= 0 {
+		return 0, errors.New("quantity must be greater than 0")
+	}
+	return quantity, nil
+}
+
+func applyBillingChargeQuantity(priceData *types.PriceData, quantity int) error {
+	if priceData == nil || quantity == 1 || priceData.Quota == 0 {
+		return nil
+	}
+	maxInt := int(^uint(0) >> 1)
+	if priceData.Quota > maxInt/quantity {
+		return errors.New("quantity is too large")
+	}
+	priceData.Quota *= quantity
+	return nil
+}
+
 func buildBillingChargeRelayInfo(c *gin.Context, modelName string) *relaycommon.RelayInfo {
 	startTime := time.Now()
 	requestId := c.GetString(common.RequestIdKey)
@@ -163,12 +203,13 @@ func buildBillingChargeRelayInfo(c *gin.Context, modelName string) *relaycommon.
 	return relayInfo
 }
 
-func recordBillingChargeConsumption(c *gin.Context, relayInfo *relaycommon.RelayInfo, priceData types.PriceData) {
+func recordBillingChargeConsumption(c *gin.Context, relayInfo *relaycommon.RelayInfo, priceData types.PriceData, quantity int) {
 	other := map[string]interface{}{
 		"manual_charge": true,
 		"request_path":  c.Request.URL.Path,
 		"model_price":   priceData.ModelPrice,
 		"group_ratio":   priceData.GroupRatioInfo.GroupRatio,
+		"quantity":      quantity,
 	}
 	if priceData.ModelRatio > 0 {
 		other["model_ratio"] = priceData.ModelRatio
@@ -192,6 +233,7 @@ func recordBillingChargeConsumption(c *gin.Context, relayInfo *relaycommon.Relay
 	} else {
 		content = fmt.Sprintf("%s, model ratio %.4f, group ratio %.4f", content, priceData.ModelRatio, priceData.GroupRatioInfo.GroupRatio)
 	}
+	content = fmt.Sprintf("%s, quantity %d", content, quantity)
 
 	model.RecordConsumeLog(c, relayInfo.UserId, model.RecordConsumeLogParams{
 		ChannelId:      0,
