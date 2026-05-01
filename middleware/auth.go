@@ -10,6 +10,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
@@ -171,6 +172,73 @@ func UserAuth() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authHelper(c, common.RoleCommonUser)
 	}
+}
+
+func ClientVersionCheck() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		clientVersion := c.GetHeader("X-Client-Version")
+		if clientVersion == "" {
+			clientVersion = c.Query("clientVersion")
+		}
+		if !service.IsClientVersionSupported(clientVersion) {
+			clientAuthError(c, http.StatusOK, dto.ClientErrorVersionUnsupported, "Please upgrade the desktop client.")
+			return
+		}
+		protocolVersion := c.GetHeader("X-Client-Protocol-Version")
+		if protocolVersion == "" {
+			protocolVersion = c.Query("protocolVersion")
+		}
+		if protocolVersion != "" && protocolVersion != strconv.Itoa(dto.ClientProtocolVersion) {
+			clientAuthError(c, http.StatusOK, dto.ClientErrorVersionUnsupported, "Please upgrade the desktop client.")
+			return
+		}
+		c.Next()
+	}
+}
+
+func ClientAuth() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		accessToken := c.Request.Header.Get("Authorization")
+		if accessToken == "" {
+			clientAuthError(c, http.StatusUnauthorized, dto.ClientErrorAuthRequired, common.TranslateMessage(c, i18n.MsgAuthNotLoggedIn))
+			return
+		}
+		user, authErr := model.ValidateAccessToken(accessToken)
+		if authErr != nil {
+			if errors.Is(authErr, model.ErrDatabase) {
+				common.SysLog("ClientAuth ValidateAccessToken database error: " + authErr.Error())
+				clientAuthError(c, http.StatusInternalServerError, dto.ClientErrorInternal, common.TranslateMessage(c, i18n.MsgDatabaseError))
+			} else {
+				clientAuthError(c, http.StatusOK, dto.ClientErrorAuthExpired, common.TranslateMessage(c, i18n.MsgAuthAccessTokenInvalid))
+			}
+			return
+		}
+		if user == nil || user.Username == "" || !validUserInfo(user.Username, user.Role) {
+			clientAuthError(c, http.StatusOK, dto.ClientErrorAuthExpired, common.TranslateMessage(c, i18n.MsgAuthAccessTokenInvalid))
+			return
+		}
+		if user.Status == common.UserStatusDisabled {
+			clientAuthError(c, http.StatusOK, dto.ClientErrorAuthRevoked, common.TranslateMessage(c, i18n.MsgAuthUserBanned))
+			return
+		}
+		c.Header("Auth-Version", "864b7076dbcd0a3c01b5520316720ebf")
+		c.Set("username", user.Username)
+		c.Set("role", user.Role)
+		c.Set("id", user.Id)
+		c.Set("group", user.Group)
+		c.Set("user_group", user.Group)
+		c.Set("use_access_token", true)
+		c.Next()
+	}
+}
+
+func clientAuthError(c *gin.Context, status int, code string, message string) {
+	c.JSON(status, gin.H{
+		"success": false,
+		"code":    code,
+		"message": message,
+	})
+	c.Abort()
 }
 
 func AdminAuth() func(c *gin.Context) {
