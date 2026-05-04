@@ -87,6 +87,8 @@ POSTGRES_CONTAINER="new-api-postgres"
 REDIS_CONTAINER="new-api-redis"
 CADDY_CONTAINER="snowlight-caddy"
 CADDY_CONFIG_STATUS="not-run"
+CADDY_MANAGED_BEGIN="# BEGIN new-api managed caddy routes"
+CADDY_MANAGED_END="# END new-api managed caddy routes"
 BUILD_STRATEGY_RESOLVED=""
 LEGACY_BUILD_DIR=""
 DURATION_STAGE_SECONDS="0"
@@ -724,6 +726,124 @@ http://${REMOTE_HOST} {
 EOF
 }
 
+build_managed_caddy_addresses() {
+  local addresses=""
+
+  if [ -n "$PUBLIC_HOSTNAME_LIST" ]; then
+    addresses="$PUBLIC_HOSTNAME_LIST"
+  fi
+  if [ -n "$ENTERPRISE_HOSTNAME_LIST" ]; then
+    if [ -n "$addresses" ]; then
+      addresses="${addresses},${ENTERPRISE_HOSTNAME_LIST}"
+    else
+      addresses="$ENTERPRISE_HOSTNAME_LIST"
+    fi
+  fi
+  if [ -n "$PUBLIC_HOSTNAME" ]; then
+    if [ -n "$addresses" ]; then
+      addresses="${addresses},http://${REMOTE_HOST}"
+    else
+      addresses="http://${REMOTE_HOST}"
+    fi
+  fi
+
+  printf '%s\n' "$addresses"
+}
+
+merge_caddyfile_content() {
+  local existing_content="$1"
+  local managed_content="$2"
+  local managed_addresses="$3"
+  local existing_file=""
+  local managed_file=""
+
+  existing_file="$(mktemp "${TMPDIR:-/tmp}/kkidc-caddy-existing-XXXXXX")"
+  managed_file="$(mktemp "${TMPDIR:-/tmp}/kkidc-caddy-managed-XXXXXX")"
+  printf '%s' "$existing_content" > "$existing_file"
+  printf '%s' "$managed_content" > "$managed_file"
+
+  CADDY_MANAGED_BEGIN="$CADDY_MANAGED_BEGIN" \
+    CADDY_MANAGED_END="$CADDY_MANAGED_END" \
+    CADDY_MANAGED_ADDRESSES="$managed_addresses" \
+    python3 - "$existing_file" "$managed_file" <<'PY'
+from pathlib import Path
+import os
+import sys
+
+existing = Path(sys.argv[1]).read_text()
+managed = Path(sys.argv[2]).read_text().strip()
+managed_addresses = {
+    address.strip()
+    for address in os.environ.get("CADDY_MANAGED_ADDRESSES", "").split(",")
+    if address.strip()
+}
+begin = os.environ["CADDY_MANAGED_BEGIN"]
+end = os.environ["CADDY_MANAGED_END"]
+
+
+def strip_marked_managed_blocks(text: str) -> str:
+    lines = text.splitlines()
+    output = []
+    index = 0
+    while index < len(lines):
+        if lines[index].strip() == begin:
+            index += 1
+            while index < len(lines) and lines[index].strip() != end:
+                index += 1
+            if index < len(lines):
+                index += 1
+            continue
+        output.append(lines[index])
+        index += 1
+    return "\n".join(output)
+
+
+def block_label(line: str) -> str:
+    if "{" not in line:
+        return ""
+    return line.split("{", 1)[0].strip()
+
+
+def label_addresses(label: str):
+    if not label or label.startswith("("):
+        return set()
+    normalized = label.replace(",", " ")
+    return {part.strip() for part in normalized.split() if part.strip()}
+
+
+def remove_legacy_managed_blocks(text: str) -> str:
+    lines = text.splitlines()
+    output = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        stripped = line.strip()
+        label = block_label(stripped)
+        addresses = label_addresses(label)
+        if addresses and addresses & managed_addresses:
+            depth = line.count("{") - line.count("}")
+            index += 1
+            while index < len(lines) and depth > 0:
+                depth += lines[index].count("{") - lines[index].count("}")
+                index += 1
+            while index < len(lines) and not lines[index].strip():
+                index += 1
+            continue
+        output.append(line)
+        index += 1
+    return "\n".join(output).strip()
+
+
+unmanaged = remove_legacy_managed_blocks(strip_marked_managed_blocks(existing))
+parts = [begin, managed, end]
+if unmanaged:
+    parts.extend(["", unmanaged])
+print("\n".join(parts).rstrip() + "\n")
+PY
+
+  rm -f "$existing_file" "$managed_file"
+}
+
 deploy_remote_app() {
   remote_bash <<EOF
 set -euo pipefail
@@ -750,29 +870,33 @@ EOF
 
 configure_remote_caddy() {
   local site_block=""
+  local managed_caddyfile_content=""
   local caddyfile_content=""
   local existing_caddyfile=""
+  local managed_addresses=""
 
   site_block="$(build_caddy_site_block "$PUBLIC_CADDY_SITE_ADDRESSES" "3000")"
   if [ -n "$site_block" ]; then
-    caddyfile_content+="${site_block}"$'\n'
+    managed_caddyfile_content+="${site_block}"$'\n'
   fi
 
   site_block="$(build_caddy_site_block "$ENTERPRISE_CADDY_SITE_ADDRESSES" "3002")"
   if [ -n "$site_block" ]; then
-    caddyfile_content+="${site_block}"$'\n'
+    managed_caddyfile_content+="${site_block}"$'\n'
   fi
 
   if [ -n "$PUBLIC_HOSTNAME" ]; then
-    caddyfile_content+="$(build_caddy_http_fallback_block)"
+    managed_caddyfile_content+="$(build_caddy_http_fallback_block)"
   fi
 
-  if [ -z "$caddyfile_content" ]; then
+  if [ -z "$managed_caddyfile_content" ]; then
     CADDY_CONFIG_STATUS="skipped-empty"
     return
   fi
 
   existing_caddyfile="$(remote_cmd "cat /opt/snowlight/Caddyfile 2>/dev/null || true")"
+  managed_addresses="$(build_managed_caddy_addresses)"
+  caddyfile_content="$(merge_caddyfile_content "$existing_caddyfile" "$managed_caddyfile_content" "$managed_addresses")"
   if [ "$existing_caddyfile" = "$caddyfile_content" ] && remote_cmd "docker container inspect '${CADDY_CONTAINER}' >/dev/null 2>&1"; then
     log INFO "caddy config unchanged; skipping caddy restart"
     CADDY_CONFIG_STATUS="unchanged"
