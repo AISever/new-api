@@ -53,6 +53,7 @@ func TestUpdateUserSparseQuotaUpdatePreservesExistingIdentityFields(t *testing.T
 		Group:       "default",
 		Quota:       100,
 		Remark:      "keep-me",
+		AffCode:     "quota1",
 	})
 
 	ctx, recorder := newAuthenticatedContext(t, http.MethodPut, "/api/user/", map[string]any{
@@ -87,5 +88,93 @@ func TestUpdateUserSparseQuotaUpdatePreservesExistingIdentityFields(t *testing.T
 	}
 	if reloaded.Quota != 250 {
 		t.Fatalf("expected quota to update to 250, got %d", reloaded.Quota)
+	}
+}
+
+func TestUpdateUserEditWithoutQuotaPreservesExistingQuota(t *testing.T) {
+	db := setupUserControllerTestDB(t)
+	seedUserForUpdateTest(t, db, &model.User{
+		Id:          2,
+		Username:    "edit-user",
+		Password:    "password123",
+		DisplayName: "Edit User",
+		Role:        common.RoleCommonUser,
+		Status:      common.UserStatusEnabled,
+		Group:       "default",
+		Quota:       500,
+		Remark:      "old remark",
+		AffCode:     "edit2",
+	})
+
+	ctx, recorder := newAuthenticatedContext(t, http.MethodPut, "/api/user/", map[string]any{
+		"id":           2,
+		"username":     "edit-user",
+		"display_name": "Edited User",
+		"group":        "vip",
+		"remark":       "new remark",
+	}, 999)
+	ctx.Set("role", common.RoleRootUser)
+
+	UpdateUser(ctx)
+
+	response := decodeAPIResponse(t, recorder)
+	if !response.Success {
+		t.Fatalf("expected success response, got message: %s", response.Message)
+	}
+
+	var reloaded model.User
+	if err := db.First(&reloaded, 2).Error; err != nil {
+		t.Fatalf("failed to reload user: %v", err)
+	}
+
+	if reloaded.Quota != 500 {
+		t.Fatalf("expected quota to stay 500 when omitted, got %d", reloaded.Quota)
+	}
+	if reloaded.DisplayName != "Edited User" {
+		t.Fatalf("expected display name to update, got %q", reloaded.DisplayName)
+	}
+	if reloaded.Group != "vip" {
+		t.Fatalf("expected group to update, got %q", reloaded.Group)
+	}
+	if reloaded.Remark != "new remark" {
+		t.Fatalf("expected remark to update, got %q", reloaded.Remark)
+	}
+}
+
+func TestUpdateUserExplicitZeroQuotaUpdatesQuota(t *testing.T) {
+	db := setupUserControllerTestDB(t)
+	seedUserForUpdateTest(t, db, &model.User{
+		Id:          3,
+		Username:    "zero-quota-user",
+		Password:    "password123",
+		DisplayName: "Zero Quota User",
+		Role:        common.RoleCommonUser,
+		Status:      common.UserStatusEnabled,
+		Group:       "default",
+		Quota:       500,
+		Remark:      "keep-me",
+		AffCode:     "zero3",
+	})
+
+	ctx, recorder := newAuthenticatedContext(t, http.MethodPut, "/api/user/", map[string]any{
+		"id":    3,
+		"quota": 0,
+	}, 999)
+	ctx.Set("role", common.RoleRootUser)
+
+	UpdateUser(ctx)
+
+	response := decodeAPIResponse(t, recorder)
+	if !response.Success {
+		t.Fatalf("expected success response, got message: %s", response.Message)
+	}
+
+	var reloaded model.User
+	if err := db.First(&reloaded, 3).Error; err != nil {
+		t.Fatalf("failed to reload user: %v", err)
+	}
+
+	if reloaded.Quota != 0 {
+		t.Fatalf("expected quota to update to explicit zero, got %d", reloaded.Quota)
 	}
 }

@@ -511,7 +511,7 @@ func (user *User) Update(updatePassword bool) error {
 	return updateUserCache(*user)
 }
 
-func (user *User) Edit(updatePassword bool) error {
+func (user *User) Edit(updatePassword bool, updateQuota bool) error {
 	var err error
 	if updatePassword {
 		user.Password, err = common.Password2Hash(user.Password)
@@ -524,8 +524,10 @@ func (user *User) Edit(updatePassword bool) error {
 		"username":     user.Username,
 		"display_name": user.DisplayName,
 		"group":        user.Group,
-		"quota":        user.Quota,
 		"remark":       user.Remark,
+	}
+	if updateQuota {
+		updates["quota"] = user.Quota
 	}
 	if updatePassword {
 		updates["password"] = user.Password

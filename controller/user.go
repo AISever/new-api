@@ -543,12 +543,23 @@ func GetUserModels(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	var requestFields map[string]json.RawMessage
+	if err := common.Unmarshal(requestBody, &requestFields); err != nil {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
 	var updatedUser model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&updatedUser)
+	err = common.Unmarshal(requestBody, &updatedUser)
 	if err != nil || updatedUser.Id == 0 {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
+	_, updateQuota := requestFields["quota"]
 	if updatedUser.Password == "" {
 		updatedUser.Password = "$I_LOVE_U" // make Validator happy :)
 	}
@@ -582,7 +593,7 @@ func UpdateUser(c *gin.Context) {
 		updatedUser.Remark = originUser.Remark
 	}
 	updatePassword := updatedUser.Password != ""
-	if err := updatedUser.Edit(updatePassword); err != nil {
+	if err := updatedUser.Edit(updatePassword, updateQuota); err != nil {
 		common.ApiError(c, err)
 		return
 	}
