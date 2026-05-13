@@ -18,13 +18,14 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import {
-  getUserIdFromLocalStorage,
   showError,
-  formatMessageForAPI,
-  isValidMessage,
 } from './utils';
+import {
+  formatMessageForAPI,
+  getUserIdFromLocalStorage,
+  isValidMessage,
+} from './request';
 import axios from 'axios';
-import { MESSAGE_ROLES } from '../constants/playground.constants';
 
 export let API = axios.create({
   baseURL: import.meta.env.VITE_REACT_APP_SERVER_URL
