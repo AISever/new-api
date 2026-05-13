@@ -21,7 +21,7 @@ import React from 'react';
 import { useHeaderBar } from '../../../hooks/common/useHeaderBar';
 import { useNotifications } from '../../../hooks/common/useNotifications';
 import { useNavigation } from '../../../hooks/common/useNavigation';
-import NoticeModal from '../NoticeModal';
+import LazyNoticeModal from '../LazyNoticeModal';
 import MobileMenuButton from './MobileMenuButton';
 import HeaderLogo from './HeaderLogo';
 import Navigation from './Navigation';
@@ -66,7 +66,7 @@ const HeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
 
   return (
     <header className='text-semi-color-text-0 sticky top-0 z-50 transition-colors duration-300 bg-white/75 dark:bg-zinc-900/75 backdrop-blur-lg'>
-      <NoticeModal
+      <LazyNoticeModal
         visible={noticeVisible}
         onClose={handleNoticeClose}
         isMobile={isMobile}
