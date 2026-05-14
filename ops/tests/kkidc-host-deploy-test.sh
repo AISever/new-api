@@ -52,6 +52,9 @@ cat > "$APP_ENV_FILE" <<'EOF'
 DB_PASSWORD=NewApi2024Secure
 SESSION_SECRET=session-secret
 CRYPTO_SECRET=crypto-secret
+SERVER_IP=202.140.142.149
+SERVER_USER=root
+SERVER_PASSWORD=legacy-password
 EOF
 
 set +e
@@ -267,6 +270,37 @@ fi
 
 if ! printf '%s\n' "$SYNC_TEST_OUTPUT" | grep -q -- '--sync-prod-data-from-legacy only supports production'; then
   echo "FAIL: expected sync-prod-data flag validation message" >&2
+  exit 1
+fi
+
+set +e
+SKIP_LOGS_OUTPUT="$(REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" production --config "$CONFIG_FILE" --dry-run --sync-prod-data-from-legacy --skip-legacy-prod-logs 2>&1)"
+SKIP_LOGS_EXIT="$?"
+set -e
+
+if [ "$SKIP_LOGS_EXIT" -ne 0 ]; then
+  echo "FAIL: production dry-run with skip-legacy-prod-logs should succeed" >&2
+  echo "$SKIP_LOGS_OUTPUT" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$SKIP_LOGS_OUTPUT" | grep -q '^sync_prod_data_from_legacy=true$'; then
+  echo "FAIL: sync-prod-data flag should remain enabled when skipping legacy logs" >&2
+  exit 1
+fi
+
+set +e
+SKIP_LOGS_ONLY_OUTPUT="$(REPO_DIR="$REPO_DIR" APP_ENV_FILE="$APP_ENV_FILE" bash "$SCRIPT_UNDER_TEST" production --config "$CONFIG_FILE" --dry-run --skip-legacy-prod-logs 2>&1)"
+SKIP_LOGS_ONLY_EXIT="$?"
+set -e
+
+if [ "$SKIP_LOGS_ONLY_EXIT" -eq 0 ]; then
+  echo "FAIL: skip-legacy-prod-logs should require sync-prod-data mode" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$SKIP_LOGS_ONLY_OUTPUT" | grep -q -- '--skip-legacy-prod-logs requires --sync-prod-data-from-legacy'; then
+  echo "FAIL: expected skip-legacy-prod-logs validation message" >&2
   exit 1
 fi
 

@@ -43,6 +43,7 @@ SKIP_BUILD="false"
 FORCE_REBUILD="false"
 CLEAR_CACHE="false"
 SYNC_PROD_DATA_FROM_LEGACY="false"
+SYNC_PROD_LOGS_FROM_LEGACY="true"
 
 REMOTE_HOST=""
 REMOTE_USER=""
@@ -124,6 +125,8 @@ Options:
   --clear-cache         flush Redis DB for the target environment after deploy
   --sync-prod-data-from-legacy
                         restore old kkidc production data onto the new host before deploy
+  --skip-legacy-prod-logs
+                        when syncing production data from the legacy host, skip copying /opt/new-api/logs
   --help                show this help
 EOF
 }
@@ -217,6 +220,10 @@ parse_args() {
         ;;
       --sync-prod-data-from-legacy)
         SYNC_PROD_DATA_FROM_LEGACY="true"
+        shift
+        ;;
+      --skip-legacy-prod-logs)
+        SYNC_PROD_LOGS_FROM_LEGACY="false"
         shift
         ;;
       --help|-h)
@@ -542,6 +549,9 @@ check_remote_build_guard() {
 validate_requested_operation() {
   if [ "$SYNC_PROD_DATA_FROM_LEGACY" = "true" ] && [ "$TARGET_ENV" != "production" ]; then
     die "--sync-prod-data-from-legacy only supports production"
+  fi
+  if [ "$SYNC_PROD_LOGS_FROM_LEGACY" != "true" ] && [ "$SYNC_PROD_DATA_FROM_LEGACY" != "true" ]; then
+    die "--skip-legacy-prod-logs requires --sync-prod-data-from-legacy"
   fi
   if [ "$SYNC_PROD_DATA_FROM_LEGACY" = "true" ] && { [ -z "$LEGACY_BUILD_HOST" ] || [ -z "$LEGACY_BUILD_USER" ] || [ -z "$LEGACY_BUILD_PASSWORD" ]; }; then
     die "--sync-prod-data-from-legacy requires legacy kkidc credentials in $APP_ENV_FILE"
@@ -1043,8 +1053,13 @@ EOF
   log INFO "exporting legacy production database snapshot"
   legacy_cmd "docker exec '${POSTGRES_CONTAINER}' pg_dump -U newapi -d '${PG_DB}' --clean --if-exists --no-owner --no-privileges" > "${migration_dir}/db.sql"
 
-  log INFO "exporting legacy production data and logs"
-  legacy_cmd "tar --warning=no-file-changed --ignore-failed-read -C /opt -cf - new-api/data new-api/logs" > "${migration_dir}/prod-data.tar"
+  if [ "$SYNC_PROD_LOGS_FROM_LEGACY" = "true" ]; then
+    log INFO "exporting legacy production data and logs"
+    legacy_cmd "tar --warning=no-file-changed --ignore-failed-read -C /opt -cf - new-api/data new-api/logs" > "${migration_dir}/prod-data.tar"
+  else
+    log INFO "exporting legacy production data only"
+    legacy_cmd "tar --warning=no-file-changed --ignore-failed-read -C /opt -cf - new-api/data" > "${migration_dir}/prod-data.tar"
+  fi
 
   log INFO "copying production data bundle to target host"
   remote_cmd "mkdir -p '${REMOTE_BUILD_DIR}'"
