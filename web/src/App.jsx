@@ -25,6 +25,7 @@ import { StatusContext } from './context/Status';
 import OAuth2Callback from './components/auth/OAuth2Callback';
 import SetupCheck from './components/layout/SetupCheck';
 const PageLayout = lazy(() => import('./components/layout/PageLayout'));
+const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -95,13 +96,64 @@ function App() {
     <SetupCheck>
       <Routes>
         <Route
-          path='/'
           element={
-            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-              <Home />
+            <Suspense fallback={<Loading></Loading>} key={`public-${location.pathname}`}>
+              <PublicLayout />
             </Suspense>
           }
-        />
+        >
+          <Route
+            path='/'
+            element={
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Home />
+              </Suspense>
+            }
+          />
+          <Route
+            path='/pricing'
+            element={
+              pricingRequireAuth ? (
+                <PrivateRoute>
+                  <Suspense
+                    fallback={<Loading></Loading>}
+                    key={location.pathname}
+                  >
+                    <Pricing />
+                  </Suspense>
+                </PrivateRoute>
+              ) : (
+                <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                  <Pricing />
+                </Suspense>
+              )
+            }
+          />
+          <Route
+            path='/about'
+            element={
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <About />
+              </Suspense>
+            }
+          />
+          <Route
+            path='/help'
+            element={
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Help />
+              </Suspense>
+            }
+          />
+          <Route
+            path='/docs/:docId?'
+            element={
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Docs />
+              </Suspense>
+            }
+          />
+        </Route>
         <Route
           path='/console/*'
           element={
@@ -196,33 +248,6 @@ function App() {
           }
         />
         <Route
-          path='/pricing'
-          element={
-            pricingRequireAuth ? (
-              <PrivateRoute>
-                <Suspense
-                  fallback={<Loading></Loading>}
-                  key={location.pathname}
-                >
-                  <Pricing />
-                </Suspense>
-              </PrivateRoute>
-            ) : (
-              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-                <Pricing />
-              </Suspense>
-            )
-          }
-        />
-        <Route
-          path='/about'
-          element={
-            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-              <About />
-            </Suspense>
-          }
-        />
-        <Route
           path='/user-agreement'
           element={
             <Suspense fallback={<Loading></Loading>} key={location.pathname}>
@@ -235,22 +260,6 @@ function App() {
           element={
             <Suspense fallback={<Loading></Loading>} key={location.pathname}>
               <PrivacyPolicy />
-            </Suspense>
-          }
-        />
-        <Route
-          path='/help'
-          element={
-            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-              <Help />
-            </Suspense>
-          }
-        />
-        <Route
-          path='/docs/:docId?'
-          element={
-            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-              <Docs />
             </Suspense>
           }
         />
