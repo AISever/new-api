@@ -17,32 +17,35 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import '@douyinfe/semi-ui/dist/css/semi.css';
 import HeaderBar from './headerbar';
-import { Layout, LocaleProvider } from '@douyinfe/semi-ui';
+import { Layout } from '@douyinfe/semi-ui';
 import SiderBar from './SiderBar';
+import App from '../../App';
 import FooterBar from './Footer';
+import { ToastContainer } from 'react-toastify';
 import ErrorBoundary from '../common/ErrorBoundary';
-import React, { useMemo, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useIsMobile } from '../../hooks/common/useIsMobile';
 import { useSidebarCollapsed } from '../../hooks/common/useSidebarCollapsed';
 import { useTranslation } from 'react-i18next';
+import { API } from '../../helpers/api';
+import { applyBrandingToDocument } from '../../helpers/branding';
+import { setStatusData } from '../../helpers/data';
+import { getLogo, getSystemName, showError } from '../../helpers/utils';
+import { UserContext } from '../../context/User';
+import { StatusContext } from '../../context/Status';
 import { useLocation } from 'react-router-dom';
-import zh_CN from '@douyinfe/semi-ui/lib/es/locale/source/zh_CN';
-import en_GB from '@douyinfe/semi-ui/lib/es/locale/source/en_GB';
-import ConsoleRoutes from './ConsoleRoutes';
+import { normalizeLanguage } from '../../i18n/language';
 const { Sider, Content, Header } = Layout;
 
 const PageLayout = () => {
+  const [userState, userDispatch] = useContext(UserContext);
+  const [, statusDispatch] = useContext(StatusContext);
   const isMobile = useIsMobile();
   const [collapsed, , setCollapsed] = useSidebarCollapsed();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { i18n } = useTranslation();
   const location = useLocation();
-  const semiLocale = useMemo(
-    () => ({ zh: zh_CN, en: en_GB })[i18n.language] || zh_CN,
-    [i18n.language],
-  );
 
   const cardProPages = [
     '/console/channel',
@@ -66,104 +69,166 @@ const PageLayout = () => {
   const isConsoleRoute = location.pathname.startsWith('/console');
   const showSider = isConsoleRoute && (!isMobile || drawerOpen);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isMobile && drawerOpen && collapsed) {
       setCollapsed(false);
     }
   }, [isMobile, drawerOpen, collapsed, setCollapsed]);
 
+  const loadUser = () => {
+    let user = localStorage.getItem('user');
+    if (user) {
+      let data = JSON.parse(user);
+      userDispatch({ type: 'login', payload: data });
+    }
+  };
+
+  const loadStatus = async () => {
+    try {
+      const res = await API.get('/api/status');
+      const { success, data } = res.data;
+      if (success) {
+        statusDispatch({ type: 'set', payload: data });
+        setStatusData(data);
+        applyBrandingToDocument(document, {
+          systemName: data.system_name,
+          logo: data.logo,
+        });
+      } else {
+        showError('Unable to connect to server');
+      }
+    } catch (error) {
+      showError('Failed to load status');
+    }
+  };
+
+  useEffect(() => {
+    loadUser();
+    loadStatus().catch(console.error);
+    applyBrandingToDocument(document, {
+      systemName: getSystemName(),
+      logo: getLogo(),
+    });
+  }, []);
+
+  useEffect(() => {
+    let preferredLang;
+
+    if (userState?.user?.setting) {
+      try {
+        const settings = JSON.parse(userState.user.setting);
+        preferredLang = normalizeLanguage(settings.language);
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+
+    if (!preferredLang) {
+      const savedLang = localStorage.getItem('i18nextLng');
+      if (savedLang) {
+        preferredLang = normalizeLanguage(savedLang);
+      }
+    }
+
+    if (preferredLang) {
+      localStorage.setItem('i18nextLng', preferredLang);
+      if (preferredLang !== i18n.language) {
+        i18n.changeLanguage(preferredLang);
+      }
+    }
+  }, [i18n, userState?.user?.setting]);
+
   return (
-    <LocaleProvider locale={semiLocale}>
-      <Layout
-        className='app-layout'
+    <Layout
+      className='app-layout'
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: isMobile ? 'visible' : 'hidden',
+      }}
+    >
+      <Header
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: isMobile ? 'visible' : 'hidden',
+          padding: 0,
+          height: 'auto',
+          lineHeight: 'normal',
+          position: 'fixed',
+          width: '100%',
+          top: 0,
+          zIndex: 100,
         }}
       >
-        <Header
-          style={{
-            padding: 0,
-            height: 'auto',
-            lineHeight: 'normal',
-            position: 'fixed',
-            width: '100%',
-            top: 0,
-            zIndex: 100,
-          }}
-        >
-          <HeaderBar
-            onMobileMenuToggle={() => setDrawerOpen((prev) => !prev)}
-            drawerOpen={drawerOpen}
-          />
-        </Header>
+        <HeaderBar
+          onMobileMenuToggle={() => setDrawerOpen((prev) => !prev)}
+          drawerOpen={drawerOpen}
+        />
+      </Header>
+      <Layout
+        style={{
+          overflow: isMobile ? 'visible' : 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {showSider && (
+          <Sider
+            className='app-sider'
+            style={{
+              position: 'fixed',
+              left: 0,
+              top: '64px',
+              zIndex: 99,
+              border: 'none',
+              paddingRight: '0',
+              width: 'var(--sidebar-current-width)',
+            }}
+          >
+            <SiderBar
+              onNavigate={() => {
+                if (isMobile) setDrawerOpen(false);
+              }}
+            />
+          </Sider>
+        )}
         <Layout
           style={{
-            overflow: isMobile ? 'visible' : 'auto',
+            marginLeft: isMobile
+              ? '0'
+              : showSider
+                ? 'var(--sidebar-current-width)'
+                : '0',
+            flex: '1 1 auto',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          {showSider && (
-            <Sider
-              className='app-sider'
-              style={{
-                position: 'fixed',
-                left: 0,
-                top: '64px',
-                zIndex: 99,
-                border: 'none',
-                paddingRight: '0',
-                width: 'var(--sidebar-current-width)',
-              }}
-            >
-              <SiderBar
-                onNavigate={() => {
-                  if (isMobile) setDrawerOpen(false);
-                }}
-              />
-            </Sider>
-          )}
-          <Layout
+          <Content
             style={{
-              marginLeft: isMobile
-                ? '0'
-                : showSider
-                  ? 'var(--sidebar-current-width)'
-                  : '0',
-              flex: '1 1 auto',
-              display: 'flex',
-              flexDirection: 'column',
+              flex: '1 0 auto',
+              overflowY: isMobile ? 'visible' : 'hidden',
+              WebkitOverflowScrolling: 'touch',
+              padding: shouldInnerPadding ? (isMobile ? '5px' : '24px') : '0',
+              position: 'relative',
             }}
           >
-            <Content
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
+          </Content>
+          {!shouldHideFooter && (
+            <Layout.Footer
               style={{
-                flex: '1 0 auto',
-                overflowY: isMobile ? 'visible' : 'hidden',
-                WebkitOverflowScrolling: 'touch',
-                padding: shouldInnerPadding ? (isMobile ? '5px' : '24px') : '0',
-                position: 'relative',
+                flex: '0 0 auto',
+                width: '100%',
               }}
             >
-              <ErrorBoundary>
-                <ConsoleRoutes />
-              </ErrorBoundary>
-            </Content>
-            {!shouldHideFooter && (
-              <Layout.Footer
-                style={{
-                  flex: '0 0 auto',
-                  width: '100%',
-                }}
-              >
-                <FooterBar />
-              </Layout.Footer>
-            )}
-          </Layout>
+              <FooterBar />
+            </Layout.Footer>
+          )}
         </Layout>
       </Layout>
-    </LocaleProvider>
+      <ToastContainer />
+    </Layout>
   );
 };
 

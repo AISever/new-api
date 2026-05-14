@@ -20,11 +20,10 @@ For commercial licensing, please contact support@quantumnous.com
 import React, { lazy, Suspense, useContext, useMemo } from 'react';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Loading from './components/common/ui/Loading';
-import { AuthRedirect, PrivateRoute, AdminRoute } from './helpers/auth';
+import { AuthRedirect, PrivateRoute, AdminRoute } from './helpers';
 import { StatusContext } from './context/Status';
 import OAuth2Callback from './components/auth/OAuth2Callback';
 import SetupCheck from './components/layout/SetupCheck';
-const PageLayout = lazy(() => import('./components/layout/PageLayout'));
 
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -103,14 +102,6 @@ function App() {
           }
         />
         <Route
-          path='/console/*'
-          element={
-            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-              <PageLayout />
-            </Suspense>
-          }
-        />
-        <Route
           path='/setup'
           element={
             <Suspense fallback={<Loading></Loading>} key={location.pathname}>
@@ -119,6 +110,70 @@ function App() {
           }
         />
         <Route path='/forbidden' element={<Forbidden />} />
+        <Route
+          path='/console/models'
+          element={
+            <AdminRoute>
+              <ModelPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/deployment'
+          element={
+            <AdminRoute>
+              <ModelDeploymentPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/subscription'
+          element={
+            <AdminRoute>
+              <Subscription />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/channel'
+          element={
+            <AdminRoute>
+              <Channel />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/token'
+          element={
+            <PrivateRoute>
+              <Token />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/playground'
+          element={
+            <PrivateRoute>
+              <Playground />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/redemption'
+          element={
+            <AdminRoute>
+              <Redemption />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/user'
+          element={
+            <AdminRoute>
+              <User />
+            </AdminRoute>
+          }
+        />
         <Route
           path='/user/reset'
           element={
@@ -196,6 +251,74 @@ function App() {
           }
         />
         <Route
+          path='/console/setting'
+          element={
+            <AdminRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Setting />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/personal'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <PersonalSetting />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/topup'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <TopUp />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/log'
+          element={
+            <PrivateRoute>
+              <Log />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Dashboard />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/midjourney'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Midjourney />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/task'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Task />
+              </Suspense>
+            </PrivateRoute>
+          }
+        />
+        <Route
           path='/pricing'
           element={
             pricingRequireAuth ? (
@@ -252,6 +375,25 @@ function App() {
             <Suspense fallback={<Loading></Loading>} key={location.pathname}>
               <Docs />
             </Suspense>
+          }
+        />
+        <Route
+          path='/console/chat/:id?'
+          element={
+            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+              <Chat />
+            </Suspense>
+          }
+        />
+        {/* 方便使用chat2link直接跳转聊天... */}
+        <Route
+          path='/chat2link'
+          element={
+            <PrivateRoute>
+              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
+                <Chat2Link />
+              </Suspense>
+            </PrivateRoute>
           }
         />
         <Route path='*' element={<NotFound />} />

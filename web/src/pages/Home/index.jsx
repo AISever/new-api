@@ -19,6 +19,13 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React, { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import {
+  Button,
+  Typography,
+  Input,
+  ScrollList,
+  ScrollItem,
+} from '@douyinfe/semi-ui';
+import {
   showError,
   copy,
   showSuccess,
@@ -31,11 +38,18 @@ import { StatusContext } from '../../context/Status';
 import { useActualTheme } from '../../context/Theme';
 import { marked } from 'marked';
 import { useTranslation } from 'react-i18next';
-import { Github, Play, FileText, Copy } from 'lucide-react';
+import {
+  IconGithubLogo,
+  IconPlay,
+  IconFile,
+  IconCopy,
+} from '@douyinfe/semi-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import LazyNoticeModal from '../../components/layout/LazyNoticeModal';
 
 const ProviderLogoCloud = lazy(() => import('./ProviderLogoCloud'));
+
+const { Text } = Typography;
 
 const Home = () => {
   const { t, i18n } = useTranslation();
@@ -127,8 +141,6 @@ const Home = () => {
     navigate('/help');
   };
 
-  const currentEndpoint = endpointItems[endpointIndex]?.value || '';
-
   return (
     <div className='w-full overflow-x-hidden'>
       <LazyNoticeModal
@@ -161,41 +173,55 @@ const Home = () => {
                   </p>
                   {/* BASE URL 与端点选择 */}
                   <div className='flex flex-col md:flex-row items-center justify-center gap-4 w-full mt-4 md:mt-6 max-w-md'>
-                    <div className='flex w-full items-center rounded-full border border-semi-color-border bg-white/90 dark:bg-zinc-900/90 px-4 py-2 shadow-sm'>
-                      <div className='min-w-0 flex-1 text-left'>
-                        <div className='truncate text-sm md:text-base text-semi-color-text-0'>
-                          {serverAddress}
+                    <Input
+                      readonly
+                      value={serverAddress}
+                      className='flex-1 !rounded-full'
+                      size={isMobile ? 'default' : 'large'}
+                      suffix={
+                        <div className='flex items-center gap-2'>
+                          <ScrollList
+                            bodyHeight={32}
+                            style={{ border: 'unset', boxShadow: 'unset' }}
+                          >
+                            <ScrollItem
+                              mode='wheel'
+                              cycled={true}
+                              list={endpointItems}
+                              selectedIndex={endpointIndex}
+                              onSelect={({ index }) => setEndpointIndex(index)}
+                            />
+                          </ScrollList>
+                          <Button
+                            type='primary'
+                            onClick={handleCopyBaseURL}
+                            icon={<IconCopy />}
+                            className='!rounded-full'
+                          />
                         </div>
-                        <div className='h-5 text-xs text-semi-color-text-2'>
-                          {currentEndpoint}
-                        </div>
-                      </div>
-                      <button
-                        type='button'
-                        onClick={handleCopyBaseURL}
-                        className='ml-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-semi-color-primary text-white transition hover:opacity-90'
-                        aria-label={t('已复制到剪切板')}
-                      >
-                        <Copy size={18} />
-                      </button>
-                    </div>
+                      }
+                    />
                   </div>
                 </div>
 
                 {/* 操作按钮 */}
                 <div className='flex flex-row gap-4 justify-center items-center'>
                   <Link to='/console'>
-                    <span
-                      className={`inline-flex items-center gap-2 rounded-3xl bg-semi-color-primary px-8 py-2 text-white shadow-sm transition hover:opacity-90 ${isMobile ? 'text-sm' : 'text-base'}`}
+                    <Button
+                      theme='solid'
+                      type='primary'
+                      size={isMobile ? 'default' : 'large'}
+                      className='!rounded-3xl px-8 py-2'
+                      icon={<IconPlay />}
                     >
-                      <Play size={18} />
                       {t('获取密钥')}
-                    </span>
+                    </Button>
                   </Link>
                   {isDemoSiteMode && statusState?.status?.version ? (
-                    <button
-                      type='button'
-                      className={`inline-flex items-center gap-2 rounded-3xl border border-semi-color-border bg-white/80 px-6 py-2 text-semi-color-text-0 transition hover:bg-semi-color-fill-0 dark:bg-zinc-900/80 ${isMobile ? 'text-sm' : 'text-base'}`}
+                    <Button
+                      size={isMobile ? 'default' : 'large'}
+                      className='flex items-center !rounded-3xl px-6 py-2'
+                      icon={<IconGithubLogo />}
                       onClick={() =>
                         window.open(
                           'https://github.com/QuantumNous/new-api',
@@ -203,19 +229,18 @@ const Home = () => {
                         )
                       }
                     >
-                      <Github size={18} />
                       {statusState.status.version}
-                    </button>
+                    </Button>
                   ) : (
                     docsAvailable && (
-                      <button
-                        type='button'
-                        className={`inline-flex items-center gap-2 rounded-3xl border border-semi-color-border bg-white/80 px-6 py-2 text-semi-color-text-0 transition hover:bg-semi-color-fill-0 dark:bg-zinc-900/80 ${isMobile ? 'text-sm' : 'text-base'}`}
+                      <Button
+                        size={isMobile ? 'default' : 'large'}
+                        className='flex items-center !rounded-3xl px-6 py-2'
+                        icon={<IconFile />}
                         onClick={handleOpenDocs}
                       >
-                        <FileText size={18} />
                         {t('文档')}
-                      </button>
+                      </Button>
                     )
                   )}
                 </div>
