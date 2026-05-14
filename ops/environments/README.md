@@ -3,13 +3,13 @@
 本目录用于统一管理 `new-api` 的部署环境信息，避免把不同服务器环境混在一起。
 如需执行具体操作，请回到 `ops/README.md` 选择对应脚本或检查清单。
 
-## 1. 当前口径（2026-04-05）
+## 1. 当前口径（2026-05-14）
 
-> 重要：**当前真实对外个人生产环境是新 `kkidc` 主机 `114.66.47.192` 上的 `https://api.aisever.cn`；企业生产环境也已在同主机独立启用，对外地址 `https://corp-api.aisever.cn`。**
+> 重要：**当前真实对外个人生产环境已经切换到腾讯云主机 `43.133.183.213`，对外地址为 `https://api.aisever.cn` / `https://newapi.aisever.cn`；企业生产环境与测试环境仍按各自环境文档维护。**
 
 | 环境 | 当前状态 | 访问地址 | 服务器 | 容器 | 数据库 | 用途 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `kkidc` 个人生产环境 | **启用中** | `https://api.aisever.cn` / `https://newapi.aisever.cn` | `114.66.47.192` | `new-api-local` | `new-api` | 当前个人用户生产流量 |
+| `kkidc` 个人生产环境 | **启用中** | `https://api.aisever.cn` / `https://newapi.aisever.cn` | `43.133.183.213` | `new-api-local` | `new-api` | 当前个人用户生产流量 |
 | `kkidc` 企业生产环境 | **启用中** | `https://corp-api.aisever.cn` | `114.66.47.192` | `new-api-enterprise` | `new-api-enterprise` | 企业客户独立生产流量 |
 | `kkidc` 测试环境 | **按需启动** | `http://114.66.47.192:3001` | `114.66.47.192` | `new-api-test` | `new-api-test` | 新功能测试验证，结束后关闭 |
 

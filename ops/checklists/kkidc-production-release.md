@@ -11,6 +11,7 @@
 - 确认待部署提交已经 push 到远端校验分支。
 - 如涉及数据库、配置、数据迁移，先执行 `bash ops/scripts/kkidc-host-backup.sh production`，并记录回滚方案与备份目录。
 - 默认走本地构建发布；只有在明确受控窗口内，才允许显式 `BUILD_STRATEGY=remote`。
+- 当前腾讯云个人生产主机 `43.133.183.213` 不作为常规远端构建节点使用；除非是明确的受控应急验证，否则不要切换到 `BUILD_STRATEGY=remote`。
 - 如需显式 `BUILD_STRATEGY=remote`，先记录当前主机资源：
   - `MemAvailable >= 2048MB`
   - `load1 <= 4.00`

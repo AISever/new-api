@@ -13,6 +13,7 @@
 ## 1. 当前环境口径
 
 - `kkidc` 个人生产环境：`https://api.aisever.cn`
+- `kkidc` 个人生产主机：`43.133.183.213`
 - `kkidc` 企业生产环境：`https://corp-api.aisever.cn`
 - `kkidc` 测试环境：`http://114.66.47.192:3001`
 在执行任何部署、恢复、迁移、切流之前，请先阅读：
@@ -51,6 +52,7 @@
 - `ops/scripts/kkidc-host-deploy.sh` 默认使用本地 Docker 构建镜像；本地不可构建时直接失败，不自动退回服务器构建。
 - 若目标环境已存在同一 `SHA` 的镜像标签，`ops/scripts/kkidc-host-deploy.sh` 会默认直接复用远端镜像并跳过重复构建；如需强制重建，显式传 `--rebuild`。
 - `--build-strategy remote` / `legacy-remote` 仅保留为显式紧急选项，不作为常规发布路径。
+- 当前腾讯云个人生产主机 `43.133.183.213` 不应承担常规远端构建任务；即使门禁通过，也应优先使用本地构建上传，避免共享主机在 `docker build` / 前端构建阶段影响线上服务。
 - 如需显式使用 `BUILD_STRATEGY=remote`，脚本会先检查远端主机当前资源；默认要求 `MemAvailable >= 2048MB` 且 `load1 <= 4.00`，否则直接拒绝远端构建。
 - 当前 `kkidc` 本地构建默认使用 `linux/amd64` 目标平台，避免 Apple Silicon 本地镜像直接推到 `amd64` 服务器后出现 `exec format error`。
 - 当前 `kkidc` 本地构建默认使用 `FRONTEND_BUILD_NODE_OPTIONS=--max-old-space-size=4096`，并在部署专用 `Dockerfile.deploy` 中把 Alpine 包源切到阿里云镜像，避免本地交叉构建 OOM 或 Alpine 官方源波动导致失败。
@@ -84,7 +86,7 @@
   - `duration_remote_start_seconds=2`
   - `duration_verify_seconds=14`
   - `duration_total_seconds=372`
-- 2026-03-26 显式使用 `BUILD_STRATEGY=remote` 在 `kkidc` 测试环境验证时，服务器在当前空载条件下可成功完成远端构建，且生产 `https://api.aisever.cn/api/status` 并行探测未出现失败：
+- 2026-03-26 显式使用 `BUILD_STRATEGY=remote` 在 `kkidc` 测试环境验证时，服务器在当时空载条件下曾成功完成远端构建，且生产 `https://api.aisever.cn/api/status` 并行探测未出现失败；该记录仅作为历史样本，不代表当前腾讯云个人生产主机适合作为常规远端构建节点：
   - `duration_image_seconds=243`
   - `duration_image_build_seconds=229`
   - `duration_remote_start_seconds=2`
