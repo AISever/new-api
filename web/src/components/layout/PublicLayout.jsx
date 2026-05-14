@@ -70,7 +70,7 @@ const PublicLayout = () => {
             position: 'relative',
           }}
         >
-          <ErrorBoundary resetKey={location.pathname}>
+          <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
         </Content>

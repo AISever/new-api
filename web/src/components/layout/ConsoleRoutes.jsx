@@ -21,31 +21,24 @@ import React, { Suspense, lazy } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { AdminRoute, PrivateRoute } from '../../helpers';
 import Loading from '../common/ui/Loading';
-import { lazyWithRetry } from '../../helpers/lazyWithRetry';
 
-const Dashboard = lazy(lazyWithRetry(() => import('../../pages/Dashboard'), 'dashboard'));
-const User = lazy(lazyWithRetry(() => import('../../pages/User'), 'user'));
-const Setting = lazy(lazyWithRetry(() => import('../../pages/Setting'), 'setting'));
-const Channel = lazy(lazyWithRetry(() => import('../../pages/Channel'), 'channel'));
-const Token = lazy(lazyWithRetry(() => import('../../pages/Token'), 'token'));
-const Redemption = lazy(lazyWithRetry(() => import('../../pages/Redemption'), 'redemption'));
-const TopUp = lazy(lazyWithRetry(() => import('../../pages/TopUp'), 'topup'));
-const Log = lazy(lazyWithRetry(() => import('../../pages/Log'), 'log'));
-const Chat = lazy(lazyWithRetry(() => import('../../pages/Chat'), 'chat'));
-const Midjourney = lazy(lazyWithRetry(() => import('../../pages/Midjourney'), 'midjourney'));
-const Task = lazy(lazyWithRetry(() => import('../../pages/Task'), 'task'));
-const ModelPage = lazy(lazyWithRetry(() => import('../../pages/Model'), 'models'));
-const ModelDeploymentPage = lazy(
-  lazyWithRetry(() => import('../../pages/ModelDeployment'), 'deployment'),
-);
-const Playground = lazy(lazyWithRetry(() => import('../../pages/Playground'), 'playground'));
-const Subscription = lazy(
-  lazyWithRetry(() => import('../../pages/Subscription'), 'subscription'),
-);
-const PersonalSetting = lazy(
-  lazyWithRetry(() => import('../settings/PersonalSetting'), 'personal-setting'),
-);
-const NotFound = lazy(lazyWithRetry(() => import('../../pages/NotFound'), 'console-not-found'));
+const Dashboard = lazy(() => import('../../pages/Dashboard'));
+const User = lazy(() => import('../../pages/User'));
+const Setting = lazy(() => import('../../pages/Setting'));
+const Channel = lazy(() => import('../../pages/Channel'));
+const Token = lazy(() => import('../../pages/Token'));
+const Redemption = lazy(() => import('../../pages/Redemption'));
+const TopUp = lazy(() => import('../../pages/TopUp'));
+const Log = lazy(() => import('../../pages/Log'));
+const Chat = lazy(() => import('../../pages/Chat'));
+const Midjourney = lazy(() => import('../../pages/Midjourney'));
+const Task = lazy(() => import('../../pages/Task'));
+const ModelPage = lazy(() => import('../../pages/Model'));
+const ModelDeploymentPage = lazy(() => import('../../pages/ModelDeployment'));
+const Playground = lazy(() => import('../../pages/Playground'));
+const Subscription = lazy(() => import('../../pages/Subscription'));
+const PersonalSetting = lazy(() => import('../settings/PersonalSetting'));
+const NotFound = lazy(() => import('../../pages/NotFound'));
 
 const ConsoleRoutes = () => {
   const location = useLocation();
