@@ -16,6 +16,15 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
+  componentDidUpdate(prevProps) {
+    if (
+      this.state.hasError &&
+      prevProps.resetKey !== this.props.resetKey
+    ) {
+      this.setState({ hasError: false });
+    }
+  }
+
   componentDidCatch(error, errorInfo) {
     console.error('[ErrorBoundary]', error, errorInfo);
   }
@@ -38,7 +47,7 @@ class ErrorBoundary extends React.Component {
             theme='solid'
             type='primary'
             style={{ marginTop: 16 }}
-            onClick={() => window.location.reload()}
+            onClick={() => this.setState({ hasError: false })}
           >
             {t('刷新页面')}
           </Button>

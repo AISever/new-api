@@ -146,7 +146,7 @@ const PageLayout = () => {
                 position: 'relative',
               }}
             >
-              <ErrorBoundary>
+              <ErrorBoundary resetKey={location.pathname}>
                 <ConsoleRoutes />
               </ErrorBoundary>
             </Content>
