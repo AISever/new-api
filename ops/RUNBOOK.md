@@ -60,6 +60,20 @@ bash ops/scripts/kkidc-host-restore.sh test --source-backup-dir /opt/new-api-bac
 
 说明：该入口会先备份当前测试环境，再恢复指定备份目录中的 `db.dump`、`data.tgz`，默认同时恢复 `logs.tgz`，最后使用当前已推送分支对应的远端镜像重新启动测试环境。
 
+按 profile 导入新聚合上游内容：
+
+```bash
+bash ops/scripts/kkidc-host-import-profile.sh test --profile ops/channel-onboarding/profiles/yunwu.yaml --dry-run
+bash ops/scripts/kkidc-host-import-profile.sh test --profile ops/channel-onboarding/profiles/yunwu.yaml --target-root-username <root> --target-root-password <password>
+bash ops/scripts/kkidc-host-import-profile.sh test --profile ops/channel-onboarding/profiles/yunwu.yaml --target-root-username <root> --target-root-password <password> --probe-upstream --require-channel-keys --channel-key kling=<key> --channel-key vidu=<key> --channel-key doubao-video=<key>
+```
+
+Yunwu 测试环境联调快捷入口：
+
+```bash
+bash ops/scripts/kkidc-test-yunwu-onboarding.sh --target-root-username <root> --target-root-password <password> --channel-key kling=<key> --channel-key vidu=<key> --channel-key doubao-video=<key>
+```
+
 ## 2. `kkidc` 生产环境
 
 备份：
@@ -119,6 +133,14 @@ curl http://114.66.47.192:3002/api/status
 ```
 
 说明：当前企业环境已配置 `ENTERPRISE_HOSTNAME=corp-api.aisever.cn`。若后续企业发布触发 Caddy 重建，发布后应同时验证 `https://corp-api.aisever.cn` 与 `https://api.aisever.cn`。
+
+按 profile 导入新聚合上游内容：
+
+```bash
+bash ops/scripts/kkidc-host-import-profile.sh enterprise --profile ops/channel-onboarding/profiles/yunwu.yaml --dry-run
+bash ops/scripts/kkidc-host-import-profile.sh enterprise --profile ops/channel-onboarding/profiles/yunwu.yaml --target-root-username <root> --target-root-password <password>
+bash ops/scripts/kkidc-host-import-profile.sh enterprise --profile ops/channel-onboarding/profiles/yunwu.yaml --target-root-username <root> --target-root-password <password> --probe-upstream --require-channel-keys --channel-key kling=<key> --channel-key vidu=<key> --channel-key doubao-video=<key>
+```
 
 ## 4. 发布顺序
 

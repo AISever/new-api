@@ -26,6 +26,7 @@
 - 最小运维手册：`ops/RUNBOOK.md`
 - 官方稳定版升级清单：`ops/checklists/kkidc-upstream-stable-upgrade.md`
 - `kkidc` 测试发布：`ops/checklists/kkidc-test-release.md`
+- `kkidc` 测试环境 Yunwu 接入：`ops/checklists/kkidc-test-yunwu-onboarding.md`
 - `kkidc` 个人生产发布：`ops/checklists/kkidc-production-release.md`
 - `kkidc` 企业生产发布：`ops/checklists/kkidc-enterprise-production-release.md`
 
@@ -37,6 +38,8 @@
 - `kkidc` 统一恢复入口：`ops/scripts/kkidc-host-restore.sh test|enterprise --source-backup-dir <remote-backup-dir>`
 - `kkidc` 测试/企业环境统一重置入口：`ops/scripts/kkidc-host-reset.sh test|enterprise`
 - `kkidc` 测试/企业环境上游导入入口：`ops/scripts/kkidc-host-import-upstream.sh test|enterprise --upstream-base-url <url> --upstream-username <user> --upstream-password <pass>`
+- `kkidc` 测试/企业环境 profile 导入入口：`ops/scripts/kkidc-host-import-profile.sh test|enterprise --profile <path>`
+- `kkidc` 测试环境 Yunwu 联调入口：`ops/scripts/kkidc-test-yunwu-onboarding.sh`
 - 官方稳定版升级门禁：`ops/scripts/kkidc-host-upgrade-gate.sh local|test`
 
 要求：
@@ -48,6 +51,8 @@
 - `kkidc` 测试/企业环境如需从远端备份目录恢复数据库与运行目录，必须通过 `ops/scripts/kkidc-host-restore.sh`。
 - `kkidc` 测试/企业环境如需整库清空并重新初始化，必须通过 `ops/scripts/kkidc-host-reset.sh`，禁止手工删库或手工清目录。
 - `kkidc` 测试/企业环境如需从外部上游批量导入分组、模型、倍率与渠道，必须通过 `ops/scripts/kkidc-host-import-upstream.sh`。
+- `kkidc` 测试/企业环境如需按 manifest/profile 导入新聚合上游内容，必须通过 `ops/scripts/kkidc-host-import-profile.sh`；该入口当前只允许 `test|enterprise`，明确拒绝个人生产自动写入。
+- 如需在导入前验证上游 family 鉴权与探测路径，可为 `ops/scripts/kkidc-host-import-profile.sh` 追加 `--probe-upstream --require-channel-keys --channel-key FAMILY=KEY`。
 - 企业版本地文档通过 `bun run sync:enterprise-docs` 生成到 `web/public/enterprise-docs/apifox/`；`ops/scripts/kkidc-host-deploy.sh test|enterprise` 与 `ops/scripts/kkidc-host-import-upstream.sh test|enterprise` 会自动写入 `general_setting.docs_manifest_path=/enterprise-docs/apifox/manifest.json`，不要把该配置同步覆盖到个人生产环境。
 - `ops/scripts/kkidc-host-deploy.sh` 默认使用本地 Docker 构建镜像；本地不可构建时直接失败，不自动退回服务器构建。
 - 若目标环境已存在同一 `SHA` 的镜像标签，`ops/scripts/kkidc-host-deploy.sh` 会默认直接复用远端镜像并跳过重复构建；如需强制重建，显式传 `--rebuild`。
@@ -100,5 +105,6 @@
 - `kkidc` 备份入口：`ops/scripts/kkidc-host-backup.sh production|enterprise|test`，默认在服务器上生成 PostgreSQL dump、globals dump，以及可选的数据/日志归档。
 - `kkidc` 测试/企业环境重置入口：`ops/scripts/kkidc-host-reset.sh test|enterprise`，会先备份目标环境，再清空目标数据库 / Redis DB / 数据目录 / 日志目录，最后通过正式部署脚本重新拉起目标环境。
 - `kkidc` 测试/企业环境上游导入入口：`ops/scripts/kkidc-host-import-upstream.sh test|enterprise`，负责拉取外部上游分组、模型、倍率数据，写入目标环境 option，并创建或更新目标渠道。
+- `kkidc` 测试/企业环境 profile 导入入口：`ops/scripts/kkidc-host-import-profile.sh test|enterprise`，负责基于 `ops/channel-onboarding/*.yaml` 生成计划并最小合并写入目标环境的分组、倍率和渠道。
 - `kkidc` 企业环境若未配置 `ENTERPRISE_HOSTNAME`，脚本只保证 `new-api-enterprise` 与 `:3002` 可用；公网域名切流须在 DNS 指向正确后再补齐。
 - 服务器环境只允许部署已提交且已 push 的仓库状态；需要验证未提交或未 push 改动时，先用本地 Docker 测试环境。

@@ -1,0 +1,62 @@
+version: 1
+
+source:
+  slug: example-source
+  name: Example Source
+  base_url: https://example.com
+  docs_url: https://example.com/docs
+  auth_mode: bearer
+  profile_type: aggregator
+
+target:
+  environment: test
+  channel_scope: personal-production
+
+families:
+  - family: openai
+    channel_type: 1
+    base_url_strategy: source-base-url
+    path_template:
+      models_probe: /v1/models
+    model_source:
+      mode: explicit
+      models:
+        - gpt-4o-mini
+    ignore_models: []
+    verification:
+      probe_endpoint: /v1/models
+      expected_shape: data[].id
+      fail_closed: true
+
+groups:
+  mode: explicit
+  items:
+    - source: default
+      target: default
+      description: 默认分组
+
+pricing:
+  mode: manual-review
+  group_ratio: {}
+  model_ratio: {}
+  completion_ratio: {}
+  model_price: {}
+  required_manual_fields: []
+
+channels:
+  naming:
+    pattern: "newapi::{source_slug}::{family}::{group}"
+  tag:
+    pattern: "personal-upstream-{source_slug}"
+  settings:
+    upstream_model_update_check_enabled: false
+    upstream_model_update_auto_sync_enabled: false
+    upstream_model_update_ignored_models: []
+
+verification:
+  local_or_test_dry_run_required: true
+  test_environment_required: true
+  production_release_guard:
+    requires_backup: true
+    requires_test_validation: true
+    requires_minimal_change_review: true

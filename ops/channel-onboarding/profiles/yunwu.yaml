@@ -1,0 +1,153 @@
+version: 1
+
+source:
+  slug: yunwu
+  name: Yunwu
+  base_url: https://yunwu.ai
+  docs_url: https://yunwuapi.apifox.cn/
+  auth_mode: bearer
+  profile_type: aggregator
+
+target:
+  environment: test
+  channel_scope: personal-production
+
+families:
+  - family: kling
+    channel_type: 50
+    adaptor: relay/channel/task/kling
+    base_url_strategy: source-base-url
+    channel_base_url_suffix: ""
+    path_template:
+      create: /kling/v1/videos/text2video
+      fetch: /kling/v1/videos/text2video/{task_id}
+      model_probe: /kling/v1/videos/text2video
+    model_source:
+      mode: explicit
+      models:
+        - kling-v1
+        - kling-v1-6
+        - kling-v2-master
+    ignore_models: []
+    verification:
+      probe_endpoint: /kling/v1/videos/text2video
+      probe_request_body:
+        model_name: "{test_model}"
+      expected_shape: task-endpoint-available
+      fail_closed: true
+
+  - family: vidu
+    channel_type: 52
+    adaptor: relay/channel/task/vidu
+    base_url_strategy: source-base-url
+    channel_base_url_suffix: ""
+    path_template:
+      create: /ent/v2/text2video
+      fetch: /ent/v2/tasks/{task_id}/creations
+      model_probe: /ent/v2/text2video
+    model_source:
+      mode: explicit
+      models:
+        - viduq2
+        - viduq2-pro
+        - viduq2-turbo
+        - viduq3
+        - viduq3-pro
+        - viduq3-turbo
+        - viduq3-mix
+        - viduq1
+        - viduq1-classic
+        - vidu2.0
+    ignore_models: []
+    verification:
+      probe_endpoint: /ent/v2/text2video
+      probe_request_body:
+        model: "{test_model}"
+        duration: 5
+        resolution: 720p
+      expected_shape: task-endpoint-available
+      fail_closed: true
+      compatibility_assumption: reuse-existing-vidu-adaptor
+
+  - family: doubao-video
+    channel_type: 54
+    adaptor: relay/channel/task/doubao
+    base_url_strategy: source-base-url
+    channel_base_url_suffix: ""
+    path_template:
+      create: /volc/v1/contents/generations/tasks
+      fetch: /volc/v1/contents/generations/tasks/{task_id}
+      model_probe: /volc/v1/contents/generations/tasks
+    model_source:
+      mode: explicit
+      models:
+        - doubao-seedance-1-0-lite-t2v-250428
+        - doubao-seedance-1-0-pro-250528
+        - doubao-seedance-1-0-pro-fast-251015
+        - doubao-seedance-1-5-pro-251215
+        - doubao-seedance-1-0-lite-i2v-250428
+    ignore_models: []
+    verification:
+      probe_endpoint: /volc/v1/contents/generations/tasks
+      probe_request_body:
+        model: "{test_model}"
+      expected_shape: task-endpoint-available
+      fail_closed: true
+      requires_explicit_models: true
+
+groups:
+  mode: explicit
+  items:
+    - source: yunwu-video
+      target: yunwu-video
+      description: Yunwu 聚合视频分组
+
+pricing:
+  mode: manual-review
+  group_ratio: {}
+  model_ratio: {}
+  completion_ratio: {}
+  model_price:
+    kling-v1: 0.017
+    kling-v1-6: 0.017
+    kling-v2-master: 0.017
+    viduq2: 0.016
+    viduq2-pro: 0.016
+    viduq2-turbo: 0.016
+    viduq3: 0.016
+    viduq3-pro: 0.016
+    viduq3-turbo: 0.016
+    viduq3-mix: 0.016
+    viduq1: 0.016
+    viduq1-classic: 0.016
+    vidu2.0: 0.016
+    doubao-seedance-1-0-lite-t2v-250428: 0.026
+    doubao-seedance-1-0-pro-250528: 0.026
+    doubao-seedance-1-0-pro-fast-251015: 0.026
+    doubao-seedance-1-5-pro-251215: 0.026
+    doubao-seedance-1-0-lite-i2v-250428: 0.026
+  required_manual_fields:
+    - group_ratio
+    - model_ratio
+    - completion_ratio
+
+channels:
+  naming:
+    pattern: "newapi::{source_slug}::{family}::{group}"
+  tag:
+    pattern: "personal-upstream-{source_slug}"
+  settings:
+    upstream_model_update_check_enabled: false
+    upstream_model_update_auto_sync_enabled: false
+    upstream_model_update_ignored_models: []
+
+verification:
+  local_or_test_dry_run_required: true
+  test_environment_required: true
+  test_status_url: http://114.66.47.192:3001/api/status
+  production_status_url: https://api.aisever.cn/api/status
+  production_release_guard:
+    requires_backup: true
+    requires_test_validation: true
+    requires_minimal_change_review: true
+    checklist: ops/checklists/kkidc-production-release.md
