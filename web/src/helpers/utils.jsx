@@ -751,9 +751,25 @@ export const calculateModelPrice = ({
     // 按次计费
     const priceUSD = parseFloat(record.model_price) * usedGroupRatio;
     const displayVal = displayPrice(priceUSD);
+    const priceItems = Array.isArray(record.price_items)
+      ? record.price_items
+          .map((item) => {
+            const itemPrice = Number(item?.price);
+            if (!Number.isFinite(itemPrice)) {
+              return null;
+            }
+            return {
+              label: item?.label || '',
+              price: displayPrice(itemPrice * usedGroupRatio),
+              unit: item?.unit || '',
+            };
+          })
+          .filter(Boolean)
+      : [];
 
     return {
       price: displayVal,
+      priceItems,
       isPerToken: false,
       isTokensDisplay: false,
       usedGroup,
@@ -884,6 +900,17 @@ export const getModelPriceItems = (
         suffix: unitSuffix,
       },
     ].filter((item) => item.value !== null && item.value !== undefined && item.value !== '');
+  }
+
+  if (Array.isArray(priceData.priceItems) && priceData.priceItems.length > 0) {
+    return priceData.priceItems
+      .map((item, index) => ({
+        key: `fixed-item-${index}`,
+        label: item.label,
+        value: item.price,
+        suffix: item.unit ? ` / ${item.unit}` : ` / ${t('次')}`,
+      }))
+      .filter((item) => item.value !== null && item.value !== undefined && item.value !== '');
   }
 
   return [
