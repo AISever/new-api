@@ -20,6 +20,7 @@ CONFIG_FILE="$ROOT_DIR/.env.lighthouse"
 TARGET_PORT_FILE="$ROOT_DIR/target.port"
 SERVER_SCRIPT="$ROOT_DIR/fake_target_server.py"
 TARGET_LOG="$ROOT_DIR/target.log"
+PROFILE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/channel-onboarding/profiles/yunwu.yaml"
 
 cat > "$CONFIG_FILE" <<'EOF'
 IP_1=127.0.0.1
@@ -185,7 +186,7 @@ set +e
 DRY_OUTPUT="$(
   bash "$SCRIPT_UNDER_TEST" test \
     --config "$CONFIG_FILE" \
-    --profile "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/channel-onboarding/profiles/yunwu.yaml" \
+    --profile "$PROFILE_PATH" \
     --dry-run 2>&1
 )"
 DRY_EXIT_CODE="$?"
@@ -207,7 +208,7 @@ set +e
 OUTPUT="$(
   bash "$SCRIPT_UNDER_TEST" test \
     --config "$CONFIG_FILE" \
-    --profile "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/channel-onboarding/profiles/yunwu.yaml" \
+    --profile "$PROFILE_PATH" \
     --target-root-username "root" \
     --target-root-password "secret" 2>&1
 )"
@@ -236,7 +237,7 @@ set +e
 PROD_OUTPUT="$(
   bash "$SCRIPT_UNDER_TEST" production \
     --config "$CONFIG_FILE" \
-    --profile "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/channel-onboarding/profiles/yunwu.yaml" \
+    --profile "$PROFILE_PATH" \
     --target-root-username "root" \
     --target-root-password "secret" 2>&1
 )"
@@ -255,4 +256,29 @@ if ! printf '%s\n' "$PROD_OUTPUT" | grep -q 'production'; then
   exit 1
 fi
 
-echo "PASS: kkidc host import profile wrapper supports test dry-run/import and rejects production"
+set +e
+PROD_CONFIRMED_OUTPUT="$(
+  bash "$SCRIPT_UNDER_TEST" production \
+    --config "$CONFIG_FILE" \
+    --profile "$PROFILE_PATH" \
+    --target-base-url "http://127.0.0.1:3001" \
+    --target-root-username "root" \
+    --target-root-password "secret" \
+    --confirm-production 2>&1
+)"
+PROD_CONFIRMED_EXIT_CODE="$?"
+set -e
+
+if [ "$PROD_CONFIRMED_EXIT_CODE" -ne 0 ]; then
+  echo "FAIL: production target should be allowed with explicit confirmation and target URL" >&2
+  echo "$PROD_CONFIRMED_OUTPUT" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$PROD_CONFIRMED_OUTPUT" | grep -q '"target_environment": "production"'; then
+  echo "FAIL: confirmed production import should include production target environment" >&2
+  echo "$PROD_CONFIRMED_OUTPUT" >&2
+  exit 1
+fi
+
+echo "PASS: kkidc host import profile wrapper supports test dry-run/import and guarded production"

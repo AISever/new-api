@@ -11,7 +11,7 @@ from typing import Any, Dict
 from dry_run import build_result, load_yaml, normalize_target_environment
 
 
-ALLOWED_TARGET_ENVIRONMENTS = {"test", "enterprise"}
+ALLOWED_TARGET_ENVIRONMENTS = {"test", "enterprise", "production"}
 
 
 def fail(message: str) -> None:
@@ -277,6 +277,7 @@ def main() -> None:
     parser.add_argument("--target-environment", required=True)
     parser.add_argument("--probe-upstream", action="store_true")
     parser.add_argument("--require-channel-keys", action="store_true")
+    parser.add_argument("--confirm-production", action="store_true")
     parser.add_argument("--channel-key", action="append", default=[], help="family=key")
     args = parser.parse_args()
 
@@ -284,7 +285,9 @@ def main() -> None:
     profile = load_yaml(profile_path)
     environment = normalize_target_environment(profile, args.target_environment)
     if environment not in ALLOWED_TARGET_ENVIRONMENTS:
-        fail(f"production writes are blocked for this importer; allowed environments: {', '.join(sorted(ALLOWED_TARGET_ENVIRONMENTS))}")
+        fail(f"unsupported target environment: {environment}")
+    if environment == "production" and not args.confirm_production:
+        fail("production writes require --confirm-production")
 
     dry_run = build_result(profile, profile_path, environment)
     channel_keys = parse_channel_key_args(args.channel_key)

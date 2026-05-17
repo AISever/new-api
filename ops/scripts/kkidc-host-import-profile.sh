@@ -35,18 +35,20 @@ TARGET_ROOT_USERNAME="${TARGET_ROOT_USERNAME:-}"
 TARGET_ROOT_PASSWORD="${TARGET_ROOT_PASSWORD:-}"
 PROBE_UPSTREAM="false"
 REQUIRE_CHANNEL_KEYS="false"
+CONFIRM_PRODUCTION="false"
 CHANNEL_KEYS=()
 
 REMOTE_HOST=""
 TEST_HOSTNAME=""
 ENTERPRISE_HOSTNAME=""
+PRODUCTION_HOSTNAME=""
 
 usage() {
   cat <<EOF
-Import a manifest/profile into kkidc test or enterprise environments.
+Import a manifest/profile into kkidc test, enterprise, or guarded production environments.
 
 Usage:
-  $(basename "$0") test|enterprise [options]
+  $(basename "$0") test|enterprise|production [options]
 
 Options:
   --config PATH                  host config file (default: .kkidc/.env.lighthouse)
@@ -57,6 +59,7 @@ Options:
   --probe-upstream               run family-level upstream probe before import
   --require-channel-keys         require explicit family channel keys
   --channel-key FAMILY=KEY       provide explicit channel key for a family
+  --confirm-production           allow production import after separate backup and deploy gates
   --dry-run                      run manifest dry-run only, no target mutation
   --help                         show this help
 EOF
@@ -81,7 +84,7 @@ parse_args() {
       TARGET_ENV="enterprise"
       ;;
     production|prod)
-      die "production is not supported by kkidc-host-import-profile.sh"
+      TARGET_ENV="production"
       ;;
     --help|-h)
       usage
@@ -127,6 +130,10 @@ parse_args() {
         CHANNEL_KEYS+=("$2")
         shift 2
         ;;
+      --confirm-production)
+        CONFIRM_PRODUCTION="true"
+        shift
+        ;;
       --dry-run)
         DRY_RUN="true"
         shift
@@ -152,6 +159,7 @@ load_host_config() {
   REMOTE_HOST="${IP_1:-${SERVER_IP:-}}"
   TEST_HOSTNAME="${TEST_HOSTNAME:-}"
   ENTERPRISE_HOSTNAME="${ENTERPRISE_HOSTNAME:-}"
+  PRODUCTION_HOSTNAME="${PRODUCTION_HOSTNAME:-api.aisever.cn}"
 
   [ -n "$REMOTE_HOST" ] || die "missing IP_1 in $CONFIG_FILE"
 }
@@ -175,6 +183,11 @@ resolve_target_base_url() {
       else
         TARGET_BASE_URL="http://${REMOTE_HOST}:3002"
       fi
+      ;;
+    production)
+      [ "$CONFIRM_PRODUCTION" = "true" ] || die "production import requires --confirm-production"
+      [ -n "$PRODUCTION_HOSTNAME" ] || die "missing PRODUCTION_HOSTNAME for production import"
+      TARGET_BASE_URL="https://${PRODUCTION_HOSTNAME}"
       ;;
     *)
       die "unsupported target environment: $TARGET_ENV"
@@ -213,6 +226,10 @@ main() {
     --target-root-password "$TARGET_ROOT_PASSWORD" \
     --target-environment "$TARGET_ENV"
   )
+
+  if [ "$CONFIRM_PRODUCTION" = "true" ]; then
+    IMPORT_CMD+=(--confirm-production)
+  fi
 
   if [ "$PROBE_UPSTREAM" = "true" ]; then
     IMPORT_CMD+=(--probe-upstream)
