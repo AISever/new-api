@@ -21,6 +21,7 @@ import (
 
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/relay/channel"
 	taskcommon "github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
@@ -356,6 +357,12 @@ func (a *TaskAdaptor) ParseTaskResult(respBody []byte) (*relaycommon.TaskInfo, e
 		if videos := resPayload.Data.TaskResult.Videos; len(videos) > 0 {
 			video := videos[0]
 			taskInfo.Url = video.Url
+			if seconds, err := strconv.ParseFloat(strings.TrimSpace(video.Duration), 64); err == nil && seconds > 0 {
+				body, err := common.Marshal(map[string]float64{"duration": seconds})
+				if err == nil {
+					taskInfo.BillingRequestInput = &billingexpr.RequestInput{Body: body}
+				}
+			}
 		}
 		if tokens, err := strconv.ParseFloat(resPayload.Data.FinalUnitDeduction, 64); err == nil {
 			rounded := int(math.Ceil(tokens))

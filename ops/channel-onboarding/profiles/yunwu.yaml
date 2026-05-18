@@ -8,9 +8,43 @@ source:
   auth_mode: bearer
   profile_type: aggregator
 
+upstream_facts:
+  status: needs-refresh-from-authenticated-ui
+  required_before_apply: true
+  notes:
+    - Extract provider, upstream group, model, and final price tables from the rendered yunwu UI or documented APIs before generating a production write plan.
+    - Preserve evidence references for every price row because some yunwu models use per-second or matrix pricing.
+    - Preserve upstream cardinality by default; do not merge upstream groups, providers, ratios, or prices without explicit user approval.
+  providers:
+    - name: Kling
+      family: kling
+    - name: Vidu
+      family: vidu
+    - name: DoubaoVideo
+      family: doubao-video
+  models:
+    - id: kling-motion-control
+      provider: Kling
+      family: kling
+      pricing_shape: per_duration_matrix
+      billing_unit: second
+      billing_unit_label: 按秒
+      support_status: blocked
+      block_reason: Requires verified per-second version/mode/resolution/upstream-group billing or split routeable model names before target write.
+      request_selectors:
+        - version
+        - mode
+        - resolution
+        - duration
+
 target:
   environment: test
   channel_scope: personal-production
+
+confirmation:
+  required: true
+  artifact: ops/local-test/yunwu-onboarding/yunwu-upstream-confirmation.md
+  user_confirmed: false
 
 families:
   - family: kling
@@ -98,38 +132,36 @@ families:
 groups:
   mode: explicit
   items:
-    - source: yunwu-video
-      target: yunwu-video
-      description: Yunwu 聚合视频分组
+    - source: kling-group-1
+      target: video-upstream-kling-group-1
+      description: Kling upstream group 1
+    - source: kling-group-2
+      target: video-upstream-kling-group-2
+      description: Kling upstream group 2
 
 pricing:
   mode: manual-review
+  pricing_shapes:
+    kling-motion-control:
+      shape: per_duration_matrix
+      support_status: blocked
+      billing_strategy: unsupported
+      billing_unit: second
+      billing_unit_label: 按秒
+      block_reason: Per-second matrix pricing must not be collapsed into one ModelPrice.
   group_ratio: {}
   model_ratio: {}
   completion_ratio: {}
-  model_price:
-    kling-v1: 0.017
-    kling-v1-6: 0.017
-    kling-v2-master: 0.017
-    viduq2: 0.016
-    viduq2-pro: 0.016
-    viduq2-turbo: 0.016
-    viduq3: 0.016
-    viduq3-pro: 0.016
-    viduq3-turbo: 0.016
-    viduq3-mix: 0.016
-    viduq1: 0.016
-    viduq1-classic: 0.016
-    vidu2.0: 0.016
-    doubao-seedance-1-0-lite-t2v-250428: 0.026
-    doubao-seedance-1-0-pro-250528: 0.026
-    doubao-seedance-1-0-pro-fast-251015: 0.026
-    doubao-seedance-1-5-pro-251215: 0.026
-    doubao-seedance-1-0-lite-i2v-250428: 0.026
+  model_price: {}
+  model_price_items: {}
+  billing_mode: {}
+  billing_expr: {}
   required_manual_fields:
+    - upstream_facts
     - group_ratio
     - model_ratio
     - completion_ratio
+    - model_price_or_billing_expr
 
 channels:
   naming:

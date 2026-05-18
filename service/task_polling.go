@@ -17,6 +17,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/setting/billing_setting"
 
 	"github.com/samber/lo"
 )
@@ -541,14 +542,22 @@ func truncateBase64(s string) string {
 //  2. taskResult.TotalTokens > 0 → 按 token 重算
 //  3. 都不满足 → 保持预扣额度不变
 func settleTaskBillingOnComplete(ctx context.Context, adaptor TaskPollingAdaptor, task *model.Task, taskResult *relaycommon.TaskInfo) {
-	// 0. 按次计费的任务不做差额结算
-	if bc := task.PrivateData.BillingContext; bc != nil && bc.PerCallBilling {
-		logger.LogInfo(ctx, fmt.Sprintf("任务 %s 按次计费，跳过差额结算", task.TaskID))
+	bc := task.PrivateData.BillingContext
+	// 0. 固定按次计费的任务不做差额结算；per_call_expr 仍允许 adaptor 按任务结果校正。
+	if shouldSkipCompletionBilling(bc) {
+		logger.LogInfo(ctx, fmt.Sprintf("任务 %s 固定按次计费，跳过差额结算", task.TaskID))
 		return
 	}
 	// 1. 优先让 adaptor 决定最终额度
 	if actualQuota := adaptor.AdjustBillingOnComplete(task, taskResult); actualQuota > 0 {
 		RecalculateTaskQuota(ctx, task, actualQuota, "adaptor计费调整")
+		return
+	}
+	if recalculateTaskQuotaByPerCallExpr(ctx, task, taskResult) {
+		return
+	}
+	if bc != nil && bc.PerCallBilling {
+		logger.LogInfo(ctx, fmt.Sprintf("任务 %s 按请求表达式计费，未收到 adaptor 调整，保持预扣额度", task.TaskID))
 		return
 	}
 	// 2. 回退到 token 重算
@@ -557,4 +566,15 @@ func settleTaskBillingOnComplete(ctx context.Context, adaptor TaskPollingAdaptor
 		return
 	}
 	// 3. 无调整，保持预扣额度
+}
+
+func shouldSkipCompletionBilling(bc *model.TaskBillingContext) bool {
+	if bc == nil {
+		return false
+	}
+	if bc.SkipCompletionBilling {
+		return true
+	}
+	// Backward compatibility for tasks created before SkipCompletionBilling existed.
+	return bc.PerCallBilling && bc.BillingMode != billing_setting.BillingModePerCallExpr
 }

@@ -8,9 +8,46 @@ source:
   auth_mode: bearer
   profile_type: aggregator
 
+upstream_facts:
+  collected_at: "YYYY-MM-DDTHH:mm:ss+08:00"
+  evidence:
+    - id: example-provider-models
+      url: https://example.com/console
+      kind: browser-table
+      artifact: /absolute/path/to/screenshot-or-saved-html
+  providers:
+    - name: Example Provider
+      family: openai
+  upstream_groups:
+    - id: default
+      provider: Example Provider
+      display_name: default
+      price_differs: false
+      target_group: upstream-pool-example-default
+  models:
+    - id: gpt-4o-mini
+      provider: Example Provider
+      family: openai
+      pricing_shape: fixed_per_request
+      billing_unit: request
+      billing_unit_label: 按次
+      support_status: direct
+      request_selectors: []
+      price_matrix:
+        - upstream_group: default
+          unit: request
+          price: 0.001
+      evidence_refs:
+        - example-provider-models
+
 target:
   environment: test
   channel_scope: personal-production
+
+confirmation:
+  required: true
+  artifact: /absolute/path/to/upstream-confirmation.md
+  user_confirmed: false
 
 families:
   - family: openai
@@ -32,15 +69,50 @@ groups:
   mode: explicit
   items:
     - source: default
-      target: default
-      description: 默认分组
+      target: upstream-pool-example-default
+      description: Example provider default group
 
 pricing:
   mode: manual-review
+  pricing_shapes:
+    gpt-4o-mini:
+      shape: fixed_per_request
+      support_status: direct
+      billing_strategy: model_price
+      billing_unit: request
+      billing_unit_label: 按次
   group_ratio: {}
   model_ratio: {}
   completion_ratio: {}
   model_price: {}
+  model_price_items: {}
+  billing_mode: {}
+  billing_expr: {}
+  model_pricing_profiles:
+    example-sub-capability-model:
+      shape: per_call_sub_capability
+      billing_mode: per_call_expr
+      billing_expr: 'param("metadata.action") == "tts" ? tier("语音合成", 0.085) : tier("音效", 0.425)'
+      items:
+        - label: 文生音效
+          price: 0.425
+          unit: 次
+          conditions:
+            metadata.action: effect
+        - label: 语音合成
+          price: 0.085
+          unit: 次
+          conditions:
+            metadata.action: tts
+    example-per-second-model:
+      shape: per_duration
+      unit: second
+      price_per_unit: 0.12
+      duration_selector: duration
+      items:
+        - label: 按秒
+          price: 0.12
+          unit: 秒
   required_manual_fields: []
 
 channels:

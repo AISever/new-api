@@ -19,6 +19,7 @@ import (
 var completionRatioMetaOptionKeys = []string{
 	"ModelPrice",
 	"ModelPriceItems",
+	"ModelPricingProfiles",
 	"ModelRatio",
 	"CompletionRatio",
 	"CacheRatio",
@@ -241,6 +242,15 @@ func UpdateOption(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
 				"message": "模型价格明细设置失败: " + err.Error(),
+			})
+			return
+		}
+	case "ModelPricingProfiles":
+		_, err = ratio_setting.ApplyModelPricingProfilesByJSONString(option.Value.(string))
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "模型价格 Profile 设置失败: " + err.Error(),
 			})
 			return
 		}

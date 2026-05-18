@@ -645,11 +645,37 @@ export const calculateModelPrice = ({
     }
   }
 
-  // 2. 动态计费（tiered_expr）
-  if (record.billing_mode === 'tiered_expr' && record.billing_expr) {
+  // 2. 动态计费（tiered_expr / per_call_expr）
+  if (
+    (record.billing_mode === 'tiered_expr' ||
+      record.billing_mode === 'per_call_expr') &&
+    record.billing_expr
+  ) {
+    const isPerCallExpr = record.billing_mode === 'per_call_expr';
+    const perCallPriceItems = isPerCallExpr
+      ? (Array.isArray(record.price_items) && record.price_items.length > 0
+          ? record.price_items
+          : tiersFromExpr(record.billing_expr)
+        )
+          .map((item) => {
+            const itemPrice = Number(item?.price ?? item?.value);
+            if (!Number.isFinite(itemPrice)) {
+              return null;
+            }
+            return {
+              label: item?.label || '',
+              price: displayPrice(itemPrice * usedGroupRatio),
+              unit: item?.unit || '次',
+            };
+          })
+          .filter(Boolean)
+      : [];
+
     return {
       isDynamicPricing: true,
+      isPerCallExpr,
       billingExpr: record.billing_expr,
+      priceItems: perCallPriceItems,
       usedGroup,
       usedGroupRatio,
     };
@@ -793,10 +819,21 @@ export const getModelPriceItems = (
   quotaDisplayType = 'USD',
 ) => {
   if (priceData.isDynamicPricing) {
+    if (priceData.isPerCallExpr && Array.isArray(priceData.priceItems) && priceData.priceItems.length > 0) {
+      return priceData.priceItems
+        .map((item, index) => ({
+          key: `per-call-expr-item-${index}`,
+          label: item.label,
+          value: item.price,
+          suffix: item.unit ? ` / ${item.unit}` : ` / ${t('次')}`,
+        }))
+        .filter((item) => item.value !== null && item.value !== undefined && item.value !== '');
+    }
+
     return [
       {
         key: 'dynamic',
-        label: t('动态计费'),
+        label: priceData.isPerCallExpr ? t('按次查看计费') : t('动态计费'),
         value: '',
         suffix: '',
         isDynamic: true,
@@ -924,8 +961,20 @@ export const getModelPriceItems = (
 };
 
 // 格式化动态计费摘要（用于卡片视图，与 formatPriceInfo 风格统一）
-export const formatDynamicPriceSummary = (billingExpr, t, groupRatio = 1) => {
-  if (!billingExpr) return <span style={{ color: 'var(--semi-color-text-1)' }}>{t('动态计费')}</span>;
+export const formatDynamicPriceSummary = (
+  billingExpr,
+  t,
+  groupRatio = 1,
+  mode = 'tiered_expr',
+  priceItems = [],
+) => {
+  if (!billingExpr) {
+    return (
+      <span style={{ color: 'var(--semi-color-text-1)' }}>
+        {mode === 'per_call_expr' ? t('按次查看计费') : t('动态计费')}
+      </span>
+    );
+  }
 
   const quotaDisplayType = localStorage.getItem('quota_display_type') || 'USD';
   let symbol = '$';
@@ -964,8 +1013,33 @@ export const formatDynamicPriceSummary = (billingExpr, t, groupRatio = 1) => {
   if (hasTimeCondition) tags.push(t('含时间条件'));
   if (hasRequestCondition) tags.push(t('含请求条件'));
 
-  const unitSuffix = ' / 1M Tokens';
+  const isPerCallExpr = mode === 'per_call_expr';
+  const unitSuffix = isPerCallExpr ? ` / ${t('次')}` : ' / 1M Tokens';
   const lineStyle = { color: 'var(--semi-color-text-1)' };
+
+  if (isPerCallExpr && Array.isArray(priceItems) && priceItems.length > 0) {
+    return (
+      <>
+        {priceItems.map((item, index) => (
+          <span key={`${item.label || 'item'}-${index}`} style={lineStyle}>
+            {`${item.label || t('默认')} ${item.price}${unitSuffix}`}
+          </span>
+        ))}
+      </>
+    );
+  }
+
+  if (isPerCallExpr && tierCount > 0) {
+    return (
+      <>
+        {tiersFromExpr(exprBody).map((tier) => (
+          <span key={tier.label || tier.value} style={lineStyle}>
+            {`${tier.label || t('默认')} ${symbol}${(tier.value * gr * rate).toFixed(4)}${unitSuffix}`}
+          </span>
+        ))}
+      </>
+    );
+  }
 
   return (
     <>
@@ -1013,6 +1087,16 @@ export const formatDynamicPriceSummary = (billingExpr, t, groupRatio = 1) => {
       )}
     </>
   );
+};
+
+const tiersFromExpr = (exprBody) => {
+  const tiers = [];
+  const tierRe = /tier\(\s*["']([^"']+)["']\s*,\s*([0-9.]+)\s*\)/g;
+  let match;
+  while ((match = tierRe.exec(exprBody)) !== null) {
+    tiers.push({ label: match[1], value: Number(match[2]) });
+  }
+  return tiers;
 };
 
 // 格式化价格信息（用于卡片视图）

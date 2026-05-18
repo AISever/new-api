@@ -575,13 +575,28 @@ func RelayTask(c *gin.Context) {
 		task.PrivateData.BillingSource = relayInfo.BillingSource
 		task.PrivateData.SubscriptionId = relayInfo.SubscriptionId
 		task.PrivateData.TokenId = relayInfo.TokenId
+		isPerCallExpr := relayInfo.TieredBillingSnapshot != nil && relayInfo.TieredBillingSnapshot.BillingMode == "per_call_expr"
+		isFixedPerCall := common.StringsContains(constant.TaskPricePatches, relayInfo.OriginModelName) ||
+			(relayInfo.PriceData.UsePrice && !isPerCallExpr)
 		task.PrivateData.BillingContext = &model.TaskBillingContext{
-			ModelPrice:      relayInfo.PriceData.ModelPrice,
-			GroupRatio:      relayInfo.PriceData.GroupRatioInfo.GroupRatio,
-			ModelRatio:      relayInfo.PriceData.ModelRatio,
-			OtherRatios:     relayInfo.PriceData.OtherRatios,
-			OriginModelName: relayInfo.OriginModelName,
-			PerCallBilling:  common.StringsContains(constant.TaskPricePatches, relayInfo.OriginModelName) || relayInfo.PriceData.UsePrice,
+			ModelPrice:            relayInfo.PriceData.ModelPrice,
+			GroupRatio:            relayInfo.PriceData.GroupRatioInfo.GroupRatio,
+			ModelRatio:            relayInfo.PriceData.ModelRatio,
+			OtherRatios:           relayInfo.PriceData.OtherRatios,
+			OriginModelName:       relayInfo.OriginModelName,
+			PerCallBilling:        isFixedPerCall || isPerCallExpr,
+			SkipCompletionBilling: isFixedPerCall,
+		}
+		if snap := relayInfo.TieredBillingSnapshot; snap != nil {
+			task.PrivateData.BillingContext.BillingMode = snap.BillingMode
+			task.PrivateData.BillingContext.MatchedTier = snap.EstimatedTier
+			task.PrivateData.BillingContext.BillingExpr = snap.ExprString
+		}
+		if input := relayInfo.BillingRequestInput; input != nil {
+			task.PrivateData.BillingContext.BillingRequestHeaders = input.Headers
+			if len(input.Body) > 0 {
+				task.PrivateData.BillingContext.BillingRequestBody = append([]byte(nil), input.Body...)
+			}
 		}
 		task.Quota = result.Quota
 		task.Data = result.TaskData

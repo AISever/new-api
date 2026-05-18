@@ -123,14 +123,14 @@ const normalizeCompletionRatioMeta = (rawMeta) => {
 
 const buildModelState = (name, sourceMaps) => {
   const billingMode = sourceMaps.ModelBillingMode?.[name];
-  if (billingMode === 'tiered_expr') {
+  if (billingMode === 'tiered_expr' || billingMode === 'per_call_expr') {
     const fullBillingExpr = sourceMaps.ModelBillingExpr?.[name] || '';
     const { billingExpr, requestRuleExpr } =
       splitBillingExprAndRequestRules(fullBillingExpr);
     return {
       ...EMPTY_MODEL,
       name,
-      billingMode: 'tiered_expr',
+      billingMode,
       billingExpr,
       requestRuleExpr,
       rawRatios: { ...EMPTY_MODEL.rawRatios },
@@ -225,13 +225,14 @@ const buildModelState = (name, sourceMaps) => {
 
 export const isBasePricingUnset = (model) =>
   model.billingMode !== 'tiered_expr' &&
+  model.billingMode !== 'per_call_expr' &&
   !hasValue(model.fixedPrice) && !hasValue(model.inputPrice);
 
 export const getModelWarnings = (model, t) => {
   if (!model) {
     return [];
   }
-  if (model.billingMode === 'tiered_expr') {
+  if (model.billingMode === 'tiered_expr' || model.billingMode === 'per_call_expr') {
     return [];
   }
   const warnings = [];
@@ -290,9 +291,20 @@ export const getModelWarnings = (model, t) => {
 
 export const buildSummaryText = (model, t) => {
   const requestRuleSuffix =
-    model.billingMode === 'tiered_expr' && model.requestRuleExpr
-    ? `，${t('请求规则')}`
-    : '';
+    (model.billingMode === 'tiered_expr' ||
+      model.billingMode === 'per_call_expr') &&
+    model.requestRuleExpr
+      ? `，${t('请求规则')}`
+      : '';
+  if (model.billingMode === 'per_call_expr') {
+    const expr = model.billingExpr;
+    if (!expr) return `${t('请求感知按次计费')}${requestRuleSuffix}`;
+    const tierCount = (expr.match(/tier\(/g) || []).length;
+    if (tierCount === 0) {
+      return `${t('请求感知按次计费')}${requestRuleSuffix}`;
+    }
+    return `${t('请求感知按次计费')} (${tierCount} ${t('项')})${requestRuleSuffix}`;
+  }
   if (model.billingMode === 'tiered_expr') {
     const expr = model.billingExpr;
     if (!expr) return `${t('表达式计费')}${requestRuleSuffix}`;
@@ -459,12 +471,12 @@ export const buildPreviewRows = (model, t) => {
     model.requestRuleExpr,
   );
 
-  if (model.billingMode === 'tiered_expr') {
+  if (model.billingMode === 'tiered_expr' || model.billingMode === 'per_call_expr') {
     const rows = [
       {
         key: 'BillingMode',
         label: 'ModelBillingMode',
-        value: 'tiered_expr',
+        value: model.billingMode,
       },
     ];
     if (finalBillingExpr) {
@@ -1040,19 +1052,20 @@ export function useModelPricingEditorState({
       };
 
       for (const model of models) {
-        if (model.billingMode === 'tiered_expr') {
+        if (model.billingMode === 'tiered_expr' || model.billingMode === 'per_call_expr') {
           const finalBillingExpr = combineBillingExpr(
             model.billingExpr,
             model.requestRuleExpr,
           );
           if (finalBillingExpr) {
-            tieredOutput['billing_setting.billing_mode'][model.name] = 'tiered_expr';
+            tieredOutput['billing_setting.billing_mode'][model.name] =
+              model.billingMode;
             tieredOutput['billing_setting.billing_expr'][model.name] = finalBillingExpr;
           }
         }
 
         // Always serialize ratio/price values for all models (including
-        // tiered_expr) so they serve as fallback during multi-instance sync
+        // expression billing) so they serve as fallback during multi-instance sync
         // delay.  ModelPriceHelper checks billing_mode first, so these values
         // are only used when billing_setting hasn't propagated yet.
         try {
@@ -1063,7 +1076,10 @@ export function useModelPricingEditorState({
             }
           });
         } catch (e) {
-          if (model.billingMode !== 'tiered_expr') {
+          if (
+            model.billingMode !== 'tiered_expr' &&
+            model.billingMode !== 'per_call_expr'
+          ) {
             throw e;
           }
         }

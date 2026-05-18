@@ -21,8 +21,51 @@ import React from 'react';
 import { Avatar, Typography, Table, Tag } from '@douyinfe/semi-ui';
 import { IconCoinMoneyStroked } from '@douyinfe/semi-icons';
 import { calculateModelPrice, getModelPriceItems } from '../../../../../helpers';
+import { useIsMobile } from '../../../../../hooks/common/useIsMobile';
 
 const { Text } = Typography;
+
+const priceSummaryRowStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) auto',
+  alignItems: 'center',
+  gap: 12,
+  padding: '10px 18px',
+  borderBottom: '1px solid var(--semi-color-border)',
+};
+
+const nestedPricingTableStyle = {
+  borderRadius: 8,
+  overflow: 'hidden',
+  width: '100%',
+};
+
+const compactGroupCardStyle = {
+  borderTop: '1px solid var(--semi-color-border)',
+  padding: '14px 0',
+};
+
+const mobilePerCallCardStyle = {
+  border: '1px solid var(--semi-color-border)',
+  borderRadius: 8,
+  overflow: 'hidden',
+  background: 'var(--semi-color-bg-1)',
+};
+
+const mobilePerCallMetaStyle = {
+  display: 'grid',
+  gridTemplateColumns: '1fr',
+  gap: 10,
+  padding: 14,
+  borderBottom: '1px solid var(--semi-color-border)',
+};
+
+const mobilePerCallMetaItemStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+};
 
 const ModelPricingTable = ({
   modelData,
@@ -36,10 +79,101 @@ const ModelPricingTable = ({
   autoGroups = [],
   t,
 }) => {
+  const isMobile = useIsMobile();
+  const isPerCallExpr = modelData?.billing_mode === 'per_call_expr';
   const modelEnableGroups = Array.isArray(modelData?.enable_groups)
     ? modelData.enable_groups
     : [];
   const autoChain = autoGroups.filter((g) => modelEnableGroups.includes(g));
+
+  const renderGroupTag = (group, withSuffix = false) => (
+    <Tag color='white' size='small' shape='circle'>
+      {group}
+      {withSuffix ? t('分组') : ''}
+    </Tag>
+  );
+
+  const renderPriceSummary = (items) => {
+    if (items.length === 1 && items[0].isDynamic) {
+      return (
+        <Text type='tertiary' size='small'>
+          {t('见上方动态计费详情')}
+        </Text>
+      );
+    }
+
+    if (isPerCallExpr) {
+      const priceItems = items.filter((item) => !item.isDynamic);
+      if (priceItems.length === 0) {
+        return <Text type='tertiary'>-</Text>;
+      }
+
+      const columns = [
+        {
+          title: t('模型'),
+          dataIndex: 'label',
+          render: (text) => <Text>{text || t('默认')}</Text>,
+        },
+        {
+          title: t('价格'),
+          dataIndex: 'value',
+          render: (text) => (
+            <Text strong style={{ color: 'var(--semi-color-warning)' }}>
+              {text}
+            </Text>
+          ),
+        },
+      ];
+      const dataSource = priceItems.map((item) => ({
+        key: item.key,
+        label: item.label,
+        value: item.value,
+      }));
+
+      return (
+        <div style={nestedPricingTableStyle}>
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            pagination={false}
+            size='small'
+            bordered={false}
+            className='!rounded-lg'
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ minWidth: 240 }}>
+        {items.map((item, index) => (
+          <div
+            key={item.key}
+            style={{
+              ...priceSummaryRowStyle,
+              paddingLeft: 0,
+              paddingRight: 0,
+              borderBottom:
+                index === items.length - 1
+                  ? 'none'
+                  : priceSummaryRowStyle.borderBottom,
+            }}
+          >
+            <Text size='small'>{item.label || t('默认')}</Text>
+            <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+              <Text strong>{item.value}</Text>
+              {item.suffix && (
+                <Text type='tertiary' size='small'>
+                  {item.suffix}
+                </Text>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderGroupPriceTable = () => {
     // 仅展示模型可用的分组：模型 enable_groups 与用户可用分组的交集
 
@@ -71,8 +205,11 @@ const ModelPricingTable = ({
         group: group,
         ratio: groupRatioValue,
         billingType:
-          modelData?.billing_mode === 'tiered_expr'
-            ? t('动态计费')
+          modelData?.billing_mode === 'tiered_expr' ||
+          modelData?.billing_mode === 'per_call_expr'
+            ? modelData?.billing_mode === 'per_call_expr'
+              ? t('按次计费')
+              : t('动态计费')
             : modelData?.quota_type === 0
               ? t('按量计费')
               : modelData?.quota_type === 1
@@ -82,24 +219,127 @@ const ModelPricingTable = ({
       };
     });
 
+    if (isPerCallExpr) {
+      if (isMobile) {
+        return (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {tableData.map((row) => (
+              <div key={row.key} style={mobilePerCallCardStyle}>
+                <div style={mobilePerCallMetaStyle}>
+                  <div style={mobilePerCallMetaItemStyle}>
+                    <Text type='tertiary' size='small'>{t('分组')}</Text>
+                    {renderGroupTag(row.group)}
+                  </div>
+                  <div style={mobilePerCallMetaItemStyle}>
+                    <Text type='tertiary' size='small'>{t('计费类型')}</Text>
+                    <Tag color='teal' size='small' shape='circle'>
+                      {row.billingType || '-'}
+                    </Tag>
+                  </div>
+                </div>
+                <div style={{ padding: 12 }}>
+                  <Text
+                    type='tertiary'
+                    size='small'
+                    style={{ display: 'block', marginBottom: 8 }}
+                  >
+                    {t('价格')}
+                  </Text>
+                  {renderPriceSummary(row.priceItems)}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      const columns = [
+        {
+          title: t('分组'),
+          dataIndex: 'group',
+          render: (text) => renderGroupTag(text, true),
+        },
+        {
+          title: t('计费类型'),
+          dataIndex: 'billingType',
+          render: (text) => (
+            <Tag color='teal' size='small' shape='circle'>
+              {text || '-'}
+            </Tag>
+          ),
+        },
+        {
+          title: t('价格'),
+          dataIndex: 'priceItems',
+          render: renderPriceSummary,
+        },
+      ];
+
+      return (
+        <Table
+          dataSource={tableData}
+          columns={columns}
+          pagination={false}
+          size='small'
+          bordered={false}
+          className='!rounded-lg'
+          scroll={isMobile ? { x: 'max-content' } : undefined}
+        />
+      );
+    }
+
+    if (isMobile || tableData.length === 1) {
+      return (
+        <div>
+          {tableData.map((row) => (
+            <div
+              key={row.key}
+              style={compactGroupCardStyle}
+            >
+              <div
+                style={{
+                  display: isMobile ? 'block' : 'grid',
+                  gridTemplateColumns: '220px 220px minmax(0, 1fr)',
+                  alignItems: 'center',
+                  gap: 18,
+                }}
+              >
+                <div style={{ marginBottom: isMobile ? 10 : 0 }}>
+                  {renderGroupTag(row.group)}
+                </div>
+                <div style={{ marginBottom: isMobile ? 10 : 0 }}>
+                  <Tag
+                    color={
+                      row.billingType === t('动态计费')
+                        ? 'amber'
+                        : row.billingType === t('按次计费')
+                          ? 'teal'
+                          : 'violet'
+                    }
+                    size='small'
+                    shape='circle'
+                  >
+                    {row.billingType || '-'}
+                  </Tag>
+                </div>
+                <div>{renderPriceSummary(row.priceItems)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     // 定义表格列
     const columns = [
       {
         title: t('分组'),
         dataIndex: 'group',
-        render: (text) => (
-          <Tag color='white' size='small' shape='circle'>
-            {text}
-            {t('分组')}
-          </Tag>
-        ),
+        render: (text) => renderGroupTag(text, true),
       },
     ];
 
-    const isDynamic = modelData?.billing_mode === 'tiered_expr';
-
-    // 动态计费时始终显示倍率列，否则根据设置
-    if (showRatio || isDynamic) {
+    if (showRatio && !isPerCallExpr) {
       columns.push({
         title: t('分组倍率'),
         dataIndex: 'ratio',
@@ -128,29 +368,13 @@ const ModelPricingTable = ({
     });
 
     columns.push({
-      title: siteDisplayType === 'TOKENS' ? t('计费摘要') : t('价格摘要'),
+      title: isPerCallExpr
+        ? t('价格')
+        : siteDisplayType === 'TOKENS'
+          ? t('计费摘要')
+          : t('价格摘要'),
       dataIndex: 'priceItems',
-      render: (items) => {
-        if (items.length === 1 && items[0].isDynamic) {
-          return (
-            <Text type='tertiary' size='small'>
-              {t('见上方动态计费详情')}
-            </Text>
-          );
-        }
-        return (
-          <div className='space-y-1'>
-            {items.map((item) => (
-              <div key={item.key}>
-                <div className='font-semibold text-orange-600'>
-                  {item.label} {item.value}
-                </div>
-                <div className='text-xs text-gray-500'>{item.suffix}</div>
-              </div>
-            ))}
-          </div>
-        );
-      },
+      render: renderPriceSummary,
     });
 
     return (

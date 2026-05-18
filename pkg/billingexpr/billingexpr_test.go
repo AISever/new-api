@@ -912,6 +912,26 @@ func TestTimeFunctions_EmptyTimezone(t *testing.T) {
 	}
 }
 
+func TestRequestConversionFunctions_NumAndStr(t *testing.T) {
+	exprStr := `str(param("metadata.mode")) == "pro" ? tier("pro", num(param("duration")) * 1.36) : tier("std", num(param("duration")) * 0.85)`
+	cost, trace, err := billingexpr.RunExprWithRequest(
+		exprStr,
+		billingexpr.TokenParams{},
+		billingexpr.RequestInput{
+			Body: []byte(`{"duration":"5","metadata":{"mode":"pro"}}`),
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if trace.MatchedTier != "pro" {
+		t.Errorf("tier = %s, want pro", trace.MatchedTier)
+	}
+	if math.Abs(cost-6.8) > 0.000001 {
+		t.Errorf("cost = %f, want 6.8", cost)
+	}
+}
+
 func TestTimeFunctions_NightDiscountPattern(t *testing.T) {
 	exprStr := `tier("default", p * 2 + c * 10) * (hour("UTC") >= 21 || hour("UTC") < 6 ? 0.5 : 1)`
 	cost, _, err := billingexpr.RunExpr(exprStr, billingexpr.TokenParams{P: 1000, C: 500})

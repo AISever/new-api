@@ -153,7 +153,7 @@ func (a *TaskAdaptor) BuildRequestURL(info *relaycommon.RelayInfo) (string, erro
 func (a *TaskAdaptor) BuildRequestHeader(c *gin.Context, req *http.Request, info *relaycommon.RelayInfo) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", viduAuthorizationHeader(info.ApiKey))
+	req.Header.Set("Authorization", "Token "+info.ApiKey)
 	return nil
 }
 
@@ -203,7 +203,7 @@ func (a *TaskAdaptor) FetchTask(baseUrl, key string, body map[string]any, proxy 
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", viduAuthorizationHeader(key))
+	req.Header.Set("Authorization", "Token "+key)
 
 	client, err := service.GetHttpClientWithProxy(proxy)
 	if err != nil {
@@ -218,13 +218,6 @@ func (a *TaskAdaptor) GetModelList() []string {
 
 func (a *TaskAdaptor) GetChannelName() string {
 	return "vidu"
-}
-
-func viduAuthorizationHeader(apiKey string) string {
-	if strings.HasPrefix(apiKey, "sk-") {
-		return "Bearer " + apiKey
-	}
-	return "Token " + apiKey
 }
 
 // ============================

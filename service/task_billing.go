@@ -9,7 +9,9 @@ import (
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 )
@@ -41,6 +43,11 @@ func LogTaskConsumption(c *gin.Context, info *relaycommon.RelayInfo) {
 	other["model_price"] = info.PriceData.ModelPrice
 	if info.PriceData.ModelRatio > 0 {
 		other["model_ratio"] = info.PriceData.ModelRatio
+	}
+	if snap := info.TieredBillingSnapshot; snap != nil {
+		other["billing_mode"] = snap.BillingMode
+		other["matched_tier"] = snap.EstimatedTier
+		other["expr_b64"] = common.EncodeBase64(snap.ExprString)
 	}
 	other["group_ratio"] = info.PriceData.GroupRatioInfo.GroupRatio
 	if info.PriceData.GroupRatioInfo.HasSpecialRatio {
@@ -123,6 +130,15 @@ func taskBillingOther(task *model.Task) map[string]interface{} {
 		other["model_price"] = bc.ModelPrice
 		if bc.ModelRatio > 0 {
 			other["model_ratio"] = bc.ModelRatio
+		}
+		if bc.BillingMode != "" {
+			other["billing_mode"] = bc.BillingMode
+		}
+		if bc.MatchedTier != "" {
+			other["matched_tier"] = bc.MatchedTier
+		}
+		if bc.BillingExpr != "" {
+			other["expr_b64"] = common.EncodeBase64(bc.BillingExpr)
 		}
 		other["group_ratio"] = bc.GroupRatio
 		if len(bc.OtherRatios) > 0 {
@@ -298,4 +314,109 @@ func RecalculateTaskQuotaByTokens(ctx context.Context, task *model.Task, totalTo
 
 	reason := fmt.Sprintf("token重算：tokens=%d, modelRatio=%.2f, groupRatio=%.2f, otherMultiplier=%.4f", totalTokens, modelRatio, finalGroupRatio, otherMultiplier)
 	RecalculateTaskQuota(ctx, task, actualQuota, reason)
+}
+
+func recalculateTaskQuotaByPerCallExpr(ctx context.Context, task *model.Task, taskResult *relaycommon.TaskInfo) bool {
+	bc := task.PrivateData.BillingContext
+	if bc == nil || bc.BillingMode != billing_setting.BillingModePerCallExpr || strings.TrimSpace(bc.BillingExpr) == "" {
+		return false
+	}
+
+	requestInput, hasRequestInput := taskBillingRequestInput(bc)
+	if taskResult != nil && taskResult.BillingRequestInput != nil {
+		requestInput = mergeBillingRequestInput(requestInput, *taskResult.BillingRequestInput)
+		hasRequestInput = hasBillingRequestInput(requestInput)
+	}
+	if !hasRequestInput {
+		logger.LogWarn(ctx, fmt.Sprintf("任务 %s 表达式完成结算缺少请求快照，保持预扣额度", task.TaskID))
+		return true
+	}
+
+	modelPrice, trace, err := billingexpr.RunExprWithRequest(bc.BillingExpr, billingexpr.TokenParams{}, requestInput)
+	if err != nil {
+		logger.LogWarn(ctx, fmt.Sprintf("任务 %s 表达式完成结算失败: %s", task.TaskID, err.Error()))
+		return true
+	}
+	if modelPrice < 0 {
+		logger.LogWarn(ctx, fmt.Sprintf("任务 %s 表达式完成结算返回负价格: %.6f", task.TaskID, modelPrice))
+		return true
+	}
+
+	groupRatio := bc.GroupRatio
+	actualQuota := billingexpr.QuotaRound(modelPrice * common.QuotaPerUnit * groupRatio)
+	if trace.MatchedTier != "" {
+		bc.MatchedTier = trace.MatchedTier
+	}
+	reason := fmt.Sprintf("表达式任务重算：tier=%s, modelPrice=%.6f, groupRatio=%.2f", trace.MatchedTier, modelPrice, groupRatio)
+	RecalculateTaskQuota(ctx, task, actualQuota, reason)
+	return true
+}
+
+func taskBillingRequestInput(bc *model.TaskBillingContext) (billingexpr.RequestInput, bool) {
+	input := billingexpr.RequestInput{}
+	if len(bc.BillingRequestHeaders) > 0 {
+		input.Headers = make(map[string]string, len(bc.BillingRequestHeaders))
+		for k, v := range bc.BillingRequestHeaders {
+			input.Headers[k] = v
+		}
+	}
+	if len(bc.BillingRequestBody) > 0 {
+		input.Body = append([]byte(nil), bc.BillingRequestBody...)
+	}
+	return input, hasBillingRequestInput(input)
+}
+
+func hasBillingRequestInput(input billingexpr.RequestInput) bool {
+	return len(input.Body) > 0 || len(input.Headers) > 0
+}
+
+func mergeBillingRequestInput(base, override billingexpr.RequestInput) billingexpr.RequestInput {
+	merged := billingexpr.RequestInput{}
+	if len(base.Headers) > 0 || len(override.Headers) > 0 {
+		merged.Headers = make(map[string]string, len(base.Headers)+len(override.Headers))
+		for k, v := range base.Headers {
+			merged.Headers[k] = v
+		}
+		for k, v := range override.Headers {
+			merged.Headers[k] = v
+		}
+	}
+	merged.Body = mergeBillingRequestBody(base.Body, override.Body)
+	return merged
+}
+
+func mergeBillingRequestBody(base, override []byte) []byte {
+	if len(base) == 0 {
+		return append([]byte(nil), override...)
+	}
+	if len(override) == 0 {
+		return append([]byte(nil), base...)
+	}
+
+	var baseMap map[string]interface{}
+	var overrideMap map[string]interface{}
+	if err := common.Unmarshal(base, &baseMap); err != nil {
+		return append([]byte(nil), override...)
+	}
+	if err := common.Unmarshal(override, &overrideMap); err != nil {
+		return append([]byte(nil), override...)
+	}
+	deepMergeMap(baseMap, overrideMap)
+	merged, err := common.Marshal(baseMap)
+	if err != nil {
+		return append([]byte(nil), override...)
+	}
+	return merged
+}
+
+func deepMergeMap(dst map[string]interface{}, src map[string]interface{}) {
+	for k, v := range src {
+		srcMap, srcOk := v.(map[string]interface{})
+		dstMap, dstOk := dst[k].(map[string]interface{})
+		if srcOk && dstOk {
+			deepMergeMap(dstMap, srcMap)
+			continue
+		}
+		dst[k] = v
+	}
 }

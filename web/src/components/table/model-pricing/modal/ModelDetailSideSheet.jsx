@@ -61,7 +61,7 @@ const ModelDetailSideSheet = ({
         borderBottom: '1px solid var(--semi-color-border)',
       }}
       visible={visible}
-      width={isMobile ? '100%' : 600}
+      width={isMobile ? '100%' : 1180}
       closeIcon={
         <Button
           className='semi-button-tertiary semi-button-size-small semi-button-borderless'
@@ -95,7 +95,8 @@ const ModelDetailSideSheet = ({
                 t={t}
               />
             </div>
-            {modelData.billing_mode === 'tiered_expr' && modelData.billing_expr && (
+            {modelData.billing_mode === 'tiered_expr' &&
+              modelData.billing_expr && (
               <>
                 <Divider margin={16} />
                 <div style={{ padding: '0 24px' }}>

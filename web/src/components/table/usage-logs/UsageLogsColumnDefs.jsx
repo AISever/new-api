@@ -33,6 +33,7 @@ import {
   getLogOther,
   renderModelTag,
   renderModelPriceSimple,
+  renderPerCallExprModelPrice,
   renderTieredModelPriceSimple,
 } from '../../../helpers';
 import { IconHelpCircle } from '@douyinfe/semi-icons';
@@ -462,6 +463,10 @@ function getUsageLogDetailSummary(record, text, billingDisplayMode, t) {
   }
 
   const summaryOpts = { ...other, displayMode: billingDisplayMode, outputMode: 'segments' };
+
+  if (other?.billing_mode === 'per_call_expr') {
+    return { segments: renderPerCallExprModelPrice(summaryOpts) };
+  }
 
   if (other?.billing_mode === 'tiered_expr') {
     return { segments: renderTieredModelPriceSimple(summaryOpts) };

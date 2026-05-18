@@ -2,6 +2,7 @@ package billing_setting
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/setting/config"
@@ -9,10 +10,11 @@ import (
 )
 
 const (
-	BillingModeRatio      = "ratio"
-	BillingModeTieredExpr = "tiered_expr"
-	BillingModeField      = "billing_mode"
-	BillingExprField      = "billing_expr"
+	BillingModeRatio       = "ratio"
+	BillingModeTieredExpr  = "tiered_expr"
+	BillingModePerCallExpr = "per_call_expr"
+	BillingModeField       = "billing_mode"
+	BillingExprField       = "billing_expr"
 )
 
 // BillingSetting is managed by config.GlobalConfig.Register.
@@ -53,6 +55,24 @@ func GetBillingModeCopy() map[string]string {
 
 func GetBillingExprCopy() map[string]string {
 	return lo.Assign(billingSetting.BillingExpr)
+}
+
+func MergeBillingConfig(modes map[string]string, exprs map[string]string) {
+	for model, mode := range modes {
+		model = strings.TrimSpace(model)
+		mode = strings.TrimSpace(mode)
+		if model == "" || mode == "" {
+			continue
+		}
+		billingSetting.BillingMode[model] = mode
+	}
+	for model, expr := range exprs {
+		model = strings.TrimSpace(model)
+		if model == "" || strings.TrimSpace(expr) == "" {
+			continue
+		}
+		billingSetting.BillingExpr[model] = expr
+	}
 }
 
 func GetPricingSyncData(base map[string]any) map[string]any {

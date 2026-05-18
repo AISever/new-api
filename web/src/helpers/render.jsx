@@ -2270,6 +2270,94 @@ export function parseTiersFromExpr(exprStr) {
   }
 }
 
+function parsePerCallTiersFromExpr(exprStr) {
+  if (!exprStr) return [];
+  try {
+    const { body } = stripExprVersion(exprStr);
+    const tierRe = /tier\(\s*["']([^"']+)["']\s*,\s*([0-9.]+)\s*\)/g;
+    const tiers = [];
+    let m;
+    while ((m = tierRe.exec(body)) !== null) {
+      tiers.push({ label: m[1], value: Number(m[2]) });
+    }
+    return tiers;
+  } catch {
+    return [];
+  }
+}
+
+export function renderPerCallExprModelPrice(opts) {
+  const {
+    expr_b64: exprB64,
+    matched_tier: matchedTier,
+    model_price: modelPrice = -1,
+    group_ratio: groupRatio,
+    user_group_ratio,
+    displayMode = 'price',
+  } = opts;
+
+  const { ratio, label: ratioLabel } = getEffectiveRatio(groupRatio, user_group_ratio);
+  const { symbol, rate } = getCurrencyConfig();
+  let exprStr = '';
+  try { exprStr = atob(exprB64); } catch { /* ignore */ }
+  const tiers = parsePerCallTiersFromExpr(exprStr);
+  const matched = tiers.find((tier) => tier.label === matchedTier);
+  const unitPrice = matched?.value ?? modelPrice;
+
+  if (outputModeIsSegments(opts)) {
+    const segments = [
+      {
+        tone: 'primary',
+        text: getGroupRatioText(groupRatio, user_group_ratio),
+      },
+    ];
+    if (matchedTier) {
+      segments.push({
+        tone: 'primary',
+        text: i18next.t('命中子项 {{tier}}', { tier: matchedTier }),
+      });
+    }
+    if (unitPrice !== -1 && isPriceDisplayMode(displayMode, unitPrice)) {
+      segments.push({
+        tone: 'secondary',
+        text: i18next.t('{{price}} / 次', {
+          price: formatCompactDisplayPrice(unitPrice),
+        }),
+      });
+    }
+    return segments;
+  }
+
+  if (unitPrice === -1) {
+    return i18next.t('请求感知按次计费');
+  }
+
+  return renderBillingArticle([
+    matchedTier
+      ? buildBillingText('命中子项：{{tier}}', { tier: matchedTier })
+      : buildBillingText('请求感知按次计费'),
+    buildBillingPriceText(
+      '子项价格：{{symbol}}{{price}} / 次',
+      { symbol, usdAmount: unitPrice, rate },
+    ),
+    buildBillingPriceText(
+      '{{symbol}}{{price}} / 次 * {{ratioType}} {{ratio}} = {{symbol}}{{total}}',
+      {
+        symbol,
+        usdAmount: unitPrice,
+        rate,
+        ratioType: ratioLabel,
+        ratio,
+        total: formatBillingDisplayPrice(unitPrice * ratio, rate),
+      },
+    ),
+  ]);
+}
+
+function outputModeIsSegments(opts) {
+  return opts?.outputMode === 'segments';
+}
+
 export function renderTieredModelPrice(opts) {
   const {
     prompt_tokens: inputTokens = 0,

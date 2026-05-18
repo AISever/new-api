@@ -109,12 +109,18 @@ type TaskPrivateData struct {
 
 // TaskBillingContext 记录任务提交时的计费参数，以便轮询阶段可以重新计算额度。
 type TaskBillingContext struct {
-	ModelPrice      float64            `json:"model_price,omitempty"`       // 模型单价
-	GroupRatio      float64            `json:"group_ratio,omitempty"`       // 分组倍率
-	ModelRatio      float64            `json:"model_ratio,omitempty"`       // 模型倍率
-	OtherRatios     map[string]float64 `json:"other_ratios,omitempty"`      // 附加倍率（时长、分辨率等）
-	OriginModelName string             `json:"origin_model_name,omitempty"` // 模型名称，必须为OriginModelName
-	PerCallBilling  bool               `json:"per_call_billing,omitempty"`  // 按次计费：跳过轮询阶段的差额结算
+	ModelPrice            float64            `json:"model_price,omitempty"`             // 模型单价
+	GroupRatio            float64            `json:"group_ratio,omitempty"`             // 分组倍率
+	ModelRatio            float64            `json:"model_ratio,omitempty"`             // 模型倍率
+	BillingMode           string             `json:"billing_mode,omitempty"`            // 表达式计费模式快照
+	MatchedTier           string             `json:"matched_tier,omitempty"`            // 表达式命中的档位或子能力
+	BillingExpr           string             `json:"billing_expr,omitempty"`            // 表达式快照，用于后续任务日志还原计费过程
+	BillingRequestHeaders map[string]string  `json:"billing_request_headers,omitempty"` // 表达式计费请求头快照
+	BillingRequestBody    json.RawMessage    `json:"billing_request_body,omitempty"`    // 表达式计费请求体快照
+	OtherRatios           map[string]float64 `json:"other_ratios,omitempty"`            // 附加倍率（时长、分辨率等）
+	OriginModelName       string             `json:"origin_model_name,omitempty"`       // 模型名称，必须为OriginModelName
+	PerCallBilling        bool               `json:"per_call_billing,omitempty"`        // 按次计费语义：固定价或请求表达式按次预扣
+	SkipCompletionBilling bool               `json:"skip_completion_billing,omitempty"` // 固定价任务可跳过轮询阶段的差额结算
 }
 
 // GetUpstreamTaskID 获取上游真实 task ID（用于与 provider 通信）

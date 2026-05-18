@@ -36,6 +36,7 @@ import {
   renderAudioModelPrice,
   renderClaudeModelPrice,
   renderModelPrice,
+  renderPerCallExprModelPrice,
   renderTieredModelPrice,
   renderTaskBillingProcess,
 } from '../../helpers';
@@ -426,7 +427,10 @@ export const useLogsData = () => {
         });
       }
       if (logs[i].type === 2) {
-        if (other?.billing_mode !== 'tiered_expr') {
+        if (
+          other?.billing_mode !== 'tiered_expr' &&
+          other?.billing_mode !== 'per_call_expr'
+        ) {
           expandDataLocal.push({
             key: t('日志详情'),
             value: other?.claude
@@ -469,7 +473,11 @@ export const useLogsData = () => {
           Boolean(other?.violation_fee_marker);
 
         let content = '';
-        if (!isViolationFeeLog && other?.billing_mode !== 'tiered_expr') {
+        if (
+          !isViolationFeeLog &&
+          other?.billing_mode !== 'tiered_expr' &&
+          other?.billing_mode !== 'per_call_expr'
+        ) {
           const logOpts = {
             ...other,
             prompt_tokens: logs[i].prompt_tokens,
@@ -495,6 +503,15 @@ export const useLogsData = () => {
           expandDataLocal.push({
             key: t('Reasoning Effort'),
             value: other.reasoning_effort,
+          });
+        }
+        if (other?.billing_mode === 'per_call_expr') {
+          expandDataLocal.push({
+            key: t('计费过程'),
+            value: renderPerCallExprModelPrice({
+              ...other,
+              displayMode: billingDisplayMode,
+            }),
           });
         }
         if (other?.billing_mode === 'tiered_expr' && other?.expr_b64) {

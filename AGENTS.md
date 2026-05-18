@@ -134,3 +134,14 @@ For request structs that are parsed from client JSON and then re-marshaled to up
 ### Rule 7: Billing Expression System — Read `pkg/billingexpr/expr.md`
 
 When working on tiered/dynamic billing (expression-based pricing), you MUST read `pkg/billingexpr/expr.md` first. It documents the design philosophy, expression language (variables, functions, examples), full system architecture (editor → storage → pre-consume → settlement → log display), token normalization rules (`p`/`c` auto-exclusion), quota conversion, and expression versioning. All code changes to the billing expression system must follow the patterns described in that document.
+
+### Rule 8: Open Source Upstream Compatibility
+
+Unless explicitly instructed otherwise, all changes to this open source project must be designed to remain compatible with future official upstream updates.
+
+- Prefer additive, well-isolated extensions over invasive rewrites of official project logic.
+- Keep existing official behaviors, APIs, data formats, and adapter flows working unless the task explicitly requires a breaking change.
+- When extending official flows, use existing extension points, feature flags, settings, metadata fields, or compatibility wrappers where practical.
+- Avoid hard-coding site-specific assumptions into core official paths; isolate local/custom behavior behind profiles, manifests, settings, or clearly named helpers.
+- Preserve backward compatibility for existing database rows, JSON fields, options, tasks, channels, logs, and user-visible APIs.
+- When modifying provider adapters or relay/task billing paths, verify representative official behavior still works and document any residual compatibility risk.

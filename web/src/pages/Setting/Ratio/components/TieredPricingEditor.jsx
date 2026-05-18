@@ -1373,8 +1373,9 @@ function LlmPromptHelper({ t, model }) {
 
 export default function TieredPricingEditor({ model, onExprChange, requestRuleExpr, onRequestRuleExprChange, t }) {
   const currentExpr = model?.billingExpr || '';
+  const isPerCallExpr = model?.billingMode === 'per_call_expr';
 
-  const [editorMode, setEditorMode] = useState('visual');
+  const [editorMode, setEditorMode] = useState(isPerCallExpr ? 'raw' : 'visual');
   const [visualConfig, setVisualConfig] = useState(null);
   const [rawExpr, setRawExpr] = useState('');
   const [promptTokens, setPromptTokens] = useState(200000);
@@ -1409,6 +1410,12 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
   }, [onRequestRuleExprChange]);
 
   useEffect(() => {
+    if (isPerCallExpr) {
+      setEditorMode('raw');
+      setRawExpr(currentExpr);
+      setVisualConfig(null);
+      return;
+    }
     const parsed = tryParseVisualConfig(currentExpr);
     if (parsed) {
       setEditorMode('visual');
@@ -1423,15 +1430,19 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
       setVisualConfig(createDefaultVisualConfig());
       setRawExpr('');
     }
-  }, [model?.name]);
+  }, [model?.name, isPerCallExpr]);
 
   const effectiveExpr = useMemo(() => {
+    if (isPerCallExpr) {
+      const { billingExpr } = splitBillingExprAndRequestRules(rawExpr);
+      return billingExpr;
+    }
     if (editorMode === 'visual') {
       return generateExprFromVisualConfig(visualConfig);
     }
     const { billingExpr } = splitBillingExprAndRequestRules(rawExpr);
     return billingExpr;
-  }, [editorMode, visualConfig, rawExpr]);
+  }, [editorMode, visualConfig, rawExpr, isPerCallExpr]);
 
   useEffect(() => {
     if (effectiveExpr !== currentExpr) {
@@ -1524,12 +1535,25 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
           value={editorMode}
           onChange={handleModeSwitch}
         >
-          <Radio value='visual'>{t('可视化编辑')}</Radio>
+          <Radio value='visual' disabled={isPerCallExpr}>
+            {t('可视化编辑')}
+          </Radio>
           <Radio value='raw'>{t('表达式编辑')}</Radio>
         </RadioGroup>
       </div>
 
-      <PresetSection applyPreset={applyPreset} t={t} />
+      {isPerCallExpr ? (
+        <Banner
+          type='warning'
+          bordered
+          fullMode={false}
+          closeIcon={null}
+          style={{ marginBottom: 12 }}
+          title={t('请求感知按次计费会直接影响真实扣费，表达式返回每次调用价格，不是 $/1M tokens。')}
+        />
+      ) : null}
+
+      {!isPerCallExpr ? <PresetSection applyPreset={applyPreset} t={t} /> : null}
 
       <Card
         bodyStyle={{ padding: 16 }}
@@ -1603,10 +1627,11 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
         )}
       </Card>
 
-      <Card
-        bodyStyle={{ padding: 16 }}
-        style={{ marginBottom: 12, background: 'var(--semi-color-fill-0)' }}
-      >
+      {!isPerCallExpr ? (
+        <Card
+          bodyStyle={{ padding: 16 }}
+          style={{ marginBottom: 12, background: 'var(--semi-color-fill-0)' }}
+        >
         <div className='font-medium mb-2'>{t('Token 估算器')}</div>
         <div className='text-xs text-gray-500 mb-3'>
           {t('输入 Token 数量，查看按当前配置的预计费用（不含分组倍率）。')}
@@ -1688,7 +1713,8 @@ export default function TieredPricingEditor({ model, onExprChange, requestRuleEx
             </div>
           )}
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
       <LlmPromptHelper t={t} model={model} />
 

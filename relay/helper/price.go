@@ -168,6 +168,10 @@ func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens 
 func ModelPriceHelperPerCall(c *gin.Context, info *relaycommon.RelayInfo) (types.PriceData, error) {
 	groupRatioInfo := HandleGroupRatio(c, info)
 
+	if billing_setting.GetBillingMode(info.OriginModelName) == billing_setting.BillingModePerCallExpr {
+		return modelPriceHelperPerCallExpr(c, info, groupRatioInfo)
+	}
+
 	modelPrice, success := ratio_setting.GetModelPrice(info.OriginModelName, true)
 	usePrice := success
 	var modelRatio float64
@@ -225,6 +229,60 @@ func ModelPriceHelperPerCall(c *gin.Context, info *relaycommon.RelayInfo) (types
 	return priceData, nil
 }
 
+func modelPriceHelperPerCallExpr(c *gin.Context, info *relaycommon.RelayInfo, groupRatioInfo types.GroupRatioInfo) (types.PriceData, error) {
+	exprStr, ok := billing_setting.GetBillingExpr(info.OriginModelName)
+	if !ok {
+		return types.PriceData{}, fmt.Errorf("model %s is configured as per_call_expr but has no billing expression", info.OriginModelName)
+	}
+
+	requestInput, err := ResolveIncomingBillingExprRequestInput(c, info)
+	if err != nil {
+		return types.PriceData{}, err
+	}
+
+	modelPrice, trace, err := billingexpr.RunExprWithRequest(exprStr, billingexpr.TokenParams{}, requestInput)
+	if err != nil {
+		return types.PriceData{}, fmt.Errorf("model %s per-call expr run failed: %w", info.OriginModelName, err)
+	}
+	if modelPrice < 0 {
+		return types.PriceData{}, fmt.Errorf("model %s per-call expr returned negative price %f", info.OriginModelName, modelPrice)
+	}
+
+	quota := billingexpr.QuotaRound(modelPrice * common.QuotaPerUnit * groupRatioInfo.GroupRatio)
+	freeModel := false
+	if !operation_setting.GetQuotaSetting().EnableFreeModelPreConsume {
+		if groupRatioInfo.GroupRatio == 0 || modelPrice == 0 {
+			quota = 0
+			freeModel = true
+		}
+	}
+
+	exprHash := billingexpr.ExprHashString(exprStr)
+	info.TieredBillingSnapshot = &billingexpr.BillingSnapshot{
+		BillingMode:               billing_setting.BillingModePerCallExpr,
+		ModelName:                 info.OriginModelName,
+		ExprString:                exprStr,
+		ExprHash:                  exprHash,
+		GroupRatio:                groupRatioInfo.GroupRatio,
+		EstimatedQuotaBeforeGroup: modelPrice * common.QuotaPerUnit,
+		EstimatedQuotaAfterGroup:  quota,
+		EstimatedTier:             trace.MatchedTier,
+		QuotaPerUnit:              common.QuotaPerUnit,
+		ExprVersion:               billingexpr.ExprVersion(exprStr),
+	}
+	info.BillingRequestInput = &requestInput
+
+	priceData := types.PriceData{
+		FreeModel:      freeModel,
+		ModelPrice:     modelPrice,
+		UsePrice:       true,
+		Quota:          quota,
+		GroupRatioInfo: groupRatioInfo,
+	}
+	info.PriceData = priceData
+	return priceData, nil
+}
+
 func HasModelBillingConfig(modelName string) bool {
 	if _, ok := ratio_setting.GetModelPrice(modelName, false); ok {
 		return true
@@ -232,7 +290,8 @@ func HasModelBillingConfig(modelName string) bool {
 	if _, ok, _ := ratio_setting.GetModelRatio(modelName); ok {
 		return true
 	}
-	if billing_setting.GetBillingMode(modelName) != billing_setting.BillingModeTieredExpr {
+	mode := billing_setting.GetBillingMode(modelName)
+	if mode != billing_setting.BillingModeTieredExpr && mode != billing_setting.BillingModePerCallExpr {
 		return false
 	}
 	expr, ok := billing_setting.GetBillingExpr(modelName)

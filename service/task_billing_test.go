@@ -10,6 +10,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
@@ -181,6 +182,13 @@ func getLastLog(t *testing.T) *model.Log {
 	return &log
 }
 
+func getLogOther(t *testing.T, log *model.Log) map[string]interface{} {
+	t.Helper()
+	var other map[string]interface{}
+	require.NoError(t, common.UnmarshalJsonStr(log.Other, &other))
+	return other
+}
+
 func countLogs(t *testing.T) int64 {
 	t.Helper()
 	var count int64
@@ -291,6 +299,20 @@ func TestRefundTaskQuota_NoToken(t *testing.T) {
 	log := getLastLog(t)
 	require.NotNil(t, log)
 	assert.Equal(t, model.LogTypeRefund, log.Type)
+}
+
+func TestTaskBillingOtherIncludesPerCallExpressionSnapshot(t *testing.T) {
+	task := makeTask(1, 1, 85000, 1, BillingSourceWallet, 0)
+	expr := `param("metadata.scenario") == "speech" ? tier("语音合成", 0.085) : tier("音效", 0.425)`
+	task.PrivateData.BillingContext.BillingMode = "per_call_expr"
+	task.PrivateData.BillingContext.MatchedTier = "语音合成"
+	task.PrivateData.BillingContext.BillingExpr = expr
+
+	other := taskBillingOther(task)
+
+	assert.Equal(t, "per_call_expr", other["billing_mode"])
+	assert.Equal(t, "语音合成", other["matched_tier"])
+	assert.Equal(t, common.EncodeBase64(expr), other["expr_b64"])
 }
 
 // ===========================================================================
@@ -682,6 +704,177 @@ func TestSettle_PerCallBilling_SkipsTotalTokens(t *testing.T) {
 	settleTaskBillingOnComplete(ctx, adaptor, task, taskResult)
 
 	// Per-call: no recalculation by tokens
+	assert.Equal(t, initQuota, getUserQuota(t, userID))
+	assert.Equal(t, tokenRemain, getTokenRemainQuota(t, tokenID))
+	assert.Equal(t, preConsumed, task.Quota)
+	assert.Equal(t, int64(0), countLogs(t))
+}
+
+func TestSettle_PerCallExpression_AllowsAdaptorAdjust(t *testing.T) {
+	truncate(t)
+	ctx := context.Background()
+
+	const userID, tokenID, channelID = 33, 33, 33
+	const initQuota, preConsumed = 10000, 5000
+	const adaptorQuota = 3000
+	const tokenRemain = 8000
+
+	seedUser(t, userID, initQuota)
+	seedToken(t, tokenID, userID, "sk-percall-expr-adj", tokenRemain)
+	seedChannel(t, channelID)
+
+	task := makeTask(userID, channelID, preConsumed, tokenID, BillingSourceWallet, 0)
+	task.PrivateData.BillingContext.PerCallBilling = true
+	task.PrivateData.BillingContext.BillingMode = "per_call_expr"
+
+	adaptor := &mockAdaptor{adjustReturn: adaptorQuota}
+	taskResult := &relaycommon.TaskInfo{Status: model.TaskStatusSuccess}
+
+	settleTaskBillingOnComplete(ctx, adaptor, task, taskResult)
+
+	assert.Equal(t, initQuota+(preConsumed-adaptorQuota), getUserQuota(t, userID))
+	assert.Equal(t, tokenRemain+(preConsumed-adaptorQuota), getTokenRemainQuota(t, tokenID))
+	assert.Equal(t, adaptorQuota, task.Quota)
+
+	log := getLastLog(t)
+	require.NotNil(t, log)
+	assert.Equal(t, model.LogTypeRefund, log.Type)
+}
+
+func TestSettle_PerCallExpression_SkipsTokenFallback(t *testing.T) {
+	truncate(t)
+	ctx := context.Background()
+
+	const userID, tokenID, channelID = 34, 34, 34
+	const initQuota, preConsumed = 10000, 5000
+	const tokenRemain = 8000
+
+	seedUser(t, userID, initQuota)
+	seedToken(t, tokenID, userID, "sk-percall-expr-tokens", tokenRemain)
+	seedChannel(t, channelID)
+
+	task := makeTask(userID, channelID, preConsumed, tokenID, BillingSourceWallet, 0)
+	task.PrivateData.BillingContext.PerCallBilling = true
+	task.PrivateData.BillingContext.BillingMode = "per_call_expr"
+
+	adaptor := &mockAdaptor{adjustReturn: 0}
+	taskResult := &relaycommon.TaskInfo{Status: model.TaskStatusSuccess, TotalTokens: 9999}
+
+	settleTaskBillingOnComplete(ctx, adaptor, task, taskResult)
+
+	assert.Equal(t, initQuota, getUserQuota(t, userID))
+	assert.Equal(t, tokenRemain, getTokenRemainQuota(t, tokenID))
+	assert.Equal(t, preConsumed, task.Quota)
+	assert.Equal(t, int64(0), countLogs(t))
+}
+
+func TestSettle_PerCallExpression_RecalculatesFromTaskResultRequestInput(t *testing.T) {
+	truncate(t)
+	ctx := context.Background()
+
+	const userID, tokenID, channelID = 35, 35, 35
+	const initQuota, preConsumed = 10000, 300000
+	const tokenRemain = 800000
+	const actualQuota = 480000
+
+	seedUser(t, userID, initQuota)
+	seedToken(t, tokenID, userID, "sk-percall-expr-result-input", tokenRemain)
+	seedChannel(t, channelID)
+
+	task := makeTask(userID, channelID, preConsumed, tokenID, BillingSourceWallet, 0)
+	task.PrivateData.BillingContext.PerCallBilling = true
+	task.PrivateData.BillingContext.BillingMode = "per_call_expr"
+	task.PrivateData.BillingContext.BillingExpr = `tier("按秒", max(num(param("duration")), 1) * 0.12)`
+	task.PrivateData.BillingContext.GroupRatio = 1
+	task.PrivateData.BillingContext.MatchedTier = "按秒"
+	task.PrivateData.BillingContext.BillingRequestBody = json.RawMessage(`{"duration":5}`)
+
+	adaptor := &mockAdaptor{adjustReturn: 0}
+	taskResult := &relaycommon.TaskInfo{
+		Status: model.TaskStatusSuccess,
+		BillingRequestInput: &billingexpr.RequestInput{
+			Body: []byte(`{"duration":8}`),
+		},
+	}
+
+	settleTaskBillingOnComplete(ctx, adaptor, task, taskResult)
+
+	assert.Equal(t, initQuota-(actualQuota-preConsumed), getUserQuota(t, userID))
+	assert.Equal(t, tokenRemain-(actualQuota-preConsumed), getTokenRemainQuota(t, tokenID))
+	assert.Equal(t, actualQuota, task.Quota)
+
+	log := getLastLog(t)
+	require.NotNil(t, log)
+	assert.Equal(t, model.LogTypeConsume, log.Type)
+	assert.Equal(t, actualQuota-preConsumed, log.Quota)
+	assert.Equal(t, "按秒", getLogOther(t, log)["matched_tier"])
+}
+
+func TestSettle_PerCallExpression_MergesTaskResultRequestInput(t *testing.T) {
+	truncate(t)
+	ctx := context.Background()
+
+	const userID, tokenID, channelID = 37, 37, 37
+	const initQuota, preConsumed = 10000, 4250000
+	const tokenRemain = 8000000
+	const actualQuota = 5440000
+
+	seedUser(t, userID, initQuota)
+	seedToken(t, tokenID, userID, "sk-percall-expr-merge-input", tokenRemain)
+	seedChannel(t, channelID)
+
+	task := makeTask(userID, channelID, preConsumed, tokenID, BillingSourceWallet, 0)
+	task.PrivateData.BillingContext.PerCallBilling = true
+	task.PrivateData.BillingContext.BillingMode = "per_call_expr"
+	task.PrivateData.BillingContext.BillingExpr = `str(param("metadata.mode")) == "pro" ? tier("pro", num(param("duration")) * 1.36) : tier("std", num(param("duration")) * 0.85)`
+	task.PrivateData.BillingContext.GroupRatio = 1
+	task.PrivateData.BillingContext.MatchedTier = "std"
+	task.PrivateData.BillingContext.BillingRequestBody = json.RawMessage(`{"duration":5,"metadata":{"mode":"pro"}}`)
+
+	adaptor := &mockAdaptor{adjustReturn: 0}
+	taskResult := &relaycommon.TaskInfo{
+		Status: model.TaskStatusSuccess,
+		BillingRequestInput: &billingexpr.RequestInput{
+			Body: []byte(`{"duration":8}`),
+		},
+	}
+
+	settleTaskBillingOnComplete(ctx, adaptor, task, taskResult)
+
+	assert.Equal(t, initQuota-(actualQuota-preConsumed), getUserQuota(t, userID))
+	assert.Equal(t, tokenRemain-(actualQuota-preConsumed), getTokenRemainQuota(t, tokenID))
+	assert.Equal(t, actualQuota, task.Quota)
+
+	log := getLastLog(t)
+	require.NotNil(t, log)
+	assert.Equal(t, model.LogTypeConsume, log.Type)
+	assert.Equal(t, "pro", getLogOther(t, log)["matched_tier"])
+}
+
+func TestSettle_PerCallExpression_WithoutRequestInputKeepsPreConsumedQuota(t *testing.T) {
+	truncate(t)
+	ctx := context.Background()
+
+	const userID, tokenID, channelID = 36, 36, 36
+	const initQuota, preConsumed = 10000, 300000
+	const tokenRemain = 800000
+
+	seedUser(t, userID, initQuota)
+	seedToken(t, tokenID, userID, "sk-percall-expr-no-input", tokenRemain)
+	seedChannel(t, channelID)
+
+	task := makeTask(userID, channelID, preConsumed, tokenID, BillingSourceWallet, 0)
+	task.PrivateData.BillingContext.PerCallBilling = true
+	task.PrivateData.BillingContext.BillingMode = "per_call_expr"
+	task.PrivateData.BillingContext.BillingExpr = `tier("按秒", max(num(param("duration")), 1) * 0.12)`
+	task.PrivateData.BillingContext.GroupRatio = 1
+	task.PrivateData.BillingContext.MatchedTier = "按秒"
+
+	adaptor := &mockAdaptor{adjustReturn: 0}
+	taskResult := &relaycommon.TaskInfo{Status: model.TaskStatusSuccess}
+
+	settleTaskBillingOnComplete(ctx, adaptor, task, taskResult)
+
 	assert.Equal(t, initQuota, getUserQuota(t, userID))
 	assert.Equal(t, tokenRemain, getTokenRemainQuota(t, tokenID))
 	assert.Equal(t, preConsumed, task.Quota)

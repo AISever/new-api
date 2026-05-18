@@ -1614,6 +1614,7 @@
     "按次：{{symbol}}{{price}}": "Theo lượt gọi: {{symbol}}{{price}}",
     "按次：{{symbol}}{{price}} * {{ratioType}}：{{ratio}} = {{symbol}}{{total}}": "Theo lượt gọi: {{symbol}}{{price}} * {{ratioType}}: {{ratio}} = {{symbol}}{{total}}",
     "按次计费": "Tính phí theo lượt gọi",
+    "按次查看计费": "Tính phí theo lượt xem",
     "按照如下格式输入：AccessKey|SecretAccessKey|Region": "Enter in the format: AccessKey|SecretAccessKey|Region",
     "按量计费": "Trả tiền theo mức sử dụng",
     "按量计费下需要先填写输入价格，才能保存其它价格项。": "Ở chế độ tính phí theo lượng, cần điền giá đầu vào trước thì mới lưu được các mục giá khác.",
@@ -4176,6 +4177,9 @@
     "默认折叠侧边栏": "Mặc định thu gọn thanh bên",
     "默认测试模型": "Mô hình kiểm tra mặc định",
     "默认用户消息": "Xin chào",
-    "默认补全倍率": "Tỷ lệ hoàn thành mặc định"
+    "默认补全倍率": "Tỷ lệ hoàn thành mặc định",
+    "请求感知按次计费": "Tính phí theo lượt có nhận biết yêu cầu",
+    "按请求参数命中子项，匹配结果会参与真实扣费": "Các mục con được khớp từ tham số yêu cầu và ảnh hưởng đến tính phí thực tế.",
+    "子项": "Mục con"
   }
 }
