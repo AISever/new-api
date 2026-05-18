@@ -584,6 +584,8 @@ func handleConfigUpdate(key, value string) bool {
 	} else if configName == "billing_setting" {
 		InvalidatePricingCache()
 		ratio_setting.InvalidateExposedDataCache()
+	} else if configName == "general_setting" {
+		operation_setting.TaskPricePatchModelsFromString(operation_setting.GetGeneralSetting().TaskPricePatchModels)
 	}
 
 	return true // 已处理

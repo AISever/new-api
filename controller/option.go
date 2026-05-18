@@ -288,6 +288,8 @@ func UpdateOption(c *gin.Context) {
 			})
 			return
 		}
+	case "general_setting.task_price_patch_models":
+		operation_setting.TaskPricePatchModelsFromString(option.Value.(string))
 	case "console_setting.api_info":
 		err = console_setting.ValidateConsoleSettings(option.Value.(string), "ApiInfo")
 		if err != nil {

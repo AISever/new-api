@@ -42,6 +42,7 @@ const OperationSetting = () => {
     TopUpLink: '',
     'general_setting.docs_link': '',
     'general_setting.docs_manifest_path': '',
+    'general_setting.task_price_patch_models': '',
     QuotaPerUnit: 0,
     USDExchangeRate: 0,
     RetryTimes: 0,

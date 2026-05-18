@@ -1,6 +1,11 @@
 package operation_setting
 
-import "github.com/QuantumNous/new-api/setting/config"
+import (
+	"strings"
+
+	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/setting/config"
+)
 
 // 额度展示类型
 const (
@@ -15,6 +20,8 @@ type GeneralSetting struct {
 	DocsManifestPath    string `json:"docs_manifest_path"`
 	PingIntervalEnabled bool   `json:"ping_interval_enabled"`
 	PingIntervalSeconds int    `json:"ping_interval_seconds"`
+	// 逗号分隔的模型名单；命中后任务按纯按次计费，不再乘 seconds/size/resolution 等倍率
+	TaskPricePatchModels string `json:"task_price_patch_models"`
 	// 当前站点额度展示类型：USD / CNY / TOKENS
 	QuotaDisplayType string `json:"quota_display_type"`
 	// 自定义货币符号，用于 CUSTOM 展示类型
@@ -29,6 +36,7 @@ var generalSetting = GeneralSetting{
 	DocsManifestPath:           "",
 	PingIntervalEnabled:        false,
 	PingIntervalSeconds:        60,
+	TaskPricePatchModels:       "",
 	QuotaDisplayType:           QuotaDisplayTypeUSD,
 	CustomCurrencySymbol:       "¤",
 	CustomCurrencyExchangeRate: 1.0,
@@ -41,6 +49,18 @@ func init() {
 
 func GetGeneralSetting() *GeneralSetting {
 	return &generalSetting
+}
+
+func TaskPricePatchModelsFromString(s string) {
+	models := make([]string, 0)
+	for _, item := range strings.Split(s, ",") {
+		trimmed := strings.TrimSpace(item)
+		if trimmed == "" {
+			continue
+		}
+		models = append(models, trimmed)
+	}
+	constant.TaskPricePatches = models
 }
 
 // IsCurrencyDisplay 是否以货币形式展示（美元或人民币）

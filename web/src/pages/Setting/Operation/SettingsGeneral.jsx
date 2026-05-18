@@ -48,6 +48,7 @@ export default function GeneralSettings(props) {
     TopUpLink: '',
     'general_setting.docs_link': '',
     'general_setting.docs_manifest_path': '',
+    'general_setting.task_price_patch_models': '',
     'general_setting.quota_display_type': 'USD',
     'general_setting.custom_currency_symbol': '¤',
     'general_setting.custom_currency_exchange_rate': '',
@@ -275,6 +276,25 @@ export default function GeneralSettings(props) {
                 <Text type='tertiary' size='small'>
                   {t(
                     '仅企业环境建议设置。该路径指向随当前项目一起部署的本地静态文档清单，而不是外部站点链接。',
+                  )}
+                </Text>
+              </Col>
+              <Col xs={24} sm={24} md={24} lg={16} xl={16}>
+                <Form.Input
+                  field={'general_setting.task_price_patch_models'}
+                  label={t('纯按次计费模型')}
+                  initValue={''}
+                  placeholder={t(
+                    '例如 sora-2,sora-2-pro,veo-3.1-fast-generate-preview',
+                  )}
+                  onChange={handleFieldChange(
+                    'general_setting.task_price_patch_models',
+                  )}
+                  showClear
+                />
+                <Text type='tertiary' size='small'>
+                  {t(
+                    '填写逗号分隔的模型名。命中后异步视频任务仅按基础按次价格计费，不再叠加 seconds、size、resolution 等倍率修正。',
                   )}
                 </Text>
               </Col>
