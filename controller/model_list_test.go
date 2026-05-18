@@ -14,6 +14,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/setting/config"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/require"
@@ -239,4 +240,65 @@ func TestListModelsTokenLimitIncludesTieredBillingModel(t *testing.T) {
 	require.NotContains(t, ids, "zz-token-tiered-empty-expr-model")
 	require.NotContains(t, ids, "zz-token-tiered-missing-expr-model")
 	require.NotContains(t, ids, "zz-token-unpriced-model")
+}
+
+func TestGetPricingIncludesPerCallExprPriceItems(t *testing.T) {
+	withTieredBillingConfig(t, map[string]string{
+		"kling-audio": "per_call_expr",
+	}, map[string]string{
+		"kling-audio": `tier("音效", 0.425)`,
+	})
+	require.NoError(t, ratio_setting.UpdateModelPriceItemsByJSONString(`{"kling-audio":[{"label":"文生音效","price":0.425,"unit":"request"},{"label":"视频生音效","price":0.425,"unit":"request"},{"label":"语音合成","price":0.085,"unit":"request"}]}`))
+	t.Cleanup(func() {
+		require.NoError(t, ratio_setting.UpdateModelPriceItemsByJSONString(`{}`))
+		model.InvalidatePricingCache()
+	})
+
+	db := setupModelListControllerTestDB(t)
+	require.NoError(t, db.Create(&model.User{
+		Id:       1002,
+		Username: "pricing-user",
+		Password: "password",
+		Group:    "default",
+		Status:   common.UserStatusEnabled,
+	}).Error)
+	require.NoError(t, db.Create(&model.Channel{
+		Id:     2001,
+		Name:   "pricing-test-channel",
+		Type:   constant.ChannelTypeKling,
+		Key:    "sk-test",
+		Status: common.ChannelStatusEnabled,
+	}).Error)
+	require.NoError(t, db.Create(&[]model.Ability{
+		{Group: "default", Model: "kling-audio", ChannelId: 2001, Enabled: true},
+	}).Error)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/pricing", nil)
+	ctx.Set("id", 1002)
+
+	GetPricing(ctx)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	var payload struct {
+		Success bool            `json:"success"`
+		Data    []model.Pricing `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &payload))
+	require.True(t, payload.Success)
+
+	var audio *model.Pricing
+	for i := range payload.Data {
+		if payload.Data[i].ModelName == "kling-audio" {
+			audio = &payload.Data[i]
+			break
+		}
+	}
+	require.NotNil(t, audio)
+	require.Equal(t, 1, audio.QuotaType)
+	require.Equal(t, "per_call_expr", audio.BillingMode)
+	require.NotEmpty(t, audio.BillingExpr)
+	require.Len(t, audio.ModelPriceItems, 3)
+	require.Equal(t, 0.425, audio.ModelPriceItems[0].Price)
 }

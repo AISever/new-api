@@ -307,17 +307,21 @@ func updatePricing() {
 			pricing.VendorID = meta.VendorID
 		}
 		modelPrice, findPrice := ratio_setting.GetModelPrice(model, false)
+		billingMode := billing_setting.GetBillingMode(model)
 		if findPrice {
 			pricing.ModelPrice = modelPrice
 			pricing.QuotaType = 1
-			if priceItems, ok := ratio_setting.GetModelPriceItems(model); ok {
-				pricing.ModelPriceItems = priceItems
-			}
 		} else {
 			modelRatio, _, _ := ratio_setting.GetModelRatio(model)
 			pricing.ModelRatio = modelRatio
 			pricing.CompletionRatio = ratio_setting.GetCompletionRatio(model)
 			pricing.QuotaType = 0
+		}
+		if priceItems, ok := ratio_setting.GetModelPriceItems(model); ok {
+			pricing.ModelPriceItems = priceItems
+			if !findPrice && billingMode == billing_setting.BillingModePerCallExpr {
+				pricing.QuotaType = 1
+			}
 		}
 		if cacheRatio, ok := ratio_setting.GetCacheRatio(model); ok {
 			pricing.CacheRatio = &cacheRatio
@@ -336,7 +340,7 @@ func updatePricing() {
 			audioCompletionRatio := ratio_setting.GetAudioCompletionRatio(model)
 			pricing.AudioCompletionRatio = &audioCompletionRatio
 		}
-		if billingMode := billing_setting.GetBillingMode(model); billingMode == billing_setting.BillingModeTieredExpr || billingMode == billing_setting.BillingModePerCallExpr {
+		if billingMode == billing_setting.BillingModeTieredExpr || billingMode == billing_setting.BillingModePerCallExpr {
 			if expr, ok := billing_setting.GetBillingExpr(model); ok && strings.TrimSpace(expr) != "" {
 				pricing.BillingMode = billingMode
 				pricing.BillingExpr = expr
