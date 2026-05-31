@@ -116,6 +116,15 @@ func NormalizeBillingPreference(pref string) string {
 	}
 }
 
+func NormalizeInviteRewardMode(mode string) string {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "fixed", "ratio":
+		return strings.ToLower(strings.TrimSpace(mode))
+	default:
+		return "fixed"
+	}
+}
+
 // MaskEmail masks a user email to prevent PII leakage in logs
 // Returns "***masked***" if email is empty, otherwise shows only the domain part
 func MaskEmail(email string) string {

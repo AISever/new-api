@@ -13,6 +13,7 @@ import (
 	"github.com/QuantumNous/new-api/logger"
 
 	"github.com/bytedance/gopkg/util/gopool"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -336,9 +337,64 @@ func inviteUser(inviterId int) (err error) {
 		return err
 	}
 	user.AffCount++
+	return DB.Save(user).Error
+}
+
+func grantInviteFixedReward(inviterId int) error {
+	if inviterId == 0 || common.QuotaForInviter <= 0 {
+		return nil
+	}
+	user, err := GetUserById(inviterId, true)
+	if err != nil {
+		return err
+	}
 	user.AffQuota += common.QuotaForInviter
 	user.AffHistoryQuota += common.QuotaForInviter
 	return DB.Save(user).Error
+}
+
+func grantInviteRatioReward(inviteeId int, payMoney float64) error {
+	if inviteeId == 0 || payMoney <= 0 {
+		return nil
+	}
+	if common.NormalizeInviteRewardMode(common.InviteRewardMode) != common.NormalizeInviteRewardMode("ratio") {
+		return nil
+	}
+	if common.InviteRewardRatio <= 0 {
+		return nil
+	}
+
+	invitee, err := GetUserById(inviteeId, true)
+	if err != nil {
+		return err
+	}
+	if invitee.InviterId == 0 {
+		return nil
+	}
+
+	rewardQuota := int(decimal.NewFromFloat(payMoney).
+		Mul(decimal.NewFromFloat(common.InviteRewardRatio)).
+		Mul(decimal.NewFromFloat(common.QuotaPerUnit)).
+		IntPart())
+	if rewardQuota <= 0 {
+		return nil
+	}
+
+	inviter, err := GetUserById(invitee.InviterId, true)
+	if err != nil {
+		return err
+	}
+	inviter.AffQuota += rewardQuota
+	inviter.AffHistoryQuota += rewardQuota
+	if err = DB.Save(inviter).Error; err != nil {
+		return err
+	}
+	RecordLog(inviter.Id, LogTypeSystem, fmt.Sprintf("邀请充值返奖 %s，支付金额 %.2f，返奖比例 %.4f", logger.LogQuota(rewardQuota), payMoney, common.InviteRewardRatio))
+	return nil
+}
+
+func GrantInviteRatioRewardForTopUp(inviteeId int, payMoney float64) error {
+	return grantInviteRatioReward(inviteeId, payMoney)
 }
 
 func (user *User) TransferAffQuotaToQuota(quota int) error {
@@ -421,14 +477,15 @@ func (user *User) Insert(inviterId int) error {
 		RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("新用户注册赠送 %s", logger.LogQuota(common.QuotaForNewUser)))
 	}
 	if inviterId != 0 {
+		_ = inviteUser(inviterId)
 		if common.QuotaForInvitee > 0 {
 			_ = IncreaseUserQuota(user.Id, common.QuotaForInvitee, true)
 			RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("使用邀请码赠送 %s", logger.LogQuota(common.QuotaForInvitee)))
 		}
-		if common.QuotaForInviter > 0 {
+		if common.NormalizeInviteRewardMode(common.InviteRewardMode) == "fixed" && common.QuotaForInviter > 0 {
 			//_ = IncreaseUserQuota(inviterId, common.QuotaForInviter)
-			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请用户赠送 %s", logger.LogQuota(common.QuotaForInviter)))
-			_ = inviteUser(inviterId)
+			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请注册固定奖励 %s", logger.LogQuota(common.QuotaForInviter)))
+			_ = grantInviteFixedReward(inviterId)
 		}
 	}
 	return nil
@@ -482,13 +539,14 @@ func (user *User) FinalizeOAuthUserCreation(inviterId int) {
 		RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("新用户注册赠送 %s", logger.LogQuota(common.QuotaForNewUser)))
 	}
 	if inviterId != 0 {
+		_ = inviteUser(inviterId)
 		if common.QuotaForInvitee > 0 {
 			_ = IncreaseUserQuota(user.Id, common.QuotaForInvitee, true)
 			RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("使用邀请码赠送 %s", logger.LogQuota(common.QuotaForInvitee)))
 		}
-		if common.QuotaForInviter > 0 {
-			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请用户赠送 %s", logger.LogQuota(common.QuotaForInviter)))
-			_ = inviteUser(inviterId)
+		if common.NormalizeInviteRewardMode(common.InviteRewardMode) == "fixed" && common.QuotaForInviter > 0 {
+			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请注册固定奖励 %s", logger.LogQuota(common.QuotaForInviter)))
+			_ = grantInviteFixedReward(inviterId)
 		}
 	}
 }

@@ -36,10 +36,13 @@ export default function SettingsCreditLimit(props) {
     PreConsumedQuota: '',
     QuotaForInviter: '',
     QuotaForInvitee: '',
+    InviteRewardMode: 'fixed',
+    InviteRewardRatio: '',
     'quota_setting.enable_free_model_pre_consume': true,
   });
   const refForm = useRef();
   const [inputsRow, setInputsRow] = useState(inputs);
+  const inviteRewardMode = inputs.InviteRewardMode || 'fixed';
 
   function onSubmit() {
     const updateArray = compareObjects(inputs, inputsRow);
@@ -131,13 +134,39 @@ export default function SettingsCreditLimit(props) {
                 />
               </Col>
               <Col xs={24} sm={12} md={8} lg={8} xl={8}>
+                <Form.Select
+                  field={'InviteRewardMode'}
+                  label={t('邀请奖励模式')}
+                  extraText={t(
+                    '固定模式在注册时奖励，比例模式在每次成功充值后按支付金额返奖',
+                  )}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      InviteRewardMode: value,
+                    })
+                  }
+                >
+                  <Form.Select.Option value='fixed'>
+                    {t('固定奖励')}
+                  </Form.Select.Option>
+                  <Form.Select.Option value='ratio'>
+                    {t('比例返奖')}
+                  </Form.Select.Option>
+                </Form.Select>
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={8}>
                 <Form.InputNumber
                   label={t('邀请新用户奖励额度')}
                   field={'QuotaForInviter'}
                   step={1}
                   min={0}
                   suffix={'Token'}
-                  extraText={''}
+                  extraText={
+                    inviteRewardMode === 'fixed'
+                      ? t('固定模式下生效')
+                      : t('比例模式下不生效')
+                  }
                   placeholder={t('例如：2000')}
                   onChange={(value) =>
                     setInputs({
@@ -162,6 +191,29 @@ export default function SettingsCreditLimit(props) {
                     setInputs({
                       ...inputs,
                       QuotaForInvitee: String(value),
+                    })
+                  }
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={6}>
+                <Form.InputNumber
+                  label={t('邀请充值返奖比例')}
+                  field={'InviteRewardRatio'}
+                  step={0.01}
+                  min={0}
+                  max={1}
+                  extraText={
+                    inviteRewardMode === 'ratio'
+                      ? t(
+                          '比例模式下生效，按实际支付金额计算，例如 0.25 表示 25%',
+                        )
+                      : t('固定模式下不生效')
+                  }
+                  placeholder={t('例如：0.25')}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      InviteRewardRatio: String(value),
                     })
                   }
                 />
