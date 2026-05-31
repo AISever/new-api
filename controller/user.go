@@ -976,6 +976,16 @@ func ManageUser(c *gin.Context) {
 			}
 			model.RecordLogWithAdminInfo(user.Id, model.LogTypeManage,
 				fmt.Sprintf("管理员减少用户额度 %s", logger.LogQuota(req.Value)), adminInfo)
+		case "topup":
+			if req.Value <= 0 {
+				common.ApiErrorI18n(c, i18n.MsgUserQuotaChangeZero)
+				return
+			}
+			payMoney := float64(req.Value) / common.QuotaPerUnit
+			if err := model.AdminCreateTopUp(user.Id, payMoney, c.ClientIP()); err != nil {
+				common.ApiError(c, err)
+				return
+			}
 		case "override":
 			oldQuota := user.Quota
 			if err := model.DB.Model(&model.User{}).Where("id = ?", user.Id).Update("quota", req.Value).Error; err != nil {

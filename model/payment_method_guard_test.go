@@ -249,6 +249,87 @@ func TestRecharge_RatioInviteRewardModeGrantsRewardOnEverySuccessfulTopUp(t *tes
 	assert.Equal(t, expectedTotalReward, inviterAfterSecondTopup.AffHistoryQuota)
 }
 
+func TestAdminCompleteManualTopUp_RatioInviteRewardModeGrantsReward(t *testing.T) {
+	truncateTables(t)
+
+	originalMode := common.InviteRewardMode
+	originalRatio := common.InviteRewardRatio
+	originalQuotaPerUnit := common.QuotaPerUnit
+	common.InviteRewardMode = common.InviteRewardModeRatio
+	common.InviteRewardRatio = 0.25
+	common.QuotaPerUnit = 500000
+	t.Cleanup(func() {
+		common.InviteRewardMode = originalMode
+		common.InviteRewardRatio = originalRatio
+		common.QuotaPerUnit = originalQuotaPerUnit
+	})
+
+	insertInviterForRewardModeTest(t, 705)
+	insertInviteeForRewardModeTest(t, 706, 705)
+
+	topUp := &TopUp{
+		UserId:          706,
+		Amount:          20,
+		Money:           20,
+		TradeNo:         "ratio-admin-manual-topup",
+		PaymentMethod:   PaymentMethodStripe,
+		PaymentProvider: PaymentProviderStripe,
+		Status:          common.TopUpStatusPending,
+		CreateTime:      time.Now().Unix(),
+	}
+	require.NoError(t, topUp.Insert())
+
+	require.NoError(t, ManualCompleteTopUp("ratio-admin-manual-topup", "127.0.0.1"))
+
+	invitee := getUserInviteStateForPaymentGuardTest(t, 706)
+	assert.Equal(t, int(20*common.QuotaPerUnit), invitee.Quota)
+
+	inviter := getUserInviteStateForPaymentGuardTest(t, 705)
+	expectedReward := int(20 * 0.25 * common.QuotaPerUnit)
+	assert.Equal(t, expectedReward, inviter.AffQuota)
+	assert.Equal(t, expectedReward, inviter.AffHistoryQuota)
+
+	completed := GetTopUpByTradeNo("ratio-admin-manual-topup")
+	require.NotNil(t, completed)
+	assert.Equal(t, common.TopUpStatusSuccess, completed.Status)
+}
+
+func TestAdminCreateTopUp_RatioInviteRewardModeGrantsReward(t *testing.T) {
+	truncateTables(t)
+
+	originalMode := common.InviteRewardMode
+	originalRatio := common.InviteRewardRatio
+	originalQuotaPerUnit := common.QuotaPerUnit
+	common.InviteRewardMode = common.InviteRewardModeRatio
+	common.InviteRewardRatio = 0.25
+	common.QuotaPerUnit = 500000
+	t.Cleanup(func() {
+		common.InviteRewardMode = originalMode
+		common.InviteRewardRatio = originalRatio
+		common.QuotaPerUnit = originalQuotaPerUnit
+	})
+
+	insertInviterForRewardModeTest(t, 707)
+	insertInviteeForRewardModeTest(t, 708, 707)
+
+	require.NoError(t, AdminCreateTopUp(708, 12.5, "127.0.0.1"))
+
+	invitee := getUserInviteStateForPaymentGuardTest(t, 708)
+	assert.Equal(t, int(12.5*common.QuotaPerUnit), invitee.Quota)
+
+	inviter := getUserInviteStateForPaymentGuardTest(t, 707)
+	expectedReward := int(12.5 * 0.25 * common.QuotaPerUnit)
+	assert.Equal(t, expectedReward, inviter.AffQuota)
+	assert.Equal(t, expectedReward, inviter.AffHistoryQuota)
+
+	var topups []TopUp
+	require.NoError(t, DB.Where("user_id = ?", 708).Find(&topups).Error)
+	require.Len(t, topups, 1)
+	assert.Equal(t, common.TopUpStatusSuccess, topups[0].Status)
+	assert.Equal(t, "admin", topups[0].PaymentMethod)
+	assert.Equal(t, 12.5, topups[0].Money)
+}
+
 func TestRechargeWaffoPancake_RejectsMismatchedPaymentMethod(t *testing.T) {
 	truncateTables(t)
 

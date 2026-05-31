@@ -501,6 +501,7 @@ const EditUserModal = (props) => {
           >
             <Radio value='add'>{t('添加')}</Radio>
             <Radio value='subtract'>{t('减少')}</Radio>
+            <Radio value='topup'>{t('充值')}</Radio>
             <Radio value='override'>{t('覆盖')}</Radio>
           </RadioGroup>
         </div>

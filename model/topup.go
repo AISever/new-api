@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -393,6 +394,32 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 	}
 	return nil
 }
+
+func AdminCreateTopUp(userId int, payMoney float64, callerIp string) error {
+	if userId <= 0 {
+		return errors.New("无效的用户")
+	}
+	if payMoney <= 0 {
+		return errors.New("无效的支付金额")
+	}
+
+	tradeNo := fmt.Sprintf("ADMTP%d%d", userId, time.Now().UnixNano())
+	topUp := &TopUp{
+		UserId:          userId,
+		Amount:          int64(payMoney),
+		Money:           payMoney,
+		TradeNo:         tradeNo,
+		PaymentMethod:   "admin",
+		PaymentProvider: PaymentProviderStripe,
+		CreateTime:      common.GetTimestamp(),
+		Status:          common.TopUpStatusPending,
+	}
+	if err := topUp.Insert(); err != nil {
+		return err
+	}
+	return ManualCompleteTopUp(tradeNo, callerIp)
+}
+
 func RechargeCreem(referenceId string, customerEmail string, customerName string, callerIp string) (err error) {
 	if referenceId == "" {
 		return errors.New("未提供支付单号")
