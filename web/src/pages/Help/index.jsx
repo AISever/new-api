@@ -306,7 +306,25 @@ source ~/.bashrc`}</CodeBlock>
       <Tabs activeKey={activePlatform} onChange={setActivePlatform}>
         <TabPane tab={<span><IconDesktop /> Windows</span>} itemKey="windows">
           <StepCard step="1" title={t('安装 Node.js 环境')}>
-            <Paragraph>{t('参考 Claude Code 的 Node.js 安装步骤。')}</Paragraph>
+            <Paragraph>{t('Codex CLI 需要 Node.js 环境。建议安装 Node.js LTS 版本。')}</Paragraph>
+            <Title heading={6}>{t('方法一：官网下载（推荐）')}</Title>
+            <Paragraph>
+              1. {t('打开浏览器访问')} <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">https://nodejs.org/</a><br/>
+              2. {t('点击 LTS 版本下载安装包')}<br/>
+              3. {t('下载完成后双击 .msi 文件，按照安装向导完成安装')}
+            </Paragraph>
+            <Title heading={6}>{t('方法二：使用包管理器')}</Title>
+            <CodeBlock>{`# 使用 Winget
+winget install OpenJS.NodeJS.LTS
+
+# 或使用 Chocolatey
+choco install nodejs-lts
+
+# 或使用 Scoop
+scoop install nodejs-lts`}</CodeBlock>
+            <Title heading={6}>{t('验证安装')}</Title>
+            <CodeBlock>{`node --version
+npm --version`}</CodeBlock>
           </StepCard>
 
           <StepCard step="2" title={t('安装 Codex')}>
@@ -363,44 +381,131 @@ requires_openai_auth = true`}</CodeBlock>
 
         <TabPane tab={<span><IconTerminal /> macOS</span>} itemKey="macos">
           <StepCard step="1" title={t('安装 Node.js 环境')}>
+            <Paragraph>{t('Codex CLI 需要 Node.js 环境。任选下面一种方式安装即可。')}</Paragraph>
+            <Title heading={6}>{t('方法一：使用 Homebrew')}</Title>
             <CodeBlock>{`brew update
 brew install node`}</CodeBlock>
+            <Title heading={6}>{t('方法二：官网下载')}</Title>
+            <Paragraph>
+              1. {t('打开浏览器访问')} <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">https://nodejs.org/</a><br/>
+              2. {t('下载并安装 LTS 版本')}
+            </Paragraph>
+            <Title heading={6}>{t('验证安装')}</Title>
+            <CodeBlock>{`node --version
+npm --version`}</CodeBlock>
           </StepCard>
 
           <StepCard step="2" title={t('安装 Codex')}>
-            <CodeBlock>{`npm install -g @openai/codex`}</CodeBlock>
+            <CodeBlock>{`npm install -g @openai/codex@latest`}</CodeBlock>
+            <Title heading={6}>{t('验证安装')}</Title>
+            <CodeBlock>{`codex --version`}</CodeBlock>
           </StepCard>
 
-          <StepCard step="3" title={t('配置环境变量')}>
-            <Title heading={6}>{t('永久设置（zsh）')}</Title>
-            <CodeBlock>{`echo 'export OPENAI_BASE_URL="${serverAddress}/v1"' >> ~/.zshrc
-echo 'export OPENAI_API_KEY="你的API密钥"' >> ~/.zshrc
-source ~/.zshrc`}</CodeBlock>
+          <StepCard step="3" title={t('创建 API Key')}>
+            <Paragraph>{t('登录 AISever 后台，创建一个可用的 API Key。')}</Paragraph>
           </StepCard>
 
-          <StepCard step="4" title={t('开始使用')}>
+          <StepCard step="4" title={t('打开配置目录')}>
+            <Paragraph>{t('macOS 下 Codex 配置目录通常为：')}</Paragraph>
+            <CodeBlock>{`~/.codex/`}</CodeBlock>
+            <Paragraph>{t('如果目录不存在，请手动创建。')}</Paragraph>
+          </StepCard>
+
+          <StepCard step="5" title={t('创建配置文件')}>
+            <Paragraph>{t('在')} <Text code>.codex</Text> {t('目录下创建以下两个文件：')}</Paragraph>
+            <ul style={{ margin: '8px 0 0 20px' }}>
+              <li><Text code>config.toml</Text></li>
+              <li><Text code>auth.json</Text></li>
+            </ul>
+          </StepCard>
+
+          <StepCard step="6" title={t('写入配置内容')}>
+            <Title heading={6}><Text code>config.toml</Text></Title>
+            <CodeBlock>{`model_provider = "aisever"
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+network_access = "enabled"
+disable_response_storage = true
+
+[model_providers.aisever]
+name = "aisever"
+base_url = "${serverAddress}/v1"
+wire_api = "responses"
+requires_openai_auth = true`}</CodeBlock>
+
+            <Title heading={6}><Text code>auth.json</Text></Title>
+            <CodeBlock>{`{
+  "OPENAI_API_KEY": "你的 AISever API Key"
+}`}</CodeBlock>
+
+            <Paragraph>{t('请将')} <Text code>你的 AISever API Key</Text> {t('替换为你在后台创建的真实 Key。')}</Paragraph>
+          </StepCard>
+
+          <StepCard step="7" title={t('启动 Codex')}>
             <CodeBlock>{`codex`}</CodeBlock>
+            <Paragraph>{t('配置完成后，Codex 将通过 AISever 接口调用模型。')}</Paragraph>
           </StepCard>
         </TabPane>
 
         <TabPane tab={<span><IconTerminal /> Linux</span>} itemKey="linux">
           <StepCard step="1" title={t('安装 Node.js 环境')}>
+            <Paragraph>{t('Codex CLI 需要 Node.js 环境。以下示例使用 NodeSource 安装 LTS 版本。')}</Paragraph>
             <CodeBlock>{`curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt-get install -y nodejs`}</CodeBlock>
+            <Title heading={6}>{t('验证安装')}</Title>
+            <CodeBlock>{`node --version
+npm --version`}</CodeBlock>
           </StepCard>
 
           <StepCard step="2" title={t('安装 Codex')}>
-            <CodeBlock>{`npm install -g @openai/codex`}</CodeBlock>
+            <CodeBlock>{`npm install -g @openai/codex@latest`}</CodeBlock>
+            <Title heading={6}>{t('验证安装')}</Title>
+            <CodeBlock>{`codex --version`}</CodeBlock>
           </StepCard>
 
-          <StepCard step="3" title={t('配置环境变量')}>
-            <CodeBlock>{`echo 'export OPENAI_BASE_URL="${serverAddress}/v1"' >> ~/.bashrc
-echo 'export OPENAI_API_KEY="你的API密钥"' >> ~/.bashrc
-source ~/.bashrc`}</CodeBlock>
+          <StepCard step="3" title={t('创建 API Key')}>
+            <Paragraph>{t('登录 AISever 后台，创建一个可用的 API Key。')}</Paragraph>
           </StepCard>
 
-          <StepCard step="4" title={t('开始使用')}>
+          <StepCard step="4" title={t('打开配置目录')}>
+            <Paragraph>{t('Linux 下 Codex 配置目录通常为：')}</Paragraph>
+            <CodeBlock>{`~/.codex/`}</CodeBlock>
+            <Paragraph>{t('如果目录不存在，请手动创建。')}</Paragraph>
+          </StepCard>
+
+          <StepCard step="5" title={t('创建配置文件')}>
+            <Paragraph>{t('在')} <Text code>.codex</Text> {t('目录下创建以下两个文件：')}</Paragraph>
+            <ul style={{ margin: '8px 0 0 20px' }}>
+              <li><Text code>config.toml</Text></li>
+              <li><Text code>auth.json</Text></li>
+            </ul>
+          </StepCard>
+
+          <StepCard step="6" title={t('写入配置内容')}>
+            <Title heading={6}><Text code>config.toml</Text></Title>
+            <CodeBlock>{`model_provider = "aisever"
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+network_access = "enabled"
+disable_response_storage = true
+
+[model_providers.aisever]
+name = "aisever"
+base_url = "${serverAddress}/v1"
+wire_api = "responses"
+requires_openai_auth = true`}</CodeBlock>
+
+            <Title heading={6}><Text code>auth.json</Text></Title>
+            <CodeBlock>{`{
+  "OPENAI_API_KEY": "你的 AISever API Key"
+}`}</CodeBlock>
+
+            <Paragraph>{t('请将')} <Text code>你的 AISever API Key</Text> {t('替换为你在后台创建的真实 Key。')}</Paragraph>
+          </StepCard>
+
+          <StepCard step="7" title={t('启动 Codex')}>
             <CodeBlock>{`codex`}</CodeBlock>
+            <Paragraph>{t('配置完成后，Codex 将通过 AISever 接口调用模型。')}</Paragraph>
           </StepCard>
         </TabPane>
       </Tabs>
