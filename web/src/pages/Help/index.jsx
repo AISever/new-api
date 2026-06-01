@@ -310,26 +310,54 @@ source ~/.bashrc`}</CodeBlock>
           </StepCard>
 
           <StepCard step="2" title={t('安装 Codex')}>
-            <CodeBlock>{`npm install -g @openai/codex`}</CodeBlock>
+            <CodeBlock>{`npm install -g @openai/codex@latest`}</CodeBlock>
             <Title heading={6}>{t('验证安装')}</Title>
             <CodeBlock>{`codex --version`}</CodeBlock>
           </StepCard>
 
-          <StepCard step="3" title={t('配置环境变量')}>
-            <Title heading={6}>{t('方法一：配置文件设置')}</Title>
-            <Paragraph>{t('在')} <Text code>C:\\Users\\你的用户名\\.codex</Text> {t('目录下创建')} <Text code>config.toml</Text></Paragraph>
-            
-            <Title heading={6}>{t('方法二：PowerShell 设置')}</Title>
-            <CodeBlock>{`$env:OPENAI_BASE_URL = "${serverAddress}/v1"
-$env:OPENAI_API_KEY = "你的API密钥"`}</CodeBlock>
-
-            <Title heading={6}>{t('永久设置')}</Title>
-            <CodeBlock>{`[System.Environment]::SetEnvironmentVariable("OPENAI_BASE_URL", "${serverAddress}/v1", [System.EnvironmentVariableTarget]::User)
-[System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "你的API密钥", [System.EnvironmentVariableTarget]::User)`}</CodeBlock>
+          <StepCard step="3" title={t('创建 API Key')}>
+            <Paragraph>{t('登录 AISever 后台，创建一个可用的 API Key。')}</Paragraph>
           </StepCard>
 
-          <StepCard step="4" title={t('开始使用')}>
+          <StepCard step="4" title={t('打开配置目录')}>
+            <Paragraph>{t('Windows 下 Codex 配置目录通常为：')}</Paragraph>
+            <CodeBlock>{`%USERPROFILE%\\.codex\\`}</CodeBlock>
+            <Paragraph>{t('如果目录不存在，请手动创建。')}</Paragraph>
+          </StepCard>
+
+          <StepCard step="5" title={t('创建配置文件')}>
+            <Paragraph>{t('在')} <Text code>.codex</Text> {t('目录下创建以下两个文件：')}</Paragraph>
+            <ul style={{ margin: '8px 0 0 20px' }}>
+              <li><Text code>config.toml</Text></li>
+              <li><Text code>auth.json</Text></li>
+            </ul>
+          </StepCard>
+
+          <StepCard step="6" title={t('写入配置内容')}>
+            <Title heading={6}><Text code>config.toml</Text></Title>
+            <CodeBlock>{`model_provider = "aisever"
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+network_access = "enabled"
+disable_response_storage = true
+
+[model_providers.aisever]
+name = "aisever"
+base_url = "${serverAddress}/v1"
+wire_api = "responses"
+requires_openai_auth = true`}</CodeBlock>
+
+            <Title heading={6}><Text code>auth.json</Text></Title>
+            <CodeBlock>{`{
+  "OPENAI_API_KEY": "你的 AISever API Key"
+}`}</CodeBlock>
+
+            <Paragraph>{t('请将')} <Text code>你的 AISever API Key</Text> {t('替换为你在后台创建的真实 Key。')}</Paragraph>
+          </StepCard>
+
+          <StepCard step="7" title={t('启动 Codex')}>
             <CodeBlock>{`codex`}</CodeBlock>
+            <Paragraph>{t('配置完成后，Codex 将通过 AISever 接口调用模型。')}</Paragraph>
           </StepCard>
         </TabPane>
 
