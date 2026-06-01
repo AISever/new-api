@@ -560,8 +560,8 @@ npm --version`}</CodeBlock>
             </Paragraph>
             <Title heading={6}>{t('.env 文件')}</Title>
             <CodeBlock>{`GOOGLE_GEMINI_BASE_URL=${serverAddress}
-GEMINI_API_KEY=你的API密钥
-GEMINI_MODEL=gemini-2.5-pro`}</CodeBlock>
+GEMINI_API_KEY=你的 AISever API Key
+GEMINI_MODEL=gemini-3.5-flash`}</CodeBlock>
             <Title heading={6}>{t('settings.json 文件')}</Title>
             <CodeBlock>{`{
   "ide": {
@@ -574,7 +574,7 @@ GEMINI_MODEL=gemini-2.5-pro`}</CodeBlock>
   }
 }`}</CodeBlock>
             <Paragraph style={{ marginTop: '8px', color: 'var(--semi-color-text-2)' }}>
-              {t('⚠️ 将 .env 文件中的"你的API密钥"替换为您的令牌！')}
+              {t('请将 .env 文件中的')} <Text code>你的 AISever API Key</Text> {t('替换为你在后台创建的真实 Key。')}
             </Paragraph>
           </StepCard>
 
@@ -605,8 +605,8 @@ mkdir -p ~/.gemini
 # 创建 .env 文件
 cat > ~/.gemini/.env << 'EOF'
 GOOGLE_GEMINI_BASE_URL=${serverAddress}
-GEMINI_API_KEY=你的API密钥
-GEMINI_MODEL=gemini-2.5-pro
+GEMINI_API_KEY=你的 AISever API Key
+GEMINI_MODEL=gemini-3.5-flash
 EOF
 
 # 创建 settings.json 文件
@@ -623,7 +623,7 @@ cat > ~/.gemini/settings.json << 'EOF'
 }
 EOF`}</CodeBlock>
             <Paragraph style={{ marginTop: '8px', color: 'var(--semi-color-text-2)' }}>
-              {t('⚠️ 编辑 .env 文件，替换令牌：')} <Text code>nano ~/.gemini/.env</Text>
+              {t('请编辑 .env 文件，将')} <Text code>你的 AISever API Key</Text> {t('替换为你在后台创建的真实 Key。')}
             </Paragraph>
           </StepCard>
 
@@ -658,8 +658,8 @@ mkdir -p ~/.gemini
 # 创建 .env 文件
 cat > ~/.gemini/.env << 'EOF'
 GOOGLE_GEMINI_BASE_URL=${serverAddress}
-GEMINI_API_KEY=你的API密钥
-GEMINI_MODEL=gemini-2.5-pro
+GEMINI_API_KEY=你的 AISever API Key
+GEMINI_MODEL=gemini-3.5-flash
 EOF
 
 # 创建 settings.json 文件
@@ -676,7 +676,7 @@ cat > ~/.gemini/settings.json << 'EOF'
 }
 EOF`}</CodeBlock>
             <Paragraph style={{ marginTop: '8px', color: 'var(--semi-color-text-2)' }}>
-              {t('⚠️ 编辑 .env 文件，替换令牌：')} <Text code>nano ~/.gemini/.env</Text>
+              {t('请编辑 .env 文件，将')} <Text code>你的 AISever API Key</Text> {t('替换为你在后台创建的真实 Key。')}
             </Paragraph>
           </StepCard>
 
@@ -685,6 +685,123 @@ EOF`}</CodeBlock>
           </StepCard>
         </TabPane>
       </Tabs>
+    </div>
+  );
+
+  // OpenClaw 教程
+  const OpenClawTutorial = () => (
+    <div>
+      <Banner
+        type="info"
+        description={t('OpenClaw 是支持本地网关、控制台与多渠道接入的 Agent 工具，可通过自定义 Provider 接入 AISever。')}
+        className="mb-4"
+      />
+
+      <StepCard step="1" title={t('安装 OpenClaw')}>
+        <Paragraph>{t('macOS、Linux 或 WSL2 可直接执行官方安装脚本，--no-onboard 表示安装后先不自动进入向导。')}</Paragraph>
+        <CodeBlock>{`curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
+
+openclaw --help`}</CodeBlock>
+      </StepCard>
+
+      <StepCard step="2" title={t('启动接入向导')}>
+        <Paragraph>{t('安装完成后执行向导，按提示进入模型与鉴权配置。')}</Paragraph>
+        <CodeBlock>{`openclaw onboard`}</CodeBlock>
+      </StepCard>
+
+      <StepCard step="3" title={t('选择自定义服务商')}>
+        <Paragraph>{t('在模型和鉴权步骤选择 Custom provider。兼容类型可选 Anthropic-compatible 或 OpenAI-compatible。')}</Paragraph>
+        <ul style={{ margin: '8px 0 0 20px' }}>
+          <li>Provider ID: <Text code>aisever</Text></li>
+          <li>Anthropic-compatible: <Text code>{serverAddress}</Text></li>
+          <li>OpenAI-compatible: <Text code>{`${serverAddress}/v1`}</Text></li>
+          <li>API Key: <Text code>你的 AISever API Key</Text></li>
+          <li>Model: <Text code>gpt-5.5</Text></li>
+        </ul>
+      </StepCard>
+
+      <StepCard step="4" title={t('脚本化接入')}>
+        <Paragraph>{t('如需写入部署脚本或服务器初始化，可使用非交互模式。以下示例使用 OpenAI-compatible 路径，因此 Base URL 带 /v1。')}</Paragraph>
+        <CodeBlock>{`export CUSTOM_API_KEY="你的 AISever API Key"
+
+openclaw onboard --non-interactive \\
+  --mode local \\
+  --auth-choice custom-api-key \\
+  --custom-base-url "${serverAddress}/v1" \\
+  --custom-model-id "gpt-5.5" \\
+  --custom-provider-id "aisever" \\
+  --custom-compatibility openai \\
+  --secret-input-mode ref \\
+  --gateway-port 18789 \\
+  --gateway-bind loopback`}</CodeBlock>
+      </StepCard>
+
+      <StepCard step="5" title={t('手动检查配置')}>
+        <Paragraph>{t('也可以直接检查或编辑 ~/.openclaw/openclaw.json。默认模型必须写成“服务商 ID/模型名”格式。')}</Paragraph>
+        <CodeBlock>{`{
+  "agents": {
+    "defaults": {
+      "model": { "primary": "aisever/gpt-5.5" }
+    }
+  },
+  "models": {
+    "providers": {
+      "aisever": {
+        "baseUrl": "${serverAddress}/v1",
+        "apiKey": "\${CUSTOM_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "gpt-5.5",
+            "name": "gpt-5.5"
+          }
+        ]
+      }
+    }
+  }
+}`}</CodeBlock>
+      </StepCard>
+
+      <StepCard step="6" title={t('验证接入')}>
+        <CodeBlock>{`openclaw doctor
+openclaw status
+openclaw dashboard`}</CodeBlock>
+        <Paragraph>{t('如果控制台中发送消息能收到模型回复，说明 AISever 接入成功。')}</Paragraph>
+      </StepCard>
+    </div>
+  );
+
+  // Hermes 教程
+  const HermesTutorial = () => (
+    <div>
+      <Banner
+        type="info"
+        description={t('Hermes 是 Agent / 助手类工具。配置时优先选择原生 Provider，以保留工具调用语义；如果只提供 Custom OpenAI，则使用 OpenAI Compatible 作为备用。')}
+        className="mb-4"
+      />
+
+      <StepCard step="1" title={t('创建自定义 Provider')}>
+        <Paragraph>{t('在 Hermes 的模型或供应商设置中新增 AISever。若版本提供 Anthropic、Gemini 或 OpenAI Responses 原生 Provider，优先选择原生模式。')}</Paragraph>
+        <ul style={{ margin: '8px 0 0 20px' }}>
+          <li>Provider Name: <Text code>AISever</Text></li>
+          <li>Base URL: <Text code>{serverAddress}</Text></li>
+          <li>OpenAI Compatible URL: <Text code>{`${serverAddress}/v1`}</Text></li>
+          <li>API Key: <Text code>你的 AISever API Key</Text></li>
+          <li>Model: <Text code>gpt-5.5</Text></li>
+        </ul>
+      </StepCard>
+
+      <StepCard step="2" title={t('OpenAI Compatible 备用配置')}>
+        <Paragraph>{t('如果 Hermes 只提供 Custom OpenAI 或 OpenAI Compatible 配置入口，按下面参数填写。')}</Paragraph>
+        <CodeBlock>{`Provider: AISever
+Base URL: ${serverAddress}/v1
+API Key: 你的 AISever API Key
+Model: gpt-5.5`}</CodeBlock>
+      </StepCard>
+
+      <StepCard step="3" title={t('验证接入')}>
+        <Paragraph>{t('保存 Provider 后，在 Hermes 中选择该模型发起一次普通对话；如果能收到模型回复，说明配置已生效。')}</Paragraph>
+      </StepCard>
     </div>
   );
 
@@ -873,6 +990,18 @@ EOF`}</CodeBlock>
           itemKey="gemini"
         >
           <GeminiTutorial />
+        </TabPane>
+        <TabPane
+          tab={<span><IconApps /> OpenClaw</span>}
+          itemKey="openclaw"
+        >
+          <OpenClawTutorial />
+        </TabPane>
+        <TabPane
+          tab={<span><IconTerminal /> Hermes</span>}
+          itemKey="hermes"
+        >
+          <HermesTutorial />
         </TabPane>
       </Tabs>
 
