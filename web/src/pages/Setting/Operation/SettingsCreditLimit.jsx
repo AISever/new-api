@@ -138,7 +138,7 @@ export default function SettingsCreditLimit(props) {
                   field={'InviteRewardMode'}
                   label={t('邀请奖励模式')}
                   extraText={t(
-                    '固定模式在注册时奖励，比例模式在每次成功充值后按支付金额返奖',
+                    '固定模式在注册时奖励，比例模式在每次成功充值或订阅购买后按支付金额返奖',
                   )}
                   onChange={(value) =>
                     setInputs({
@@ -197,7 +197,7 @@ export default function SettingsCreditLimit(props) {
               </Col>
               <Col xs={24} sm={12} md={8} lg={8} xl={6}>
                 <Form.InputNumber
-                  label={t('邀请充值返奖比例')}
+                  label={t('邀请支付默认返奖比例')}
                   field={'InviteRewardRatio'}
                   step={0.01}
                   min={0}
@@ -205,7 +205,7 @@ export default function SettingsCreditLimit(props) {
                   extraText={
                     inviteRewardMode === 'ratio'
                       ? t(
-                          '比例模式下生效，按实际支付金额计算，例如 0.25 表示 25%',
+                          '全局默认比例，用户个人比例为空时生效，例如 0.25 表示 25%',
                         )
                       : t('固定模式下不生效')
                   }

@@ -560,6 +560,11 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 	_, updateQuota := requestFields["quota"]
+	_, updateInviteRewardRatio := requestFields["invite_reward_ratio"]
+	if updateInviteRewardRatio && updatedUser.InviteRewardRatio != nil && (*updatedUser.InviteRewardRatio < 0 || *updatedUser.InviteRewardRatio > 1) {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
 	if updatedUser.Password == "" {
 		updatedUser.Password = "$I_LOVE_U" // make Validator happy :)
 	}
@@ -593,7 +598,7 @@ func UpdateUser(c *gin.Context) {
 		updatedUser.Remark = originUser.Remark
 	}
 	updatePassword := updatedUser.Password != ""
-	if err := updatedUser.Edit(updatePassword, updateQuota); err != nil {
+	if err := updatedUser.Edit(updatePassword, updateQuota, updateInviteRewardRatio); err != nil {
 		common.ApiError(c, err)
 		return
 	}

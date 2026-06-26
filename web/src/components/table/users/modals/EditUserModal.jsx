@@ -94,6 +94,7 @@ const EditUserModal = (props) => {
     quota_amount: 0,
     group: 'default',
     remark: '',
+    invite_reward_ratio: null,
   });
 
   const fetchGroups = async () => {
@@ -148,6 +149,12 @@ const EditUserModal = (props) => {
   const submit = async (values) => {
     setLoading(true);
     let payload = { ...values };
+    if (
+      payload.invite_reward_ratio === '' ||
+      payload.invite_reward_ratio === undefined
+    ) {
+      payload.invite_reward_ratio = null;
+    }
     delete payload.quota;
     delete payload.quota_amount;
     if (userId) {
@@ -365,6 +372,23 @@ const EditUserModal = (props) => {
                           allowAdditions
                           search
                           rules={[{ required: true, message: t('请选择分组') }]}
+                        />
+                      </Col>
+
+                      <Col span={24}>
+                        <Form.InputNumber
+                          field='invite_reward_ratio'
+                          label={t('个人邀请返奖比例')}
+                          placeholder={t('留空继承全局比例，例如：0.25')}
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          precision={6}
+                          style={{ width: '100%' }}
+                          extraText={t(
+                            '留空使用系统默认比例；填写 0 表示该用户作为邀请人时不返奖',
+                          )}
+                          showClear
                         />
                       </Col>
 

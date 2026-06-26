@@ -181,6 +181,10 @@ const renderQuotaUsage = (text, record, t) => {
  * Render invite information
  */
 const renderInviteInfo = (text, record, t) => {
+  const rewardRatioText =
+    record.invite_reward_ratio === null || record.invite_reward_ratio === undefined
+      ? t('继承全局')
+      : `${(Number(record.invite_reward_ratio) * 100).toFixed(2)}%`;
   return (
     <div>
       <Space spacing={1}>
@@ -194,6 +198,9 @@ const renderInviteInfo = (text, record, t) => {
           {record.inviter_id === 0
             ? t('无邀请人')
             : `${t('邀请人')}: ${record.inviter_id}`}
+        </Tag>
+        <Tag color='white' shape='circle' className='!text-xs'>
+          {t('返奖比例')}: {rewardRatioText}
         </Tag>
       </Space>
     </div>

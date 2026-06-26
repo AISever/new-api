@@ -178,3 +178,112 @@ func TestUpdateUserExplicitZeroQuotaUpdatesQuota(t *testing.T) {
 		t.Fatalf("expected quota to update to explicit zero, got %d", reloaded.Quota)
 	}
 }
+
+func TestUpdateUserInviteRewardRatioAllowsOverrideAndClear(t *testing.T) {
+	db := setupUserControllerTestDB(t)
+	seedUserForUpdateTest(t, db, &model.User{
+		Id:          4,
+		Username:    "ratio-user",
+		Password:    "password123",
+		DisplayName: "Ratio User",
+		Role:        common.RoleCommonUser,
+		Status:      common.UserStatusEnabled,
+		Group:       "default",
+		AffCode:     "ratio4",
+	})
+
+	ctx, recorder := newAuthenticatedContext(t, http.MethodPut, "/api/user/", map[string]any{
+		"id":                  4,
+		"username":            "ratio-user",
+		"display_name":        "Ratio User",
+		"group":               "default",
+		"remark":              "",
+		"invite_reward_ratio": 0.25,
+	}, 999)
+	ctx.Set("role", common.RoleRootUser)
+
+	UpdateUser(ctx)
+
+	response := decodeAPIResponse(t, recorder)
+	if !response.Success {
+		t.Fatalf("expected success response, got message: %s", response.Message)
+	}
+
+	var reloaded model.User
+	if err := db.First(&reloaded, 4).Error; err != nil {
+		t.Fatalf("failed to reload user: %v", err)
+	}
+	if reloaded.InviteRewardRatio == nil {
+		t.Fatalf("expected invite reward ratio to be set")
+	}
+	if *reloaded.InviteRewardRatio != 0.25 {
+		t.Fatalf("expected invite reward ratio 0.25, got %v", *reloaded.InviteRewardRatio)
+	}
+
+	ctx, recorder = newAuthenticatedContext(t, http.MethodPut, "/api/user/", map[string]any{
+		"id":                  4,
+		"username":            "ratio-user",
+		"display_name":        "Ratio User",
+		"group":               "default",
+		"remark":              "",
+		"invite_reward_ratio": nil,
+	}, 999)
+	ctx.Set("role", common.RoleRootUser)
+
+	UpdateUser(ctx)
+
+	response = decodeAPIResponse(t, recorder)
+	if !response.Success {
+		t.Fatalf("expected success response, got message: %s", response.Message)
+	}
+
+	if err := db.First(&reloaded, 4).Error; err != nil {
+		t.Fatalf("failed to reload user: %v", err)
+	}
+	if reloaded.InviteRewardRatio != nil {
+		t.Fatalf("expected invite reward ratio to be cleared, got %v", *reloaded.InviteRewardRatio)
+	}
+}
+
+func TestUpdateUserOmittedInviteRewardRatioPreservesExistingValue(t *testing.T) {
+	db := setupUserControllerTestDB(t)
+	ratio := 0.25
+	seedUserForUpdateTest(t, db, &model.User{
+		Id:                5,
+		Username:          "ratio-keep-user",
+		Password:          "password123",
+		DisplayName:       "Ratio Keep User",
+		Role:              common.RoleCommonUser,
+		Status:            common.UserStatusEnabled,
+		Group:             "default",
+		AffCode:           "ratio5",
+		InviteRewardRatio: &ratio,
+	})
+
+	ctx, recorder := newAuthenticatedContext(t, http.MethodPut, "/api/user/", map[string]any{
+		"id":           5,
+		"username":     "ratio-keep-user",
+		"display_name": "Ratio Keep Edited",
+		"group":        "vip",
+		"remark":       "",
+	}, 999)
+	ctx.Set("role", common.RoleRootUser)
+
+	UpdateUser(ctx)
+
+	response := decodeAPIResponse(t, recorder)
+	if !response.Success {
+		t.Fatalf("expected success response, got message: %s", response.Message)
+	}
+
+	var reloaded model.User
+	if err := db.First(&reloaded, 5).Error; err != nil {
+		t.Fatalf("failed to reload user: %v", err)
+	}
+	if reloaded.InviteRewardRatio == nil {
+		t.Fatalf("expected invite reward ratio to be preserved")
+	}
+	if *reloaded.InviteRewardRatio != 0.25 {
+		t.Fatalf("expected invite reward ratio 0.25, got %v", *reloaded.InviteRewardRatio)
+	}
+}

@@ -22,37 +22,38 @@ const UserNameMaxLength = 20
 // User if you add sensitive fields, don't forget to clean them in setupLogin function.
 // Otherwise, the sensitive information will be saved on local storage in plain text!
 type User struct {
-	Id               int            `json:"id"`
-	Username         string         `json:"username" gorm:"unique;index" validate:"max=20"`
-	Password         string         `json:"password" gorm:"not null;" validate:"min=8,max=20"`
-	OriginalPassword string         `json:"original_password" gorm:"-:all"` // this field is only for Password change verification, don't save it to database!
-	DisplayName      string         `json:"display_name" gorm:"index" validate:"max=20"`
-	Role             int            `json:"role" gorm:"type:int;default:1"`   // admin, common
-	Status           int            `json:"status" gorm:"type:int;default:1"` // enabled, disabled
-	Email            string         `json:"email" gorm:"index" validate:"max=50"`
-	GitHubId         string         `json:"github_id" gorm:"column:github_id;index"`
-	DiscordId        string         `json:"discord_id" gorm:"column:discord_id;index"`
-	OidcId           string         `json:"oidc_id" gorm:"column:oidc_id;index"`
-	WeChatId         string         `json:"wechat_id" gorm:"column:wechat_id;index"`
-	TelegramId       string         `json:"telegram_id" gorm:"column:telegram_id;index"`
-	VerificationCode string         `json:"verification_code" gorm:"-:all"`                                    // this field is only for Email verification, don't save it to database!
-	AccessToken      *string        `json:"access_token" gorm:"type:char(32);column:access_token;uniqueIndex"` // this token is for system management
-	Quota            int            `json:"quota" gorm:"type:int;default:0"`
-	UsedQuota        int            `json:"used_quota" gorm:"type:int;default:0;column:used_quota"` // used quota
-	RequestCount     int            `json:"request_count" gorm:"type:int;default:0;"`               // request number
-	Group            string         `json:"group" gorm:"type:varchar(64);default:'default'"`
-	AffCode          string         `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
-	AffCount         int            `json:"aff_count" gorm:"type:int;default:0;column:aff_count"`
-	AffQuota         int            `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
-	AffHistoryQuota  int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
-	InviterId        int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
-	DeletedAt        gorm.DeletedAt `gorm:"index"`
-	LinuxDOId        string         `json:"linux_do_id" gorm:"column:linux_do_id;index"`
-	Setting          string         `json:"setting" gorm:"type:text;column:setting"`
-	Remark           string         `json:"remark,omitempty" gorm:"type:varchar(255)" validate:"max=255"`
-	StripeCustomer   string         `json:"stripe_customer" gorm:"type:varchar(64);column:stripe_customer;index"`
-	CreatedAt        int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
-	LastLoginAt      int64          `json:"last_login_at" gorm:"default:0;column:last_login_at"`
+	Id                int            `json:"id"`
+	Username          string         `json:"username" gorm:"unique;index" validate:"max=20"`
+	Password          string         `json:"password" gorm:"not null;" validate:"min=8,max=20"`
+	OriginalPassword  string         `json:"original_password" gorm:"-:all"` // this field is only for Password change verification, don't save it to database!
+	DisplayName       string         `json:"display_name" gorm:"index" validate:"max=20"`
+	Role              int            `json:"role" gorm:"type:int;default:1"`   // admin, common
+	Status            int            `json:"status" gorm:"type:int;default:1"` // enabled, disabled
+	Email             string         `json:"email" gorm:"index" validate:"max=50"`
+	GitHubId          string         `json:"github_id" gorm:"column:github_id;index"`
+	DiscordId         string         `json:"discord_id" gorm:"column:discord_id;index"`
+	OidcId            string         `json:"oidc_id" gorm:"column:oidc_id;index"`
+	WeChatId          string         `json:"wechat_id" gorm:"column:wechat_id;index"`
+	TelegramId        string         `json:"telegram_id" gorm:"column:telegram_id;index"`
+	VerificationCode  string         `json:"verification_code" gorm:"-:all"`                                    // this field is only for Email verification, don't save it to database!
+	AccessToken       *string        `json:"access_token" gorm:"type:char(32);column:access_token;uniqueIndex"` // this token is for system management
+	Quota             int            `json:"quota" gorm:"type:int;default:0"`
+	UsedQuota         int            `json:"used_quota" gorm:"type:int;default:0;column:used_quota"` // used quota
+	RequestCount      int            `json:"request_count" gorm:"type:int;default:0;"`               // request number
+	Group             string         `json:"group" gorm:"type:varchar(64);default:'default'"`
+	AffCode           string         `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
+	AffCount          int            `json:"aff_count" gorm:"type:int;default:0;column:aff_count"`
+	AffQuota          int            `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
+	AffHistoryQuota   int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
+	InviterId         int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	InviteRewardRatio *float64       `json:"invite_reward_ratio" gorm:"column:invite_reward_ratio"`
+	DeletedAt         gorm.DeletedAt `gorm:"index"`
+	LinuxDOId         string         `json:"linux_do_id" gorm:"column:linux_do_id;index"`
+	Setting           string         `json:"setting" gorm:"type:text;column:setting"`
+	Remark            string         `json:"remark,omitempty" gorm:"type:varchar(255)" validate:"max=255"`
+	StripeCustomer    string         `json:"stripe_customer" gorm:"type:varchar(64);column:stripe_customer;index"`
+	CreatedAt         int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
+	LastLoginAt       int64          `json:"last_login_at" gorm:"default:0;column:last_login_at"`
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -360,9 +361,6 @@ func grantInviteRatioReward(inviteeId int, payMoney float64) error {
 	if common.NormalizeInviteRewardMode(common.InviteRewardMode) != common.NormalizeInviteRewardMode("ratio") {
 		return nil
 	}
-	if common.InviteRewardRatio <= 0 {
-		return nil
-	}
 
 	invitee, err := GetUserById(inviteeId, true)
 	if err != nil {
@@ -372,25 +370,37 @@ func grantInviteRatioReward(inviteeId int, payMoney float64) error {
 		return nil
 	}
 
+	inviter, err := GetUserById(invitee.InviterId, true)
+	if err != nil {
+		return err
+	}
+	rewardRatio := resolveInviteRewardRatio(inviter)
+	if rewardRatio <= 0 {
+		return nil
+	}
+
 	rewardQuota := int(decimal.NewFromFloat(payMoney).
-		Mul(decimal.NewFromFloat(common.InviteRewardRatio)).
+		Mul(decimal.NewFromFloat(rewardRatio)).
 		Mul(decimal.NewFromFloat(common.QuotaPerUnit)).
 		IntPart())
 	if rewardQuota <= 0 {
 		return nil
 	}
 
-	inviter, err := GetUserById(invitee.InviterId, true)
-	if err != nil {
-		return err
-	}
 	inviter.AffQuota += rewardQuota
 	inviter.AffHistoryQuota += rewardQuota
 	if err = DB.Save(inviter).Error; err != nil {
 		return err
 	}
-	RecordLog(inviter.Id, LogTypeSystem, fmt.Sprintf("邀请充值返奖 %s，支付金额 %.2f，返奖比例 %.4f", logger.LogQuota(rewardQuota), payMoney, common.InviteRewardRatio))
+	RecordLog(inviter.Id, LogTypeSystem, fmt.Sprintf("邀请支付返奖 %s，支付金额 %.2f，返奖比例 %.4f", logger.LogQuota(rewardQuota), payMoney, rewardRatio))
 	return nil
+}
+
+func resolveInviteRewardRatio(inviter *User) float64 {
+	if inviter != nil && inviter.InviteRewardRatio != nil {
+		return *inviter.InviteRewardRatio
+	}
+	return common.InviteRewardRatio
 }
 
 func GrantInviteRatioRewardForTopUp(inviteeId int, payMoney float64) error {
@@ -569,7 +579,7 @@ func (user *User) Update(updatePassword bool) error {
 	return updateUserCache(*user)
 }
 
-func (user *User) Edit(updatePassword bool, updateQuota bool) error {
+func (user *User) Edit(updatePassword bool, updateQuota bool, updateInviteRewardRatio bool) error {
 	var err error
 	if updatePassword {
 		user.Password, err = common.Password2Hash(user.Password)
@@ -589,6 +599,9 @@ func (user *User) Edit(updatePassword bool, updateQuota bool) error {
 	}
 	if updatePassword {
 		updates["password"] = user.Password
+	}
+	if updateInviteRewardRatio {
+		updates["invite_reward_ratio"] = user.InviteRewardRatio
 	}
 
 	if err = DB.Model(&User{Id: user.Id}).Updates(updates).Error; err != nil {
