@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"errors"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -70,19 +68,4 @@ func TestBuildTestLogOtherInjectsTieredInfo(t *testing.T) {
 	require.Equal(t, "tiered_expr", other["billing_mode"])
 	require.Equal(t, "base", other["matched_tier"])
 	require.NotEmpty(t, other["expr_b64"])
-}
-
-func TestChannelTestUpstreamErrorResultPreservesOriginalError(t *testing.T) {
-	upstreamErr := types.NewOpenAIError(
-		errors.New("insufficient account balance"),
-		types.ErrorCodeBadResponseStatusCode,
-		http.StatusForbidden,
-	)
-
-	result := channelTestUpstreamErrorResult(nil, upstreamErr)
-
-	require.Same(t, upstreamErr, result.localErr)
-	require.Same(t, upstreamErr, result.newAPIError)
-	require.Equal(t, http.StatusForbidden, result.newAPIError.StatusCode)
-	require.Equal(t, types.ErrorCodeBadResponseStatusCode, result.newAPIError.GetErrorCode())
 }

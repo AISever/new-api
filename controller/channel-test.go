@@ -43,14 +43,6 @@ type testResult struct {
 	newAPIError *types.NewAPIError
 }
 
-func channelTestUpstreamErrorResult(c *gin.Context, err *types.NewAPIError) testResult {
-	return testResult{
-		context:     c,
-		localErr:    err,
-		newAPIError: err,
-	}
-}
-
 func normalizeChannelTestEndpoint(channel *model.Channel, modelName, endpointType string) string {
 	normalized := strings.TrimSpace(endpointType)
 	if normalized != "" {
@@ -446,7 +438,11 @@ func testChannel(channel *model.Channel, testModel string, endpointType string, 
 				httpResp.StatusCode,
 				err,
 			))
-			return channelTestUpstreamErrorResult(c, err)
+			return testResult{
+				context:     c,
+				localErr:    err,
+				newAPIError: types.NewOpenAIError(err, types.ErrorCodeBadResponse, http.StatusInternalServerError),
+			}
 		}
 	}
 	usageA, respErr := adaptor.DoResponse(c, httpResp, info)
