@@ -61,7 +61,7 @@ func SecureVerificationRequired() gin.HandlerFunc {
 
 		// 检查验证是否过期
 		elapsed := time.Now().Unix() - verifiedAt
-		if elapsed >= SecureVerificationTimeout {
+		if elapsed < 0 || elapsed >= SecureVerificationTimeout {
 			// 验证已过期，清除 session
 			clearSecureVerificationSession(session)
 			c.JSON(http.StatusForbidden, gin.H{
@@ -112,7 +112,7 @@ func OptionalSecureVerification() gin.HandlerFunc {
 		}
 
 		elapsed := time.Now().Unix() - verifiedAt
-		if elapsed >= SecureVerificationTimeout {
+		if elapsed < 0 || elapsed >= SecureVerificationTimeout {
 			clearSecureVerificationSession(session)
 			c.Set("secure_verified", false)
 			c.Next()

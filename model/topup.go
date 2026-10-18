@@ -355,11 +355,19 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 		// - 其他订单（如易支付）：Amount 为美元数量，* QuotaPerUnit
 		if topUp.PaymentProvider == PaymentProviderStripe {
 			dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
-			quotaToAdd = int(decimal.NewFromFloat(topUp.Money).Mul(dQuotaPerUnit).IntPart())
+			quota, quotaErr := common.TruncateWalletQuotaStrict(decimal.NewFromFloat(topUp.Money).Mul(dQuotaPerUnit))
+			if quotaErr != nil {
+				return quotaErr
+			}
+			quotaToAdd = quota
 		} else {
 			dAmount := decimal.NewFromInt(topUp.Amount)
 			dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
-			quotaToAdd = int(dAmount.Mul(dQuotaPerUnit).IntPart())
+			quota, quotaErr := common.TruncateWalletQuotaStrict(dAmount.Mul(dQuotaPerUnit))
+			if quotaErr != nil {
+				return quotaErr
+			}
+			quotaToAdd = quota
 		}
 		if quotaToAdd <= 0 {
 			return errors.New("无效的充值额度")
@@ -531,7 +539,11 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 
 		dAmount := decimal.NewFromInt(topUp.Amount)
 		dQuotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
-		quotaToAdd = int(dAmount.Mul(dQuotaPerUnit).IntPart())
+		quota, quotaErr := common.TruncateWalletQuotaStrict(dAmount.Mul(dQuotaPerUnit))
+		if quotaErr != nil {
+			return quotaErr
+		}
+		quotaToAdd = quota
 		if quotaToAdd <= 0 {
 			return errors.New("无效的充值额度")
 		}
@@ -595,7 +607,11 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 			return errors.New("充值订单状态错误")
 		}
 
-		quotaToAdd = int(decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)).IntPart())
+		quota, quotaErr := common.TruncateWalletQuotaStrict(decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)))
+		if quotaErr != nil {
+			return quotaErr
+		}
+		quotaToAdd = quota
 		if quotaToAdd <= 0 {
 			return errors.New("无效的充值额度")
 		}

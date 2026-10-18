@@ -53,16 +53,20 @@ const (
 func formatUserLogs(logs []*Log, startIdx int) {
 	for i := range logs {
 		logs[i].ChannelName = ""
-		var otherMap map[string]interface{}
-		otherMap, _ = common.StrToMap(logs[i].Other)
-		if otherMap != nil {
-			// Remove admin-only debug fields.
-			delete(otherMap, "admin_info")
-			// delete(otherMap, "reject_reason")
-			delete(otherMap, "stream_status")
-		}
-		logs[i].Other = common.MapToJsonStr(otherMap)
+		logs[i].Other = formatLogOtherJSON(logs[i].Other, logOtherVisibilityUser)
 		logs[i].Id = startIdx + i + 1
+	}
+}
+
+// FormatAdminLogs preserves admin metadata while excluding root diagnostics.
+func FormatAdminLogs(logs []*Log) {
+	for _, log := range logs {
+		log.Other = formatLogOtherJSON(log.Other, logOtherVisibilityAdmin)
+	}
+}
+func FormatRootLogs(logs []*Log) {
+	for _, log := range logs {
+		log.Other = formatLogOtherJSON(log.Other, logOtherVisibilityRoot)
 	}
 }
 

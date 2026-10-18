@@ -10,13 +10,13 @@
     "@visactor/react-vchart": "~1.8.8",
     "@visactor/vchart": "~1.8.8",
     "@visactor/vchart-semi-theme": "~1.8.8",
-    "axios": "1.15.0",
+    "axios": "1.20.0",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.11",
     "history": "^5.3.0",
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^7.2.0",
-    "katex": "^0.16.22",
+    "katex": "^0.19.0",
     "lucide-react": "^0.511.0",
     "marked": "^4.1.1",
     "mermaid": "^11.6.0",
@@ -28,7 +28,7 @@
     "react-i18next": "^13.0.0",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^6.3.0",
+    "react-router-dom": "^7.18.4",
     "react-telegram-login": "^1.1.2",
     "react-toastify": "^9.0.8",
     "react-turnstile": "^1.0.5",
@@ -87,11 +87,25 @@
     "prettier": "^3.0.0",
     "tailwindcss": "^3",
     "typescript": "4.4.2",
-    "vite": "^5.2.0"
+    "vite": "^6.4.3"
   },
   "prettier": {
     "singleQuote": true,
     "jsxSingleQuote": true
   },
-  "proxy": "http://localhost:3000"
+  "proxy": "http://localhost:3000",
+  "packageManager": "bun@1.4.3",
+  "overrides": {
+    "minimist": "1.2.8",
+    "minimatch@>=10": "10.2.6",
+    "glob@>=11 <12": "11.1.0",
+    "postcss-selector-parser": "7.1.6",
+    "decode-uri-component": "0.5.0",
+    "vite": "6.4.3",
+    "katex": "0.19.0",
+    "@remix-run/router": "1.23.3"
+  },
+  "patchedDependencies": {
+    "braces@3.0.3": "patches/braces@3.0.3.patch"
+  }
 }

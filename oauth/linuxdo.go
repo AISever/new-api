@@ -3,7 +3,6 @@ package oauth
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -47,8 +46,6 @@ func (p *LinuxDOProvider) ExchangeToken(ctx context.Context, code string, c *gin
 		return nil, NewOAuthError(i18n.MsgOAuthInvalidCode, nil)
 	}
 
-	logger.LogDebug(ctx, "[OAuth-LinuxDO] ExchangeToken: code=%s...", code[:min(len(code), 10)])
-
 	// Get access token using Basic auth
 	tokenEndpoint := common.GetEnvOrDefaultString("LINUX_DO_TOKEN_ENDPOINT", "https://connect.linux.do/oauth2/token")
 	credentials := common.LinuxDOClientId + ":" + common.LinuxDOClientSecret
@@ -90,7 +87,7 @@ func (p *LinuxDOProvider) ExchangeToken(ctx context.Context, code string, c *gin
 		AccessToken string `json:"access_token"`
 		Message     string `json:"message"`
 	}
-	if err := json.NewDecoder(res.Body).Decode(&tokenRes); err != nil {
+	if err := common.DecodeJson(res.Body, &tokenRes); err != nil {
 		logger.LogError(ctx, fmt.Sprintf("[OAuth-LinuxDO] ExchangeToken decode error: %s", err.Error()))
 		return nil, err
 	}
@@ -130,7 +127,7 @@ func (p *LinuxDOProvider) GetUserInfo(ctx context.Context, token *OAuthToken) (*
 	logger.LogDebug(ctx, "[OAuth-LinuxDO] GetUserInfo response status: %d", res.StatusCode)
 
 	var linuxdoUser linuxdoUser
-	if err := json.NewDecoder(res.Body).Decode(&linuxdoUser); err != nil {
+	if err := common.DecodeJson(res.Body, &linuxdoUser); err != nil {
 		logger.LogError(ctx, fmt.Sprintf("[OAuth-LinuxDO] GetUserInfo decode error: %s", err.Error()))
 		return nil, err
 	}

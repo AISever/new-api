@@ -144,10 +144,7 @@ function renderType(type, t) {
 
 function buildStreamStatusTooltip(ss, t) {
   if (!ss) return null;
-  const lines = [
-    t('流状态') + '：' + t('异常'),
-    (ss.end_reason || 'unknown'),
-  ];
+  const lines = [t('流状态') + '：' + t('异常'), ss.end_reason || 'unknown'];
   if (ss.error_count > 0) {
     lines.push(`${t('软错误')}: ${ss.error_count}`);
   }
@@ -185,11 +182,7 @@ function renderIsStream(bool, t, streamStatus) {
                 userSelect: 'none',
               }}
             >
-              <CircleAlert
-                size={14}
-                strokeWidth={2.5}
-                color='currentColor'
-              />
+              <CircleAlert size={14} strokeWidth={2.5} color='currentColor' />
             </span>
           </Tooltip>
         )}
@@ -461,7 +454,11 @@ function getUsageLogDetailSummary(record, text, billingDisplayMode, t) {
     };
   }
 
-  const summaryOpts = { ...other, displayMode: billingDisplayMode, outputMode: 'segments' };
+  const summaryOpts = {
+    ...other,
+    displayMode: billingDisplayMode,
+    outputMode: 'segments',
+  };
 
   if (other?.billing_mode === 'tiered_expr') {
     return { segments: renderTieredModelPriceSimple(summaryOpts) };
@@ -818,15 +815,31 @@ export const getLogsColumns = ({
         }
         const other = getLogOther(record.other);
         const isSubscription = other?.billing_source === 'subscription';
+        const saturation = isAdminUser && other?.admin_info?.quota_saturation;
+        const saturationMarker = saturation ? (
+          <Tooltip
+            content={`${saturation.op}: ${saturation.kind} (${saturation.original} → ${saturation.clamped})`}
+          >
+            <Tag color='red'>{t('额度计算已触发安全限制')}</Tag>
+          </Tooltip>
+        ) : null;
         if (isSubscription) {
           // Subscription billed: show only tag (no $0), but keep tooltip for equivalent cost.
           return (
-            <Tooltip content={`${t('由订阅抵扣')}：${renderQuota(text, 6)}`}>
-              <span>{renderBillingTag(record, t)}</span>
-            </Tooltip>
+            <Space>
+              <Tooltip content={`${t('由订阅抵扣')}：${renderQuota(text, 6)}`}>
+                <span>{renderBillingTag(record, t)}</span>
+              </Tooltip>
+              {saturationMarker}
+            </Space>
           );
         }
-        return <>{renderQuota(text, 6)}</>;
+        return (
+          <Space>
+            {renderQuota(text, 6)}
+            {saturationMarker}
+          </Space>
+        );
       },
     },
     {

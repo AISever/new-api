@@ -1,8 +1,8 @@
 package model
 
 import (
+	"context"
 	"fmt"
-	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
@@ -63,17 +63,47 @@ func InvalidateUserCache(userId int) error {
 	return invalidateUserCache(userId)
 }
 
-// updateUserCache updates all user cache fields using hash
-func updateUserCache(user User) error {
+func populateUserCache(user User) error {
 	if !common.RedisEnabled {
 		return nil
 	}
 
-	return common.RedisHSetObj(
-		getUserCacheKey(user.Id),
-		user.ToBaseUser(),
-		time.Duration(common.RedisKeyCacheSeconds())*time.Second,
-	)
+	// A delayed cold-cache read must not overwrite quota deltas or a status
+	// restriction that arrived while its database snapshot was being loaded.
+	const script = `
+local fields = {'Id','Group','Email','Quota','Status','Username','Setting'}
+for i, field in ipairs(fields) do
+  redis.call('HSETNX', KEYS[1], field, ARGV[i + 1])
+end
+if tonumber(ARGV[1]) > 0 and redis.call('TTL', KEYS[1]) < 0 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return 1`
+	return common.RDB.Eval(context.Background(), script, []string{getUserCacheKey(user.Id)},
+		common.RedisKeyCacheSeconds(), user.Id, user.Group, user.Email, user.Quota,
+		user.Status, user.Username, user.Setting).Err()
+}
+
+// updateUserCache refreshes non-quota user cache fields.
+// Quota is maintained by atomic quota delta paths and must not be overwritten
+// by stale user snapshots from profile/settings updates.
+func updateUserCache(user User) error {
+	if !common.RedisEnabled {
+		return nil
+	}
+	if err := updateUserGroupCache(user.Id, user.Group); err != nil {
+		return err
+	}
+	if err := updateUserEmailCache(user.Id, user.Email); err != nil {
+		return err
+	}
+	if err := updateUserStatusCache(user.Id, user.Status == common.UserStatusEnabled); err != nil {
+		return err
+	}
+	if err := updateUserNameCache(user.Id, user.Username); err != nil {
+		return err
+	}
+	return updateUserSettingCache(user.Id, user.Setting)
 }
 
 // GetUserCache gets complete user cache from hash
@@ -84,7 +114,7 @@ func GetUserCache(userId int) (userCache *UserBase, err error) {
 		// Update Redis cache asynchronously on successful DB read
 		if shouldUpdateRedis(fromDB, err) && user != nil {
 			gopool.Go(func() {
-				if err := updateUserCache(*user); err != nil {
+				if err := populateUserCache(*user); err != nil {
 					common.SysLog("failed to update user status cache: " + err.Error())
 				}
 			})
@@ -212,6 +242,13 @@ func updateUserGroupCache(userId int, group string) error {
 
 func UpdateUserGroupCache(userId int, group string) error {
 	return updateUserGroupCache(userId, group)
+}
+
+func updateUserEmailCache(userId int, email string) error {
+	if !common.RedisEnabled {
+		return nil
+	}
+	return common.RedisHSetField(getUserCacheKey(userId), "Email", email)
 }
 
 func updateUserNameCache(userId int, username string) error {

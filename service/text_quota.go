@@ -136,6 +136,18 @@ func calculateTextToolCallSurcharge(ctx *gin.Context, relayInfo *relaycommon.Rel
 	return surcharge
 }
 
+// noteQuotaClamp records the first quota saturation event onto relayInfo so it
+// can later be attached to the consume/task log for admin auditing. First
+// non-nil clamp wins (a single request may hit multiple conversions).
+func noteQuotaClamp(relayInfo *relaycommon.RelayInfo, clamp *common.QuotaClamp) {
+	if clamp == nil || relayInfo == nil {
+		return
+	}
+	if relayInfo.QuotaClamp == nil {
+		relayInfo.QuotaClamp = clamp
+	}
+}
+
 func composeTieredTextQuota(relayInfo *relaycommon.RelayInfo, summary textQuotaSummary, tieredQuota int, tieredResult *billingexpr.TieredResult) int {
 	if summary.ToolCallSurchargeQuota.IsZero() {
 		return tieredQuota
@@ -143,15 +155,17 @@ func composeTieredTextQuota(relayInfo *relaycommon.RelayInfo, summary textQuotaS
 
 	if tieredResult != nil {
 		if snap := relayInfo.TieredBillingSnapshot; snap != nil {
-			return int(decimal.NewFromFloat(tieredResult.ActualQuotaBeforeGroup).
+			quota, clamp := common.QuotaFromDecimalChecked(decimal.NewFromFloat(tieredResult.ActualQuotaBeforeGroup).
 				Mul(decimal.NewFromFloat(snap.GroupRatio)).
-				Add(summary.ToolCallSurchargeQuota).
-				Round(0).
-				IntPart())
+				Add(summary.ToolCallSurchargeQuota))
+			noteQuotaClamp(relayInfo, clamp)
+			return quota
 		}
 	}
 
-	return tieredQuota + int(summary.ToolCallSurchargeQuota.Round(0).IntPart())
+	surcharge, clamp := common.QuotaFromDecimalChecked(summary.ToolCallSurchargeQuota)
+	noteQuotaClamp(relayInfo, clamp)
+	return tieredQuota + surcharge
 }
 
 func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage *dto.Usage) textQuotaSummary {
@@ -285,7 +299,9 @@ func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInf
 		if !ratio.IsZero() && quotaCalculateDecimal.LessThanOrEqual(decimal.Zero) {
 			quotaCalculateDecimal = decimal.NewFromInt(1)
 		}
-		summary.Quota = int(quotaCalculateDecimal.Round(0).IntPart())
+		quota, clamp := common.QuotaFromDecimalChecked(quotaCalculateDecimal)
+		summary.Quota = quota
+		noteQuotaClamp(relayInfo, clamp)
 	} else {
 		quotaCalculateDecimal := dModelPrice.Mul(dQuotaPerUnit).Mul(dGroupRatio)
 		quotaCalculateDecimal = quotaCalculateDecimal.Add(summary.ToolCallSurchargeQuota)
@@ -295,7 +311,9 @@ func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInf
 				quotaCalculateDecimal = quotaCalculateDecimal.Mul(decimal.NewFromFloat(otherRatio))
 			}
 		}
-		summary.Quota = int(quotaCalculateDecimal.Round(0).IntPart())
+		quota, clamp := common.QuotaFromDecimalChecked(quotaCalculateDecimal)
+		summary.Quota = quota
+		noteQuotaClamp(relayInfo, clamp)
 	}
 
 	if summary.TotalTokens == 0 {
@@ -456,6 +474,8 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 	if tieredBillingApplied {
 		InjectTieredBillingInfo(other, relayInfo, tieredResult)
 	}
+
+	attachQuotaSaturation(ctx, relayInfo, other)
 
 	model.RecordConsumeLog(ctx, relayInfo.UserId, model.RecordConsumeLogParams{
 		ChannelId:        relayInfo.ChannelId,

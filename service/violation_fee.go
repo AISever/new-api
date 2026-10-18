@@ -88,11 +88,9 @@ func calcViolationFeeQuota(amount, groupRatio float64) int {
 	if groupRatio <= 0 {
 		return 0
 	}
-	quota := decimal.NewFromFloat(amount).
+	quota := common.QuotaFromDecimal(decimal.NewFromFloat(amount).
 		Mul(decimal.NewFromFloat(common.QuotaPerUnit)).
-		Mul(decimal.NewFromFloat(groupRatio)).
-		Round(0).
-		IntPart()
+		Mul(decimal.NewFromFloat(groupRatio)))
 	if quota <= 0 {
 		return 0
 	}

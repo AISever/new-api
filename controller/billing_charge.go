@@ -156,8 +156,7 @@ func applyBillingChargeQuantity(priceData *types.PriceData, quantity int) error 
 	if priceData == nil || quantity == 1 || priceData.Quota == 0 {
 		return nil
 	}
-	maxInt := int(^uint(0) >> 1)
-	if priceData.Quota > maxInt/quantity {
+	if quantity <= 0 || priceData.Quota < 0 || priceData.Quota > common.MaxQuota/quantity {
 		return errors.New("quantity is too large")
 	}
 	priceData.Quota *= quantity

@@ -1,0 +1,47 @@
+bc32807fcaf6baa118db79cd21996b9b7e4aaca2 feat: add per-user invite reward ratios
+77718f59b647e5b1e8e040a1eb385c506b8c08bd docs: add AISever setup for more coding tools
+23e10134f7d1fb163fa19acfa1232b05a6f5248d docs: refine Codex setup help across platforms
+eddef2fcaa2c8885eaed48c469ca6ba873b98ba1 docs: update Codex help proxy setup
+dca8fcef72af0e9f4866469ea7b5eb281089896f fix: support admin topup invite rewards
+f86cf1d59385e5cb39d4b2ba5be86bd1884c05b4 feat: support fixed and ratio invite rewards
+abef336a21baa63ce42afcfb874acfa1462d3cae feat: add configurable task price patch models
+c04207b1f56bf8045f281d06863ebee4e19dff01 docs: refresh kkidc production host records
+2ac41c43ba45e70793788aeec0d1f816b1fef5b1 feat: allow skipping legacy production logs during sync
+f8527c93096c51edaadbf2230e07064f255f72e4 chore: ignore local worktrees directory
+55c849634e1f33172b39dd3ce1d4d7efe7ec5021 Revert "perf: split heavy homepage frontend chunks"
+67c66b52c148f85611a7eddfa9a1587965e1ec83 Revert "perf: split console shell from landing page"
+bb471c6d65e4a4dfe02c5f45e4035ab395d736b6 Revert "fix: restore public site shell routes"
+13acf3da6b53e88cf46f2607fb215e4bc4db03c7 Revert "fix: recover from stale lazy-loaded chunks"
+08bbf60e2a5d3bd7cdecbd936be7c77423d7abbf fix: recover from stale lazy-loaded chunks
+27807576df7cef3916670b0488a6f14f0b9cfa59 fix: restore public site shell routes
+14e931278c223a7cf5c851575405edee0abea05d perf: split console shell from landing page
+b22b180b3533049688ccd80cf9570018744889c6 perf: split heavy homepage frontend chunks
+4dd6ba8bc616582a1c5ebaedcb8c67f6cd232071 fix kkidc caddy route preservation
+b80ee0cbe36f09c662f9e9a49454cf244be93640 fix user quota preservation on edit
+0bfea4fe2bad4c3c0e887d23c4aa34c514651bc1 fix billing charge quantity multiplier
+601af0ab63c7a9a96554c75d527a895163b7e009 feat: add token model billing charge endpoint
+36a5e41f0fcbcf185f37d1ff28975aa46ef2b52a feat(redemption): support batch deleting selected codes
+949ff919fb68c4500393565fe73d326f7d7b39ed feat(ops): add upstream stable upgrade gate
+9369903da679e56793f4297a2cd815d5c60179f7 fix(ops): support local test deploy on macOS
+33005559f738d6e10c2844454f208be21c1017f9 fix(user): use safe quota top-up path
+27bf53595222c467023b22d70d0cb58d2fb360f3 feat: support subscription plan redemptions
+08e1da24ac67f9ca27c9d698cd2442e8e325bd6b perf(ops): reuse existing remote image for same sha
+b04b13bc1c2bef815f7ce470daa2e1693c84eb98 fix(web): handle announcement publish save correctly
+b33cce0fab8b4d48fd6dba41437abdeb76576712 ops: auto-enable enterprise docs manifest
+e16ece93a9c867448b6b9492d0c1461c7eddcf7e chore: migrate subscription and ops patches to v0.12.1
+7d6a4ccc3af560e757664c609a20d9fbe4be37d2 feat: migrate top-up and free-group quota patches
+d71871b84bdfa20dc256a947b0a6156f160c5868 feat: restore dual-mode group ratio editor
+1d1a70ec4f8d4e92113faf8113d4c61787d7fed7 fix(web): avoid loading code inspector during build
+059f281354161005cdc7d57829c6e9a1efae4138 fix: Edit() 函数缓存更新使用完整用户数据
+46d95401fdc1f59cc35423b802ccf83b805cff1a feat: host synced enterprise docs locally
+c54a80bdf6ee3729e3575d4e6814713510dc6ed1 web: sync favicon with configured logo
+c50e691b1f7ebec250ddcd8d1d177684331f9db6 fix(web): expose /help route and map docs nav to internal help page
+9ab89e0d8c9ca58cb2f39bd21fa325559bb12b26 feat: add configurable help group cards
+1ee3251929c717d6ce90de609bf5fe7edabdee89 web: add custom logo asset
+9665deb65a233944c69b8035b17626ec9b0f51d2 ops: preserve target admin auth header in import sync
+85ed83742fc743efa439437f29caf8334afe3004 ops: add enterprise reset and upstream import workflow
+e42eee7f098046f3b7e0479ac4c84a5ef7a872d4 docs: mark enterprise production live
+b147abfac3061f232cacf571e29862df53c77d79 ops: support enterprise restore flow
+d214b8da4cd873debb16050c21136c5afbe918f1 ops: stage enterprise rollout safely
+4feb26a10e8905208f75f03d8436672047ee8273 ops: restart test restore via deploy build
+adc3f8c520176e9644156c39f644aec8f143733b ops: add kkidc backup restore entrypoint

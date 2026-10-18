@@ -1,0 +1,15 @@
+# Build the Go executable and embedded frontend locally before assembling this image.
+FROM debian:bookworm-slim
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata libasan8 wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates
+COPY new-api /new-api
+ARG REVISION
+ARG APP_VERSION
+LABEL org.opencontainers.image.source="https://github.com/AISever/new-api" \
+      org.opencontainers.image.revision="$REVISION" \
+      org.opencontainers.image.version="$APP_VERSION"
+EXPOSE 3000
+WORKDIR /data
+ENTRYPOINT ["/new-api"]

@@ -2,7 +2,6 @@ package model
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -35,8 +34,8 @@ type User struct {
 	OidcId            string         `json:"oidc_id" gorm:"column:oidc_id;index"`
 	WeChatId          string         `json:"wechat_id" gorm:"column:wechat_id;index"`
 	TelegramId        string         `json:"telegram_id" gorm:"column:telegram_id;index"`
-	VerificationCode  string         `json:"verification_code" gorm:"-:all"`                                    // this field is only for Email verification, don't save it to database!
-	AccessToken       *string        `json:"access_token" gorm:"type:char(32);column:access_token;uniqueIndex"` // this token is for system management
+	VerificationCode  string         `json:"verification_code" gorm:"-:all"`                         // this field is only for Email verification, don't save it to database!
+	AccessToken       *string        `json:"-" gorm:"type:char(32);column:access_token;uniqueIndex"` // this token is for system management
 	Quota             int            `json:"quota" gorm:"type:int;default:0"`
 	UsedQuota         int            `json:"used_quota" gorm:"type:int;default:0;column:used_quota"` // used quota
 	RequestCount      int            `json:"request_count" gorm:"type:int;default:0;"`               // request number
@@ -83,7 +82,7 @@ func (user *User) SetAccessToken(token string) {
 func (user *User) GetSetting() dto.UserSetting {
 	setting := dto.UserSetting{}
 	if user.Setting != "" {
-		err := json.Unmarshal([]byte(user.Setting), &setting)
+		err := common.Unmarshal([]byte(user.Setting), &setting)
 		if err != nil {
 			common.SysLog("failed to unmarshal setting: " + err.Error())
 		}
@@ -92,12 +91,28 @@ func (user *User) GetSetting() dto.UserSetting {
 }
 
 func (user *User) SetSetting(setting dto.UserSetting) {
-	settingBytes, err := json.Marshal(setting)
+	settingBytes, err := common.Marshal(setting)
 	if err != nil {
 		common.SysLog("failed to marshal setting: " + err.Error())
 		return
 	}
 	user.Setting = string(settingBytes)
+}
+
+// UpdateUserSetting writes only preferences, never a stale accounting snapshot.
+func UpdateUserSetting(userId int, setting dto.UserSetting) error {
+	if userId <= 0 {
+		return errors.New("invalid user id")
+	}
+	data, err := common.Marshal(setting)
+	if err != nil {
+		return err
+	}
+	value := string(data)
+	if err = DB.Model(&User{}).Where("id = ?", userId).Update("setting", value).Error; err != nil {
+		return err
+	}
+	return updateUserSettingCache(userId, value)
 }
 
 // 根据用户角色生成默认的边栏配置
@@ -153,7 +168,7 @@ func generateDefaultSidebarConfigForRole(userRole int) string {
 	// 普通用户不包含admin区域
 
 	// 转换为JSON字符串
-	configBytes, err := json.Marshal(defaultConfig)
+	configBytes, err := common.Marshal(defaultConfig)
 	if err != nil {
 		common.SysLog("生成默认边栏配置失败: " + err.Error())
 		return ""
@@ -379,17 +394,20 @@ func grantInviteRatioReward(inviteeId int, payMoney float64) error {
 		return nil
 	}
 
-	rewardQuota := int(decimal.NewFromFloat(payMoney).
+	rewardQuota, err := common.TruncateWalletQuotaStrict(decimal.NewFromFloat(payMoney).
 		Mul(decimal.NewFromFloat(rewardRatio)).
-		Mul(decimal.NewFromFloat(common.QuotaPerUnit)).
-		IntPart())
+		Mul(decimal.NewFromFloat(common.QuotaPerUnit)))
+	if err != nil {
+		return err
+	}
 	if rewardQuota <= 0 {
 		return nil
 	}
 
-	inviter.AffQuota += rewardQuota
-	inviter.AffHistoryQuota += rewardQuota
-	if err = DB.Save(inviter).Error; err != nil {
+	if err = DB.Model(&User{}).Where("id = ?", inviter.Id).Updates(map[string]interface{}{
+		"aff_quota":   gorm.Expr("aff_quota + ?", rewardQuota),
+		"aff_history": gorm.Expr("aff_history + ?", rewardQuota),
+	}).Error; err != nil {
 		return err
 	}
 	RecordLog(inviter.Id, LogTypeSystem, fmt.Sprintf("邀请支付返奖 %s，支付金额 %.2f，返奖比例 %.4f", logger.LogQuota(rewardQuota), payMoney, rewardRatio))
@@ -570,8 +588,11 @@ func (user *User) Update(updatePassword bool) error {
 		}
 	}
 	newUser := *user
-	DB.First(&user, user.Id)
-	if err = DB.Model(user).Updates(newUser).Error; err != nil {
+	if err = DB.Model(&User{}).Where("id = ?", user.Id).
+		Omit("quota", "used_quota", "request_count", "aff_quota", "aff_history", "aff_count").Updates(newUser).Error; err != nil {
+		return err
+	}
+	if err = DB.First(user, user.Id).Error; err != nil {
 		return err
 	}
 
@@ -615,7 +636,13 @@ func (user *User) Edit(updatePassword bool, updateQuota bool, updateInviteReward
 	}
 
 	// Update cache with complete user data
-	return updateUserCache(updatedUser)
+	if err = updateUserCache(updatedUser); err != nil {
+		return err
+	}
+	if updateQuota {
+		return updateUserQuotaCache(updatedUser.Id, updatedUser.Quota)
+	}
+	return nil
 }
 
 func (user *User) ClearBinding(bindingType string) error {

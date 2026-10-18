@@ -1,7 +1,7 @@
 module github.com/QuantumNous/new-api
 
 // +heroku goVersion go1.18
-go 1.25.1
+go 1.26.0
 
 require (
 	github.com/Calcium-Ion/go-epay v0.0.4
@@ -26,7 +26,7 @@ require (
 	github.com/go-webauthn/webauthn v0.14.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/grafana/pyroscope-go v1.2.7
 	github.com/jfreymuth/oggvorbis v1.0.5
 	github.com/jinzhu/copier v0.4.0
@@ -48,12 +48,12 @@ require (
 	github.com/tiktoken-go/tokenizer v0.6.2
 	github.com/waffo-com/waffo-go v1.3.1
 	github.com/yapingcat/gomedia v0.0.0-20240906162731-17feea57090c
-	golang.org/x/crypto v0.45.0
-	golang.org/x/image v0.38.0
-	golang.org/x/net v0.47.0
-	golang.org/x/sync v0.20.0
-	golang.org/x/sys v0.38.0
-	golang.org/x/text v0.35.0
+	golang.org/x/crypto v0.57.0
+	golang.org/x/image v0.45.0
+	golang.org/x/net v0.60.0
+	golang.org/x/sync v0.23.0
+	golang.org/x/sys v0.48.0
+	golang.org/x/text v0.42.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.4.3
 	gorm.io/driver/postgres v1.5.2
@@ -103,7 +103,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

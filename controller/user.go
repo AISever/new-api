@@ -35,7 +35,7 @@ func Login(c *gin.Context) {
 		return
 	}
 	var loginRequest LoginRequest
-	err := json.NewDecoder(c.Request.Body).Decode(&loginRequest)
+	err := common.DecodeJson(c.Request.Body, &loginRequest)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
@@ -93,6 +93,10 @@ func Login(c *gin.Context) {
 func setupLogin(user *model.User, c *gin.Context) {
 	model.UpdateUserLastLoginAt(user.Id)
 	session := sessions.Default(c)
+	// Authentication must not inherit step-up proofs from a previous identity.
+	session.Delete(SecureVerificationSessionKey)
+	session.Delete(secureVerificationMethodSessionKey)
+	session.Delete(PasskeyReadySessionKey)
 	session.Set("id", user.Id)
 	session.Set("username", user.Username)
 	session.Set("role", user.Role)
@@ -144,7 +148,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	var user model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	err := common.DecodeJson(c.Request.Body, &user)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
@@ -506,7 +510,7 @@ func generateDefaultSidebarConfig(userRole int) string {
 	// 普通用户不包含admin区域
 
 	// 转换为JSON字符串
-	configBytes, err := json.Marshal(defaultConfig)
+	configBytes, err := common.Marshal(defaultConfig)
 	if err != nil {
 		common.SysLog("生成默认边栏配置失败: " + err.Error())
 		return ""
@@ -659,8 +663,7 @@ func AdminClearUserBinding(c *gin.Context) {
 
 func UpdateSelf(c *gin.Context) {
 	var requestData map[string]interface{}
-	err := json.NewDecoder(c.Request.Body).Decode(&requestData)
-	if err != nil {
+	if err := common.DecodeJson(c.Request.Body, &requestData); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
@@ -682,9 +685,7 @@ func UpdateSelf(c *gin.Context) {
 			currentSetting.SidebarModules = sidebarModulesStr
 		}
 
-		// 保存更新后的设置
-		user.SetSetting(currentSetting)
-		if err := user.Update(false); err != nil {
+		if err := model.UpdateUserSetting(user.Id, currentSetting); err != nil {
 			common.ApiErrorI18n(c, i18n.MsgUpdateFailed)
 			return
 		}
@@ -710,9 +711,7 @@ func UpdateSelf(c *gin.Context) {
 			currentSetting.Language = langStr
 		}
 
-		// 保存更新后的设置
-		user.SetSetting(currentSetting)
-		if err := user.Update(false); err != nil {
+		if err := model.UpdateUserSetting(user.Id, currentSetting); err != nil {
 			common.ApiErrorI18n(c, i18n.MsgUpdateFailed)
 			return
 		}
@@ -723,13 +722,12 @@ func UpdateSelf(c *gin.Context) {
 
 	// 原有的用户信息更新逻辑
 	var user model.User
-	requestDataBytes, err := json.Marshal(requestData)
+	requestDataBytes, err := common.Marshal(requestData)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
-	err = json.Unmarshal(requestDataBytes, &user)
-	if err != nil {
+	if err = common.Unmarshal(requestDataBytes, &user); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
@@ -838,7 +836,7 @@ func DeleteSelf(c *gin.Context) {
 
 func CreateUser(c *gin.Context) {
 	var user model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	err := common.DecodeJson(c.Request.Body, &user)
 	user.Username = strings.TrimSpace(user.Username)
 	if err != nil || user.Username == "" || user.Password == "" {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
@@ -885,7 +883,7 @@ type ManageRequest struct {
 // ManageUser Only admin user can do this
 func ManageUser(c *gin.Context) {
 	var req ManageRequest
-	err := json.NewDecoder(c.Request.Body).Decode(&req)
+	err := common.DecodeJson(c.Request.Body, &req)
 
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
@@ -1303,8 +1301,7 @@ func UpdateUserSetting(c *gin.Context) {
 	}
 
 	// 更新用户设置
-	user.SetSetting(settings)
-	if err := user.Update(false); err != nil {
+	if err := model.UpdateUserSetting(user.Id, settings); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUpdateFailed)
 		return
 	}

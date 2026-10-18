@@ -172,7 +172,7 @@ func consumePasskeyReady(c *gin.Context) (bool, error) {
 		return false, err
 	}
 	// Expired ready markers cannot be reused.
-	if time.Now().Unix()-readyAt >= PasskeyReadyTimeout {
+	if elapsed := time.Now().Unix() - readyAt; elapsed < 0 || elapsed >= PasskeyReadyTimeout {
 		return false, nil
 	}
 	return true, nil

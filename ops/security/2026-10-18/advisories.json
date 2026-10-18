@@ -1,0 +1,158 @@
+{
+  "checked_at": "2026-10-18",
+  "source": "https://api.github.com/repos/QuantumNous/new-api/security-advisories?per_page=100",
+  "baseline": "bc32807fcaf6baa118db79cd21996b9b7e4aaca2",
+  "upstream_reference": "v1.0.0-rc.45",
+  "advisories": [
+    {
+      "id": "GHSA-8r8v-xf7q-rcpr",
+      "cve": "CVE-2026-71479",
+      "severity": "critical",
+      "title": "Integer overflow in quota billing yields negative charges (self-crediting)",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-8r8v-xf7q-rcpr",
+      "status": "backported",
+      "code": "common/quota_math.go; relay/helper/valid_request.go; controller/billing_charge.go; service/*quota*",
+      "verification": "common/quota_math_test.go; relay/helper/max_tokens_bounds_test.go; service/quota_saturation_test.go; controller/security_backport_test.go"
+    },
+    {
+      "id": "GHSA-j6gc-4893-qwmp",
+      "cve": "CVE-2026-64865",
+      "severity": "high",
+      "title": "Redis user quota cache overwrite via PUT /api/user/self allows quota bypass",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-j6gc-4893-qwmp",
+      "status": "backported",
+      "code": "model/user.go; model/user_cache.go; controller/user.go; controller/subscription.go",
+      "verification": "model/user_update_test.go; model/user_cache_security_test.go (real Redis concurrency); ops/tests/securitydb"
+    },
+    {
+      "id": "GHSA-v828-m3pf-vq9q",
+      "cve": "CVE-2026-64868",
+      "severity": "high",
+      "title": "Unauthenticated payment webhooks allow memory and disk DoS via unbounded body reads and full-body logging",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-v828-m3pf-vq9q",
+      "status": "backported",
+      "code": "middleware/request_body_limit.go; router/api-router.go",
+      "verification": "middleware/request_body_limit_test.go; ops/tests/security_http_acceptance.py"
+    },
+    {
+      "id": "GHSA-p845-629j-rcj6",
+      "cve": "CVE-2026-64866",
+      "severity": "medium",
+      "title": "Admin can reset passkeys for same-level or higher-privileged users",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-p845-629j-rcj6",
+      "status": "backported",
+      "code": "controller/passkey.go: AdminResetPasskey",
+      "verification": "controller/security_backport_test.go role matrix"
+    },
+    {
+      "id": "GHSA-6x2c-phff-wx57",
+      "cve": "CVE-2026-64859",
+      "severity": "critical",
+      "title": "User List API Leaks Root User Access Token Leading to Privilege Escalation",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-6x2c-phff-wx57",
+      "status": "backported",
+      "code": "model/user.go: AccessToken json exclusion",
+      "verification": "model/user_cache_security_test.go; ops/tests/security_http_acceptance.py"
+    },
+    {
+      "id": "GHSA-xff3-5c9p-2mr4",
+      "cve": "CVE-2026-41432",
+      "severity": "high",
+      "title": "Stripe Webhook Signature Bypass via Empty Secret Enables Unlimited Quota Fraud",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-xff3-5c9p-2mr4",
+      "status": "already_protected",
+      "code": "controller/topup_stripe.go; controller/subscription_payment_stripe.go; model/topup.go; model/subscription.go",
+      "verification": "controller/payment_webhook_availability_test.go; model/payment_method_guard_test.go"
+    },
+    {
+      "id": "GHSA-v5c3-6wvc-pc2q",
+      "cve": "CVE-2026-42339",
+      "severity": "high",
+      "title": "SSRF Filter Bypass via 0.0.0.0",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-v5c3-6wvc-pc2q",
+      "status": "already_protected",
+      "code": "common/ssrf_protection.go reserved-address policy",
+      "verification": "common/security_backport_test.go"
+    },
+    {
+      "id": "GHSA-26v7-h57m-gh9m",
+      "cve": "CVE-2026-44342",
+      "severity": "medium",
+      "title": "The binding of user email addresses has a CSRF vulnerability",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-26v7-h57m-gh9m",
+      "status": "already_protected",
+      "code": "router/api-router.go POST /oauth/email/bind; controller/user.go JSON binding",
+      "verification": "source review; no live email provider probe"
+    },
+    {
+      "id": "GHSA-5353-f8fq-65vc",
+      "cve": "CVE-2026-32879",
+      "severity": "medium",
+      "title": "Passkey-based secure step-up verification bypass for root-only channel secret disclosure",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-5353-f8fq-65vc",
+      "status": "already_protected_hardened",
+      "code": "controller/passkey.go assertion proof marker; controller/secure_verification.go; setupLogin clears proofs",
+      "verification": "controller/security_backport_test.go fresh/expired/future/valid/replay; hardware WebAuthn not exercised"
+    },
+    {
+      "id": "GHSA-6qcr-qxgr-m7fv",
+      "cve": "CVE-2026-33655",
+      "severity": "high",
+      "title": "SSRF Protection Bypass via Unresolved Hostname in Notification URLs",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-6qcr-qxgr-m7fv",
+      "status": "already_protected_hardened",
+      "code": "setting/system_setting/fetch_setting.go; common/ssrf_protection.go",
+      "verification": "common/ssrf_protection_test.go; service/protected_fetch_client_test.go (DNS rebinding, mixed addresses, proxy, disabled protection, allowed targets)"
+    },
+    {
+      "id": "GHSA-f35r-v9x5-r8mc",
+      "cve": "CVE-2026-30886",
+      "severity": "medium",
+      "title": "IDOR in VideoProxy allows cross-user video content access via missing ownership check ",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-f35r-v9x5-r8mc",
+      "status": "already_protected",
+      "code": "controller/video_proxy.go VideoProxy owner-scoped GetByTaskId",
+      "verification": "source review; real video provider not exercised"
+    },
+    {
+      "id": "GHSA-299v-8pq9-5gjq",
+      "cve": "CVE-2026-25802",
+      "severity": "high",
+      "title": "Potential XSS occurs in component MarkdownRenderer",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-299v-8pq9-5gjq",
+      "status": "already_protected",
+      "code": "web/src/components/common/markdown/MarkdownRenderer.jsx sandbox HTML preview",
+      "verification": "source review; browser checks recorded separately"
+    },
+    {
+      "id": "GHSA-w6x6-9fp7-fqm4",
+      "cve": "CVE-2026-25591",
+      "severity": "high",
+      "title": "SQL LIKE Wildcard Injection DoS in Token Search",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-w6x6-9fp7-fqm4",
+      "status": "already_protected",
+      "code": "model/token.go sanitizeLikePattern, pagination/cap",
+      "verification": "source review and backend regression"
+    },
+    {
+      "id": "GHSA-9f46-w24h-69w4",
+      "cve": "CVE-2025-62155",
+      "severity": "high",
+      "title": "SSRF Bypass",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-9f46-w24h-69w4",
+      "status": "already_protected_hardened",
+      "code": "service/http_client.go checkRedirect",
+      "verification": "common/ssrf_protection_test.go; service/protected_fetch_client_test.go (DNS rebinding, mixed addresses, proxy, disabled protection, allowed targets)"
+    },
+    {
+      "id": "GHSA-xxv6-m6fx-vfhh",
+      "cve": "CVE-2025-59146",
+      "severity": "high",
+      "title": "Authenticated Server-Side Request Forgery (SSRF)",
+      "url": "https://github.com/QuantumNous/new-api/security/advisories/GHSA-xxv6-m6fx-vfhh",
+      "status": "already_protected_hardened",
+      "code": "common/ssrf_protection.go URL/domain/IP filtering",
+      "verification": "common/ssrf_protection_test.go; service/protected_fetch_client_test.go (DNS rebinding, mixed addresses, proxy, disabled protection, allowed targets)"
+    }
+  ]
+}

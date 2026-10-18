@@ -350,6 +350,11 @@ func AdminResetPasskey(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	role := c.GetInt("role")
+	if role != common.RoleRootUser && (role != common.RoleAdminUser || role <= user.Role) {
+		common.ApiErrorMsg(c, "no permission")
+		return
+	}
 
 	if _, err := model.GetPasskeyByUserID(user.Id); err != nil {
 		if errors.Is(err, model.ErrPasskeyNotFound) {
@@ -559,7 +564,7 @@ func requirePasskeyDeleteVerification(c *gin.Context, userID int) bool {
 func requireSecureVerificationMethod(c *gin.Context, method string) bool {
 	session := sessions.Default(c)
 	verifiedAt, ok := session.Get(SecureVerificationSessionKey).(int64)
-	if !ok || time.Now().Unix()-verifiedAt >= SecureVerificationTimeout {
+	if !ok || time.Now().Unix() < verifiedAt || time.Now().Unix()-verifiedAt >= SecureVerificationTimeout {
 		session.Delete(SecureVerificationSessionKey)
 		session.Delete(secureVerificationMethodSessionKey)
 		_ = session.Save()
