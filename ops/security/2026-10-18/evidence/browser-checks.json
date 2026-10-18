@@ -1,0 +1,17 @@
+{
+  "candidate_application_revision": "ba844d202",
+  "synthetic_account": true,
+  "browser": "Codex in-app browser",
+  "pages_verified": [
+    "/",
+    "/login",
+    "/console",
+    "/console/subscription",
+    "/console/user",
+    "/help",
+    "/docs/3248625m0"
+  ],
+  "enterprise_docs_manifest_enabled": true,
+  "visible_doc_body_and_navigation": true,
+  "screenshot": "browser-enterprise-docs.png"
+}

@@ -1,0 +1,10 @@
+{
+  "equivalence_cases": 1728,
+  "deep_ast_nodes": 50000,
+  "original_compile": "RangeError",
+  "original_stringify": "RangeError",
+  "patched_compile": "safe",
+  "patched_stringify": "safe",
+  "raw_audit_advisory": "GHSA-vfj7-8cjw-p6xm",
+  "upstream_patched_version": null
+}

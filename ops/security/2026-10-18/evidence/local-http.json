@@ -1,0 +1,52 @@
+{
+  "version": "codex/sec-v0.13.2-p1+ba844d202+test",
+  "test_prefix": "new-api-security-local20261018",
+  "synthetic_upstream": true,
+  "checks": [
+    {
+      "check": "bundled enterprise documentation manifest",
+      "passed": true
+    },
+    {
+      "check": "chat relay and wallet debit",
+      "passed": true
+    },
+    {
+      "check": "SSE streaming",
+      "passed": true
+    },
+    {
+      "check": "overflow inputs reject without quota mutation",
+      "passed": true
+    },
+    {
+      "check": "anonymous webhook body limits",
+      "passed": true
+    },
+    {
+      "check": "private billing endpoint and quantity multiplier",
+      "passed": true
+    },
+    {
+      "check": "concurrent self settings cannot restore consumed wallet quota",
+      "passed": true
+    },
+    {
+      "check": "admin user list excludes access token",
+      "passed": true
+    },
+    {
+      "check": "explicit zero parameters reach upstream",
+      "passed": true
+    },
+    {
+      "check": "private subscription resets at Beijing midnight and bills subscription only",
+      "passed": true
+    },
+    {
+      "check": "test container restart preserves wallet and configuration",
+      "passed": true
+    }
+  ],
+  "passed": 11
+}

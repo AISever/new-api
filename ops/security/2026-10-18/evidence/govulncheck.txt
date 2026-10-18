@@ -1,0 +1,230 @@
+Fetching vulnerabilities from the database...
+
+Checking the code against the vulnerabilities...
+
+The package pattern matched the following 86 root packages:
+  github.com/QuantumNous/new-api/constant
+  github.com/QuantumNous/new-api/common
+  github.com/QuantumNous/new-api/setting/config
+  github.com/QuantumNous/new-api/types
+  github.com/QuantumNous/new-api/setting/operation_setting
+  github.com/QuantumNous/new-api/logger
+  github.com/QuantumNous/new-api/dto
+  github.com/QuantumNous/new-api/i18n
+  github.com/QuantumNous/new-api/common/limiter
+  github.com/QuantumNous/new-api/pkg/cachex
+  github.com/QuantumNous/new-api/pkg/billingexpr
+  github.com/QuantumNous/new-api/relay/constant
+  github.com/QuantumNous/new-api/setting/model_setting
+  github.com/QuantumNous/new-api/relay/common
+  github.com/QuantumNous/new-api/setting
+  github.com/QuantumNous/new-api/setting/billing_setting
+  github.com/QuantumNous/new-api/setting/performance_setting
+  github.com/QuantumNous/new-api/setting/ratio_setting
+  github.com/QuantumNous/new-api/setting/system_setting
+  github.com/QuantumNous/new-api/model
+  github.com/QuantumNous/new-api/relay/channel/openrouter
+  github.com/QuantumNous/new-api/relay/channel/task/taskcommon
+  github.com/QuantumNous/new-api/relay/reasonmap
+  github.com/QuantumNous/new-api/service/openaicompat
+  github.com/QuantumNous/new-api/service
+  github.com/QuantumNous/new-api/middleware
+  github.com/QuantumNous/new-api/oauth
+  github.com/QuantumNous/new-api/pkg/ionet
+  github.com/QuantumNous/new-api/relay/helper
+  github.com/QuantumNous/new-api/relay/channel
+  github.com/QuantumNous/new-api/setting/reasoning
+  github.com/QuantumNous/new-api/relay/channel/claude
+  github.com/QuantumNous/new-api/relay/channel/ai360
+  github.com/QuantumNous/new-api/relay/channel/lingyiwanwu
+  github.com/QuantumNous/new-api/relay/channel/xinference
+  github.com/QuantumNous/new-api/relay/common_handler
+  github.com/QuantumNous/new-api/relay/channel/openai
+  github.com/QuantumNous/new-api/relay/channel/ali
+  github.com/QuantumNous/new-api/relay/channel/aws
+  github.com/QuantumNous/new-api/relay/channel/baidu
+  github.com/QuantumNous/new-api/relay/channel/baidu_v2
+  github.com/QuantumNous/new-api/relay/channel/cloudflare
+  github.com/QuantumNous/new-api/relay/channel/codex
+  github.com/QuantumNous/new-api/relay/channel/cohere
+  github.com/QuantumNous/new-api/relay/channel/coze
+  github.com/QuantumNous/new-api/relay/channel/deepseek
+  github.com/QuantumNous/new-api/relay/channel/dify
+  github.com/QuantumNous/new-api/relay/channel/gemini
+  github.com/QuantumNous/new-api/relay/channel/jimeng
+  github.com/QuantumNous/new-api/relay/channel/jina
+  github.com/QuantumNous/new-api/relay/channel/minimax
+  github.com/QuantumNous/new-api/relay/channel/mistral
+  github.com/QuantumNous/new-api/relay/channel/mokaai
+  github.com/QuantumNous/new-api/relay/channel/moonshot
+  github.com/QuantumNous/new-api/relay/channel/ollama
+  github.com/QuantumNous/new-api/relay/channel/palm
+  github.com/QuantumNous/new-api/relay/channel/perplexity
+  github.com/QuantumNous/new-api/relay/channel/replicate
+  github.com/QuantumNous/new-api/relay/channel/siliconflow
+  github.com/QuantumNous/new-api/relay/channel/submodel
+  github.com/QuantumNous/new-api/relay/channel/task/ali
+  github.com/QuantumNous/new-api/relay/channel/task/doubao
+  github.com/QuantumNous/new-api/relay/channel/task/gemini
+  github.com/QuantumNous/new-api/relay/channel/task/hailuo
+  github.com/QuantumNous/new-api/relay/channel/task/jimeng
+  github.com/QuantumNous/new-api/relay/channel/task/kling
+  github.com/QuantumNous/new-api/relay/channel/task/sora
+  github.com/QuantumNous/new-api/relay/channel/task/suno
+  github.com/QuantumNous/new-api/relay/channel/vertex
+  github.com/QuantumNous/new-api/relay/channel/task/vertex
+  github.com/QuantumNous/new-api/relay/channel/task/vidu
+  github.com/QuantumNous/new-api/relay/channel/tencent
+  github.com/QuantumNous/new-api/relay/channel/volcengine
+  github.com/QuantumNous/new-api/relay/channel/xai
+  github.com/QuantumNous/new-api/relay/channel/xunfei
+  github.com/QuantumNous/new-api/relay/channel/zhipu
+  github.com/QuantumNous/new-api/relay/channel/zhipu_4v
+  github.com/QuantumNous/new-api/relay
+  github.com/QuantumNous/new-api/service/passkey
+  github.com/QuantumNous/new-api/setting/console_setting
+  github.com/QuantumNous/new-api/controller
+  github.com/QuantumNous/new-api/router
+  github.com/QuantumNous/new-api
+  github.com/QuantumNous/new-api/ops/tests/security-fixture-server
+  github.com/QuantumNous/new-api/ops/tests/securitydb
+  github.com/QuantumNous/new-api/web/node_modules/flatted/golang/pkg/flatted
+Govulncheck scanned the following 115 modules and the go1.27.2 standard library:
+  github.com/QuantumNous/new-api
+  github.com/Calcium-Ion/go-epay@v0.0.4
+  github.com/DmitriyVTitov/size@v1.5.0
+  github.com/abema/go-mp4@v1.4.1
+  github.com/andybalholm/brotli@v1.1.1
+  github.com/anknown/ahocorasick@v0.0.0-20190904063843-d75dbd5169c0
+  github.com/anknown/darts@v0.0.0-20151216065714-83ff685239e6
+  github.com/aws/aws-sdk-go-v2@v1.41.5
+  github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream@v1.7.8
+  github.com/aws/aws-sdk-go-v2/credentials@v1.19.10
+  github.com/aws/aws-sdk-go-v2/internal/configsources@v1.4.21
+  github.com/aws/aws-sdk-go-v2/internal/endpoints/v2@v2.7.21
+  github.com/aws/aws-sdk-go-v2/service/bedrockruntime@v1.50.4
+  github.com/aws/smithy-go@v1.24.2
+  github.com/beorn7/perks@v1.0.1
+  github.com/boombuler/barcode@v1.1.0
+  github.com/bytedance/gopkg@v0.1.3
+  github.com/cespare/xxhash/v2@v2.3.0
+  github.com/dgryski/go-rendezvous@v0.0.0-20200823014737-9f7001d12a5f
+  github.com/dlclark/regexp2@v1.11.5
+  github.com/dustin/go-humanize@v1.0.1
+  github.com/expr-lang/expr@v1.17.8
+  github.com/fxamacker/cbor/v2@v2.9.0
+  github.com/gabriel-vasile/mimetype@v1.4.3
+  github.com/gin-contrib/cors@v1.7.2
+  github.com/gin-contrib/gzip@v0.0.6
+  github.com/gin-contrib/sessions@v0.0.5
+  github.com/gin-contrib/sse@v0.1.0
+  github.com/gin-contrib/static@v0.0.1
+  github.com/gin-gonic/gin@v1.9.1
+  github.com/glebarez/go-sqlite@v1.21.2
+  github.com/glebarez/sqlite@v1.9.0
+  github.com/go-audio/aiff@v1.1.0
+  github.com/go-audio/audio@v1.0.0
+  github.com/go-audio/riff@v1.0.0
+  github.com/go-audio/wav@v1.1.0
+  github.com/go-playground/locales@v0.14.1
+  github.com/go-playground/universal-translator@v0.18.1
+  github.com/go-playground/validator/v10@v10.20.0
+  github.com/go-redis/redis/v8@v8.11.5
+  github.com/go-sql-driver/mysql@v1.7.0
+  github.com/go-webauthn/webauthn@v0.14.0
+  github.com/go-webauthn/x@v0.1.25
+  github.com/golang-jwt/jwt/v5@v5.3.0
+  github.com/google/go-tpm@v0.9.5
+  github.com/google/uuid@v1.6.0
+  github.com/gorilla/context@v1.1.1
+  github.com/gorilla/securecookie@v1.1.1
+  github.com/gorilla/sessions@v1.2.1
+  github.com/gorilla/websocket@v1.5.3
+  github.com/grafana/pyroscope-go@v1.2.7
+  github.com/grafana/pyroscope-go/godeltaprof@v0.1.9
+  github.com/icza/bitio@v1.1.0
+  github.com/jackc/pgpassfile@v1.0.0
+  github.com/jackc/pgservicefile@v0.0.0-20240606120523-5a60cdf6a761
+  github.com/jackc/pgx/v5@v5.9.2
+  github.com/jackc/puddle/v2@v2.2.2
+  github.com/jfreymuth/oggvorbis@v1.0.5
+  github.com/jfreymuth/vorbis@v1.0.2
+  github.com/jinzhu/copier@v0.4.0
+  github.com/jinzhu/inflection@v1.0.0
+  github.com/jinzhu/now@v1.1.5
+  github.com/joho/godotenv@v1.5.1
+  github.com/klauspost/compress@v1.18.7
+  github.com/leodido/go-urn@v1.4.0
+  github.com/mattn/go-isatty@v0.0.20
+  github.com/mewkiz/flac@v1.0.13
+  github.com/mewkiz/pkg@v0.0.0-20250417130911-3f050ff8c56d
+  github.com/mewpkg/term@v0.0.0-20241026122259-37a80af23985
+  github.com/mitchellh/mapstructure@v1.5.0
+  github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822
+  github.com/nicksnyder/go-i18n/v2@v2.6.1
+  github.com/pelletier/go-toml/v2@v2.2.1
+  github.com/pkg/errors@v0.9.1
+  github.com/pquerna/otp@v1.5.0
+  github.com/prometheus/client_golang@v1.22.0
+  github.com/prometheus/client_model@v0.6.1
+  github.com/prometheus/common@v0.62.0
+  github.com/prometheus/procfs@v0.15.1
+  github.com/remyoudompheng/bigfft@v0.0.0-20230129092748-24d4a6f8daec
+  github.com/samber/go-singleflightx@v0.3.2
+  github.com/samber/hot@v0.11.0
+  github.com/samber/lo@v1.52.0
+  github.com/shirou/gopsutil@v3.21.11+incompatible
+  github.com/shopspring/decimal@v1.4.0
+  github.com/stripe/stripe-go/v81@v81.4.0
+  github.com/tcolgate/mp3@v0.0.0-20170426193717-e79c5a46d300
+  github.com/thanhpk/randstr@v1.0.6
+  github.com/tidwall/gjson@v1.18.0
+  github.com/tidwall/match@v1.1.1
+  github.com/tidwall/pretty@v1.2.0
+  github.com/tidwall/sjson@v1.2.5
+  github.com/tiktoken-go/tokenizer@v0.6.2
+  github.com/tklauser/go-sysconf@v0.3.12
+  github.com/tklauser/numcpus@v0.6.1
+  github.com/ugorji/go/codec@v1.2.12
+  github.com/waffo-com/waffo-go@v1.3.1
+  github.com/x448/float16@v0.8.4
+  github.com/yapingcat/gomedia@v0.0.0-20240906162731-17feea57090c
+  golang.org/x/crypto@v0.57.0
+  golang.org/x/exp@v0.0.0-20250620022241-b7579e27df2b
+  golang.org/x/image@v0.45.0
+  golang.org/x/net@v0.60.0
+  golang.org/x/sync@v0.23.0
+  golang.org/x/sys@v0.48.0
+  golang.org/x/text@v0.42.0
+  google.golang.org/protobuf@v1.36.5
+  gopkg.in/yaml.v3@v3.0.1
+  gorm.io/driver/mysql@v1.4.3
+  gorm.io/driver/postgres@v1.5.2
+  gorm.io/gorm@v1.25.2
+  modernc.org/libc@v1.66.10
+  modernc.org/mathutil@v1.7.1
+  modernc.org/memory@v1.11.0
+  modernc.org/sqlite@v1.40.1
+
+=== Symbol Results ===
+
+No vulnerabilities found.
+
+=== Package Results ===
+
+No other vulnerabilities found.
+
+=== Module Results ===
+
+Vulnerability #1: GO-2026-5932
+    The golang.org/x/crypto/openpgp package is unmaintained, unsafe by design,
+    and has known security issues
+  More info: https://pkg.go.dev/vuln/GO-2026-5932
+  Module: golang.org/x/crypto
+    Found in: golang.org/x/crypto@v0.57.0
+    Fixed in: N/A
+
+Your code is affected by 0 vulnerabilities.
+This scan also found 0 vulnerabilities in packages you import and 1
+vulnerability in modules you require, but your code doesn't appear to call these
+vulnerabilities.

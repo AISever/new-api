@@ -1,0 +1,70 @@
+[
+  {
+    "test": "ops/tests/kkidc-host-backup-control-flow-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-backup-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-build-strategy-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-caddy-preserve-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-control-flow-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-image-reuse-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-local-build-platform-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-pushed-head-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-remote-guard-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-stop-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-deploy-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-import-upstream-auth-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-restore-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/kkidc-host-upgrade-gate-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/local-test-env-deploy-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/local-test-env-reset-test.sh",
+    "exit": 0
+  },
+  {
+    "test": "ops/tests/local-test-env-status-test.sh",
+    "exit": 0
+  }
+]

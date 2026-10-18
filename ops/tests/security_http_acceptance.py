@@ -67,8 +67,8 @@ if not ok('/api/setup')['status']:
     ok('/api/setup', dict(login,confirmPassword=login['password']))
 user_id = ok('/api/user/login', login)['id']
 ok('/api/subscription/self/preference',{'billing_preference':'wallet_only'},'PUT')
-for key, value in [('ModelRatio', {'security-chat':1,'security-image':1}), ('ModelPrice', {'security-image':0.01}), ('CompletionRatio', {'security-chat':2}), ('GroupRatio', {'default':1,'denied':1})]:
-    ok('/api/option/', {'key':key,'value':json.dumps(value)}, 'PUT')
+for key, value in [('ModelRatio', {'security-chat':1,'security-image':1}), ('ModelPrice', {'security-image':0.01}), ('CompletionRatio', {'security-chat':2}), ('GroupRatio', {'default':1,'denied':1}), ('general_setting.docs_manifest_path', '/enterprise-docs/apifox/manifest.json')]:
+    ok('/api/option/', {'key':key,'value':value if isinstance(value,str) else json.dumps(value)}, 'PUT')
 if int(sql("SELECT count(*) FROM channels WHERE name='synthetic-security'")) == 0:
     ok('/api/channel/', {'mode':'single','channel':{'name':'synthetic-security','type':1,'key':'synthetic-upstream','base_url':'http://'+a.prefix+'-fixture:8080','models':'security-chat,security-image','group':'default','status':1}})
 # Baseline channel additions are propagated by a periodic memory-cache sync.
@@ -83,6 +83,12 @@ else: raise AssertionError('test configuration reload failed')
 token = secrets.token_hex(24)
 sql('INSERT INTO tokens (user_id,key,status,name,expired_time,remain_quota,unlimited_quota,"group") VALUES ('+str(user_id)+",'"+token+"',1,'acceptance',-1,10000000,false,'default')")
 chat = {'model':'security-chat','messages':[{'role':'user','content':'synthetic'}], 'temperature':0, 'top_p':0, 'presence_penalty':0, 'frequency_penalty':0}
+
+def enterprise_docs():
+    assert ok('/api/status')['docs_manifest_path']=='/enterprise-docs/apifox/manifest.json'
+    code, manifest = request('/enterprise-docs/apifox/manifest.json')
+    assert code == 200 and isinstance(manifest,dict)
+check('bundled enterprise documentation manifest', enterprise_docs)
 
 def normal_chat():
     before = quota()
@@ -107,7 +113,7 @@ def bounds():
 check('overflow inputs reject without quota mutation', bounds)
 
 def body_limit():
-    for path in ['/api/stripe/webhook','/api/creem/webhook','/api/user/epay/notify','/api/subscription/epay/notify']:
+    for path in ['/api/stripe/webhook','/api/creem/webhook','/api/waffo/webhook','/api/user/epay/notify','/api/subscription/epay/notify']:
         code, _ = request(path,raw=b'x'*(512*1024+1))
         assert code == 413, (path,code)
 check('anonymous webhook body limits', body_limit)

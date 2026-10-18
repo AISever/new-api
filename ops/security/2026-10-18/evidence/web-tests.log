@@ -1,0 +1,75 @@
+bun test v1.4.3 (c6da4a4d3)
+
+web/src/helpers/branding.test.js:
+(pass) applyBrandingToDocument uses custom logo as favicon [2.61ms]
+(pass) applyBrandingToDocument keeps default favicon when logo is empty [0.09ms]
+
+web/src/helpers/docsCenter.test.js:
+(pass) normalizeDocsManifestPath accepts enterprise static manifest paths [0.20ms]
+(pass) normalizeDocsManifestPath rejects remote or unsafe paths [0.09ms]
+(pass) getDocsAvailability prefers local docs when manifest exists [0.26ms]
+(pass) getDocsAvailability keeps legacy docs link when local docs are absent [0.09ms]
+(pass) shouldUseLocalDocs only enables the in-app docs experience for valid manifests [0.07ms]
+
+web/src/components/settings/utils/helpGroupCards.test.mjs:
+(pass) parseHelpGroupCardsOption falls back to defaults when option is empty [0.34ms]
+(pass) stringifyHelpGroupCardsOption serializes cards into formatted json [0.24ms]
+(pass) buildDisplayHelpGroupCards sorts by sort_order and filters disabled cards [0.34ms]
+(pass) readHelpGroupCardsOption reports invalid json instead of silently accepting it [0.27ms]
+(pass) getHelpGroupCardsValidationError catches duplicate ids and missing titles [0.19ms]
+
+web/src/pages/Setting/Ratio/utils/optionTransformers.test.mjs:
+(pass) parseSimpleMapOption parses numeric map into editable rows [0.53ms]
+(pass) stringifySimpleMapOption serializes editable numeric rows into formatted json [0.40ms]
+(pass) stringifySimpleMapOption preserves wildcard model names [0.09ms]
+(pass) parseGroupRelationOption flattens nested relation map into rows [0.31ms]
+(pass) stringifyGroupRelationOption rebuilds nested relation map from rows [0.64ms]
+(pass) parseSpecialUsableGroupOption expands add remove and direct rules [0.62ms]
+(pass) stringifySpecialUsableGroupOption rebuilds prefixed rule keys [0.21ms]
+(pass) parseOrderedStringListOption preserves array order [0.14ms]
+(pass) stringifyOrderedStringListOption rebuilds formatted array json [0.12ms]
+
+web/src/pages/Setting/Ratio/utils/editorErrorHelpers.test.mjs:
+(pass) getSubmitBlockingError returns the first non-empty card error [1.06ms]
+
+web/src/pages/Setting/Ratio/utils/rowValidators.test.mjs:
+(pass) validateUserUsableGroupRows rejects rows with label but missing group key [1.37ms]
+(pass) validateUserUsableGroupRows allows blank label when key exists [0.17ms]
+(pass) validateSpecialUsableGroupRows rejects rows missing target group [0.21ms]
+(pass) validateSpecialUsableGroupRows ignores untouched blank rows [0.10ms]
+
+web/src/pages/Setting/Ratio/utils/focusTracking.test.mjs:
+(pass) resolveAppendedRowFocus returns appended row id when requested [0.14ms]
+(pass) resolveAppendedRowFocus ignores unchanged row counts [0.12ms]
+
+web/src/pages/Setting/Ratio/utils/editorMode.test.mjs:
+(pass) ratio editors default to json mode [0.09ms]
+
+web/src/pages/Setting/Ratio/utils/groupVisibilityLinkage.test.mjs:
+(pass) detects whether a group is visible in user usable groups [0.27ms]
+(pass) enabling visibility appends a missing user usable group row [0.15ms]
+(pass) disabling visibility removes the linked user usable group row [0.11ms]
+(pass) renaming a visible group preserves its display name [0.19ms]
+(pass) renaming to an existing target keeps the existing row and removes the old one [0.20ms]
+
+web/src/pages/Setting/Ratio/utils/editorLayout.test.mjs:
+(pass) getCompactEditorLayoutMode keeps desktop rows on non-mobile widths [0.63ms]
+(pass) getCompactEditorLayoutMode uses stacked cards for mobile widths [0.27ms]
+(pass) shouldUseSharedInlineHeaders only enables shared headers for inline mobile layout [0.22ms]
+
+web/src/pages/Setting/Dashboard/utils/announcements.test.mjs:
+(pass) normalizeAnnouncementPublishDate serializes Date values to RFC3339 [0.22ms]
+(pass) normalizeAnnouncementPublishDate accepts ISO date strings from DatePicker state [0.04ms]
+(pass) normalizeAnnouncementPublishDate rejects invalid publishDate values [0.62ms]
+(pass) ensureOptionUpdateSucceeded throws when option save fails [0.13ms]
+(pass) ensureOptionUpdateSucceeded tolerates successful option saves [0.12ms]
+
+web/scripts/security-dependencies.test.mjs:
+(pass) braces ranges, alternatives and limits retain their behavior [2.72ms]
+(pass) maximum parser nesting does not exhaust the stack [33.49ms]
+(pass) deep caller supplied AST does not exhaust the JS stack [23.88ms]
+
+ 45 pass
+ 0 fail
+ 11 expect() calls
+Ran 45 tests across 12 files. [133.00ms]

@@ -1,0 +1,158 @@
+{
+  "action": "stop",
+  "test_prefix": "new-api-security-20261018",
+  "test_port": 13018,
+  "production_unchanged": true,
+  "production_before": {
+    "new-api-local": {
+      "id": "986a046e81792121a47f7ccce7e1e7179c36217a8c08620c3fbacf788d3b9e79",
+      "image": "sha256:13a6bcdccd8424b3e6c962d3f072f2cdc14158e07b256f34dcd4650f790455d7",
+      "started_at": "2026-06-27T01:40:50.179764685Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "new-api-postgres": {
+      "id": "b0ecbb114f584dd4f691e13fec0e3fad4e7d35408ff5e7431394fb27e6b8084c",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started_at": "2026-05-14T03:06:21.12972494Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "new-api-redis": {
+      "id": "889fc0b715f8ec12bd6a75ccb5fb14827cc686371cb7aa1b092d37c8b26379e9",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started_at": "2026-05-14T03:06:21.141344558Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "snowlight-caddy": {
+      "id": "2690ef4c95b34d37d20b2c382e9931181114988982c44d42b5d61e9799330e1b",
+      "image": "sha256:8852dff945f68ac7aa3c89a78cec8516212b93b9670949d707b101f86722b4c4",
+      "started_at": "2026-06-01T13:49:16.704368321Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "new-api-test": {
+      "id": "5115aff4470ce8bb9c218b2d7faedaafc23b363867b33c1684167ed7572aad52",
+      "image": "sha256:310ffb9a55ec522e3f91a447d672daa2f9a2491c09373e0f0b5b2370c717dabb",
+      "started_at": "2026-05-17T12:03:12.003606547Z",
+      "restart_count": 0,
+      "state": "running"
+    }
+  },
+  "production_after": {
+    "new-api-local": {
+      "id": "986a046e81792121a47f7ccce7e1e7179c36217a8c08620c3fbacf788d3b9e79",
+      "image": "sha256:13a6bcdccd8424b3e6c962d3f072f2cdc14158e07b256f34dcd4650f790455d7",
+      "started_at": "2026-06-27T01:40:50.179764685Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "new-api-postgres": {
+      "id": "b0ecbb114f584dd4f691e13fec0e3fad4e7d35408ff5e7431394fb27e6b8084c",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started_at": "2026-05-14T03:06:21.12972494Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "new-api-redis": {
+      "id": "889fc0b715f8ec12bd6a75ccb5fb14827cc686371cb7aa1b092d37c8b26379e9",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started_at": "2026-05-14T03:06:21.141344558Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "snowlight-caddy": {
+      "id": "2690ef4c95b34d37d20b2c382e9931181114988982c44d42b5d61e9799330e1b",
+      "image": "sha256:8852dff945f68ac7aa3c89a78cec8516212b93b9670949d707b101f86722b4c4",
+      "started_at": "2026-06-01T13:49:16.704368321Z",
+      "restart_count": 0,
+      "state": "running"
+    },
+    "new-api-test": {
+      "id": "5115aff4470ce8bb9c218b2d7faedaafc23b363867b33c1684167ed7572aad52",
+      "image": "sha256:310ffb9a55ec522e3f91a447d672daa2f9a2491c09373e0f0b5b2370c717dabb",
+      "started_at": "2026-05-17T12:03:12.003606547Z",
+      "restart_count": 0,
+      "state": "running"
+    }
+  },
+  "production_health": {
+    "http_status": 200,
+    "success": true,
+    "version": "codex/release-v0.13.2-p1+bc32807fc+kkidc-production"
+  },
+  "test_containers": {
+    "app": {
+      "name": "new-api-security-20261018-app",
+      "id": "39d12d1511cf84ca60d9c51b434b0d3bcbdc79d7f20e59554a390377305ddef1",
+      "image_id": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "state": "exited",
+      "networks": [
+        "new-api-security-20261018"
+      ],
+      "mounts": [
+        {
+          "Source": "/home/ubuntu/.local/state/new-api-security-tests/20261018/data",
+          "Destination": "/data"
+        },
+        {
+          "Source": "/home/ubuntu/.local/state/new-api-security-tests/20261018/logs",
+          "Destination": "/app/logs"
+        }
+      ],
+      "ports": {
+        "3000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "13018"
+          }
+        ]
+      }
+    },
+    "postgres": {
+      "name": "new-api-security-20261018-postgres",
+      "id": "1ed3e647d03b4b8b82aa93d344645f00a8590bb0ab914ed92bbdb07c8baa7bed",
+      "image_id": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "state": "exited",
+      "networks": [
+        "new-api-security-20261018"
+      ],
+      "mounts": [
+        {
+          "Source": "/home/ubuntu/.local/state/new-api-security-tests/20261018/postgres",
+          "Destination": "/var/lib/postgresql/data"
+        }
+      ],
+      "ports": {}
+    },
+    "redis": {
+      "name": "new-api-security-20261018-redis",
+      "id": "e888a112be8030356ddb3e172e1fab65d0b86fa49cb24697df134b6f3720d2a4",
+      "image_id": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "state": "exited",
+      "networks": [
+        "new-api-security-20261018"
+      ],
+      "mounts": [
+        {
+          "Source": "/home/ubuntu/.local/state/new-api-security-tests/20261018/redis",
+          "Destination": "/data"
+        }
+      ],
+      "ports": {}
+    },
+    "fixture": {
+      "name": "new-api-security-20261018-fixture",
+      "id": "d55aa1356e00316f78a1ea804149b17d6fbe1821d6a13e15915e6e2224135118",
+      "image_id": "sha256:f1c06ea2d803cd89c9772498c4e37045e7d6617b1ff2ba2cdc899ec631a62d23",
+      "state": "exited",
+      "networks": [
+        "new-api-security-20261018"
+      ],
+      "mounts": [],
+      "ports": {}
+    }
+  },
+  "unchanged_across_entire_maintenance_test": true
+}

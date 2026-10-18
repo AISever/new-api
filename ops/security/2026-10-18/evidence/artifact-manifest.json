@@ -1,0 +1,14 @@
+{
+  "source_revision": "ba844d202b683219dadc679af3521dc1d8abde9f",
+  "branch": "codex/security-v0.13.2-p1-20261018",
+  "version": "codex/sec-v0.13.2-p1+ba844d202+test",
+  "candidate_image": "new-api:security-ba844d202",
+  "image_id": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+  "image_size": 71838641,
+  "go": "1.27.2",
+  "bun": "1.4.3",
+  "archive_sha256": "6e1c7e3f74f694f8d59e357fb823383eb3877fdf401636719ab3eb5a64b4b172",
+  "archive_bytes": 74716669,
+  "binary_sha256": "5c90c3ff0ead5c15b1bfcd8cabcdc95df0ce5959c0ea2c1d121a13a14282cae4",
+  "frontend_patch_sha256": "061da5e9a77cb9a710bf53fcb1cee13786b5ae7071499d64ac6ae9034910faf8"
+}

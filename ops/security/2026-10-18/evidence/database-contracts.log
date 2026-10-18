@@ -1,0 +1,16 @@
+=== RUN   TestSecurityMaintenanceDatabaseContracts
+=== RUN   TestSecurityMaintenanceDatabaseContracts/sqlite
+[SYS] 2026/10/18 - 18:50:05 | SQL_DSN not set, using SQLite as database 
+[SYS] 2026/10/18 - 18:50:05 | database migration started 
+=== RUN   TestSecurityMaintenanceDatabaseContracts/postgres
+[SYS] 2026/10/18 - 18:50:08 | using PostgreSQL as database 
+[SYS] 2026/10/18 - 18:50:08 | database migration started 
+=== RUN   TestSecurityMaintenanceDatabaseContracts/mysql
+[SYS] 2026/10/18 - 18:50:14 | using MySQL as database 
+[SYS] 2026/10/18 - 18:50:14 | database migration started 
+--- PASS: TestSecurityMaintenanceDatabaseContracts (8.68s)
+    --- PASS: TestSecurityMaintenanceDatabaseContracts/sqlite (2.10s)
+    --- PASS: TestSecurityMaintenanceDatabaseContracts/postgres (6.00s)
+    --- PASS: TestSecurityMaintenanceDatabaseContracts/mysql (0.58s)
+PASS
+ok  	github.com/QuantumNous/new-api/ops/tests/securitydb	8.714s

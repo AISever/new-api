@@ -1,0 +1,10 @@
+{
+  "baseline_image_id": "sha256:13a6bcdccd8424b3e6c962d3f072f2cdc14158e07b256f34dcd4650f790455d7",
+  "old_image_reads_candidate_schema": true,
+  "schema_unchanged": true,
+  "startup_preserves_wallet_subscription_and_anchors": true,
+  "login_and_self_api": true,
+  "synthetic_chat_and_wallet_debit": true,
+  "debit": 14,
+  "production_unchanged": true
+}
