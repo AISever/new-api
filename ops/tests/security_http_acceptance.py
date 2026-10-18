@@ -60,15 +60,26 @@ password = secrets.token_hex(12)
 root = Path.home()/'.local/state/new-api-security-tests'/a.prefix.removeprefix('new-api-security-')
 credential = root/'http-credentials.json'
 if not credential.exists():
-    ok('/api/setup', {'username':'secadmin','password':password,'confirmPassword':password})
     credential.write_text(json.dumps({'username':'secadmin','password':password}))
     credential.chmod(0o600)
 login = json.loads(credential.read_text())
+if not ok('/api/setup')['status']:
+    ok('/api/setup', dict(login,confirmPassword=login['password']))
 user_id = ok('/api/user/login', login)['id']
+ok('/api/subscription/self/preference',{'billing_preference':'wallet_only'},'PUT')
 for key, value in [('ModelRatio', {'security-chat':1,'security-image':1}), ('ModelPrice', {'security-image':0.01}), ('CompletionRatio', {'security-chat':2}), ('GroupRatio', {'default':1,'denied':1})]:
     ok('/api/option/', {'key':key,'value':json.dumps(value)}, 'PUT')
 if int(sql("SELECT count(*) FROM channels WHERE name='synthetic-security'")) == 0:
     ok('/api/channel/', {'mode':'single','channel':{'name':'synthetic-security','type':1,'key':'synthetic-upstream','base_url':'http://'+a.prefix+'-fixture:8080','models':'security-chat,security-image','group':'default','status':1}})
+# Baseline channel additions are propagated by a periodic memory-cache sync.
+# Restart only the owned test app to load the persisted fixture configuration.
+subprocess.run(['docker','restart',a.prefix+'-app'],check=True,stdout=subprocess.DEVNULL)
+for _ in range(40):
+    try:
+        if ok('/api/status')['version'] == a.version: break
+    except Exception: pass
+    time.sleep(1)
+else: raise AssertionError('test configuration reload failed')
 token = secrets.token_hex(24)
 sql('INSERT INTO tokens (user_id,key,status,name,expired_time,remain_quota,unlimited_quota,"group") VALUES ('+str(user_id)+",'"+token+"',1,'acceptance',-1,10000000,false,'default')")
 chat = {'model':'security-chat','messages':[{'role':'user','content':'synthetic'}], 'temperature':0, 'top_p':0, 'presence_penalty':0, 'frequency_penalty':0}
@@ -124,7 +135,7 @@ def concurrent_settings():
 check('concurrent self settings cannot restore consumed wallet quota', concurrent_settings)
 
 def token_not_serialized():
-    sentinel = secrets.token_hex(24)
+    sentinel = secrets.token_hex(16)
     sql("UPDATE users SET access_token='"+sentinel+"' WHERE id="+str(user_id))
     _, users = request('/api/user/')
     assert sentinel not in json.dumps(users) and 'access_token' not in json.dumps(users)
@@ -140,6 +151,7 @@ check('explicit zero parameters reach upstream', explicit_zero)
 def midnight_subscription():
     midnight = int(sql("SELECT extract(epoch FROM date_trunc('day',now() AT TIME ZONE 'Asia/Shanghai') AT TIME ZONE 'Asia/Shanghai')::bigint"))
     sql("INSERT INTO subscription_plans (id,title,enabled,duration_unit,duration_value,total_amount,effective_groups,quota_reset_period,quota_reset_custom_seconds) VALUES (991318,'synthetic-midnight',true,'month',1,100000,'[\"default\"]','custom',86400) ON CONFLICT (id) DO NOTHING")
+    sql("UPDATE user_subscriptions SET status='expired' WHERE user_id="+str(user_id)+" AND plan_id=991318")
     sid = sql("INSERT INTO user_subscriptions (user_id,plan_id,amount_total,amount_used,start_time,end_time,status,last_reset_time,next_reset_time) VALUES ("+str(user_id)+',991318,100000,99,'+str(midnight-172800)+','+str(midnight+172800)+",'active',"+str(midnight-86400)+','+str(midnight)+') RETURNING id').splitlines()[0]
     ok('/api/subscription/self/preference',{'billing_preference':'subscription_only'},'PUT')
     before = quota()

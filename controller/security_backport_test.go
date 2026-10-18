@@ -133,3 +133,20 @@ func TestPrivateBillingChargeRejectsExtremeQuantity(t *testing.T) {
 	require.NoError(t, applyBillingChargeQuantity(price, 3))
 	require.Equal(t, 15000, price.Quota)
 }
+
+func TestRelayOverflowInputsReturnBadRequestBeforeBilling(t *testing.T) {
+	for _, tc := range []struct{ path, body string }{
+		{"/v1/images/generations", `{"model":"security-image","prompt":"test","n":18446744073686646784}`},
+		{"/v1/chat/completions", `{"model":"security-chat","messages":[{"role":"user","content":"test"}],"max_tokens":2147483647}`},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			r := gin.New()
+			r.POST(tc.path, func(c *gin.Context) { Relay(c, types.RelayFormatOpenAI) })
+			req := httptest.NewRequest(http.MethodPost, tc.path, bytes.NewBufferString(tc.body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+		})
+	}
+}

@@ -27,6 +27,8 @@ if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,39}", a.run_id) or not 1024 <= a.port 
     p.error("invalid isolated test name or port")
 if a.action == "deploy" and not all([a.archive, a.image, a.image_id, a.fixture_image, a.version]):
     p.error("deploy requires archive, image, image-id, fixture-image and version")
+if a.version and len(a.version) > 50:
+    p.error("version exceeds the existing setup schema limit of 50 characters")
 if a.image and not a.image.startswith("new-api:security-"):
     p.error("candidate image must use the security namespace")
 with tempfile.TemporaryDirectory(prefix="new-api-security-ssh-") as d:
