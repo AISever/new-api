@@ -1,0 +1,34 @@
+{
+  "config_changed_fields": [
+    "Labels",
+    "Image",
+    "Env"
+  ],
+  "host_config_changed_fields": [],
+  "containers": [
+    {
+      "name": "new-api-local-failed-security-5a7aae3bf",
+      "state": "exited"
+    },
+    {
+      "name": "new-api-release-restore-20261018-app",
+      "state": "exited"
+    },
+    {
+      "name": "new-api-release-restore-20261018-redis",
+      "state": "exited"
+    },
+    {
+      "name": "new-api-release-restore-20261018-postgres",
+      "state": "exited"
+    },
+    {
+      "name": "new-api-release-redis-restore-20261018",
+      "state": "exited"
+    },
+    {
+      "name": "new-api-local-rollback-security-20261018",
+      "state": "exited"
+    }
+  ]
+}

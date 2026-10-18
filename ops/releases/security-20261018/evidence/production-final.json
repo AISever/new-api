@@ -1,0 +1,215 @@
+{
+  "captured_at": 1792341464.9895017,
+  "phase": "verified",
+  "application": {
+    "id": "1eb9ca593176302c310e0471489dcb052cfebb9bac3778becf69e50a50003ea3",
+    "image_id": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+    "version": "codex/sec-v0.13.2-p1+ba844d202+production",
+    "started_at": "2026-10-18T16:06:50.00918918Z",
+    "restart_count": 0,
+    "oom_killed": false
+  },
+  "runtime_env_preserved_except_version": true,
+  "host_config_preserved": true,
+  "caddy_runtime_restored": true,
+  "caddyfile_unchanged": true,
+  "maintenance_firewall_rule_absent": true,
+  "other_services_unchanged": true,
+  "health_urls_all_ok": [
+    "http://127.0.0.1:3000/api/status",
+    "https://api.aisever.cn/api/status",
+    "https://newapi.aisever.cn/api/status"
+  ],
+  "journal": {
+    "started": 1792339582.5895383,
+    "published_at": 1792339630.8670397,
+    "heartbeat": 1792341443.515027,
+    "health_samples": 118,
+    "observation_seconds": 1800,
+    "old_service_midnight_reset_observed": true,
+    "midnight_reset_observed": false,
+    "configuration_preserved": true,
+    "all_existing_quota_rows_preserved": true,
+    "fhy131_unchanged_at_cutover": true,
+    "probe_disabled": true
+  },
+  "fhy131": {
+    "id": 131,
+    "user_id": 1267,
+    "username": "fhy",
+    "amount_total": 50000000,
+    "amount_used": 0,
+    "last_reset_time": 1792339200,
+    "next_reset_time": 1792425600,
+    "quota_reset_period": "custom",
+    "quota_reset_custom_seconds": 86400
+  },
+  "fhy131_entire_row_unchanged_since_cutover": true,
+  "cutover_snapshot": {
+    "users": "1323|7f5afc67b423bcdf401584c01c0cb77f",
+    "tokens": "1138|6f342290249b64bc9bf7ae79558b9a40",
+    "user_subscriptions": "131|bf65e19da74323cbf9cf8f27abfca3b9",
+    "subscription_plans": "8|2ddefa9b00cca5d65d420118e4114d1a",
+    "options": "50|83fbd2afc9f7bedeee7cb1a08153f606",
+    "redemptions": "888|dfffe5391940a46a63ca042b1b9b46eb",
+    "top_ups": "413|9661c73029d598fd4ad4034cb3e94530",
+    "subscription_orders": "411|bc571e1a3a86d7889e5025a4acdc6b98",
+    "channel_config": "78f59f0cffdbc8e4969870242c78a725"
+  },
+  "backup_manifest": {
+    "database.dump": {
+      "bytes": 76953442,
+      "sha256": "8508558bb1430c0067826b77366fd14f4ea64f718954bfcd8cf2a7d6e3feeb74"
+    },
+    "database-fingerprints.csv": {
+      "bytes": 1235,
+      "sha256": "ec7322694a19a97e32839e6648e381229171dfe08870b4ea4e348b0425d190ef"
+    },
+    "globals.sql": {
+      "bytes": 667,
+      "sha256": "4c6adfe4cc604a0b73c393b5090db3892ee554fed3a4fc9758946075cca45d99"
+    },
+    "application-files.tar.gz": {
+      "bytes": 117945626,
+      "sha256": "15cc2bb7dc6ba0bdf40a6596cef2b3a19dc26defe2c64abb20592f4e7497340f"
+    },
+    "baseline-image.tar": {
+      "bytes": 185633792,
+      "sha256": "2a995c19220518ddb548c9b29e0027bed333b97763bb9dbacdcb70fe86b20f61"
+    },
+    "new-api-local.inspect.json": {
+      "bytes": 5419,
+      "sha256": "1ff9312c463e9ffb4e7c7ee03972a8571cb8f648b8c69c6960cdb2fa4282e319"
+    },
+    "caddy-runtime.json": {
+      "bytes": 831,
+      "sha256": "6d61cd73d2e45daa1bacfe311c1cce1eb30a35c9d4905b462d68252ad7238898"
+    },
+    "Caddyfile": {
+      "bytes": 396,
+      "sha256": "a2939e3e956b657b35eccec998e704a8f2f8528c543fcf205aa8d7d9c519fbb5"
+    }
+  },
+  "restore": {
+    "recoverability_verified": true,
+    "backup_dir": "/opt/new-api-backups/security-20261018-233325",
+    "tables_verified": 25,
+    "total_rows_verified": 940939,
+    "file_count_verified": 46,
+    "file_bytes_verified": 1285048361,
+    "baseline_image_restore_verified": true,
+    "baseline_archive_loaded_image_id": "sha256:6a87f67e8817bac8a04fa9883dd5fbe6ac2e750f5121007b10f949152d403e60",
+    "baseline_archive_rootfs_identical": true,
+    "candidate_boots_restored_production_data": true,
+    "candidate_image_id": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+    "restore_network_internal": true,
+    "restore_has_no_published_ports": true,
+    "fhy131_restored": {
+      "id": 131,
+      "user_id": 1267,
+      "username": "fhy",
+      "amount_total": 50000000,
+      "amount_used": 35408966,
+      "last_reset_time": 1792252800,
+      "next_reset_time": 1792339200
+    }
+  },
+  "redis_restore": {
+    "redis_backup_restore_verified": true,
+    "bytes": 1444,
+    "sha256": "0305e3b1f36c83249d1f80d107fc0df42de854caa7b45f9f5d5814c208d36a34",
+    "check_rdb_success": true,
+    "network": "none",
+    "ports_published": false,
+    "source_selected_database": "0",
+    "restored_selected_db_keys": 7
+  },
+  "cutover_restore": {
+    "exact_cutover_backup_restored": true,
+    "financial_and_configuration_fingerprints_match": true,
+    "fhy131_exact_match": true,
+    "restore_network_internal": true,
+    "backup": {
+      "path": "/opt/new-api-backups/security-20261018-233325/database-precutover-1792339582.dump",
+      "bytes": 76954578,
+      "sha256": "a1b0dbc0654a036c2f3c238e257a501e1e496e7071dfabb83fec289671062aea"
+    }
+  },
+  "probe_baseline": {
+    "phase": "baseline",
+    "probe_user_id": 1328,
+    "probe_username": "sec261018",
+    "real_model": "gemini-3.1-flash-lite",
+    "group": "gemini-01",
+    "chat_success": true,
+    "sse_success": true,
+    "login_and_profile_success": true,
+    "chat_seconds": 1.137,
+    "probe_wallet_debit": 22,
+    "existing_user_quotas_not_used": true
+  },
+  "probe_candidate": {
+    "phase": "candidate",
+    "probe_user_id": 1328,
+    "probe_username": "sec261018",
+    "real_model": "gemini-3.1-flash-lite",
+    "group": "gemini-01",
+    "chat_success": true,
+    "sse_success": true,
+    "login_and_profile_success": true,
+    "chat_seconds": 1.565,
+    "probe_wallet_debit": 22,
+    "existing_user_quotas_not_used": true
+  },
+  "probe_current_user": {
+    "id": 1328,
+    "status": 2
+  },
+  "probe_current_tokens": [
+    {
+      "id": 1139,
+      "status": 2
+    },
+    {
+      "id": 1140,
+      "status": 2
+    }
+  ],
+  "ledger_audit": {
+    "audit_samples": 41,
+    "critical_errors": [],
+    "checked_at": 1792341431.7388868
+  },
+  "first_attempt": {
+    "phase": "rolled_back",
+    "error": "Labels",
+    "started": 1792339316.4147675,
+    "rollback_started": 1792339460.610329,
+    "rollback_verified": true,
+    "new_id": "5a7aae3bfe92cd3d977639b22adbdeb8366c2d8bfdb54dc6e383b507ed86c996"
+  },
+  "retained_old_container": {
+    "id": "986a046e81792121a47f7ccce7e1e7179c36217a8c08620c3fbacf788d3b9e79",
+    "running": false,
+    "restart_policy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    }
+  },
+  "container_resources": {
+    "BlockIO": "30.2MB / 774kB",
+    "CPUPerc": "0.02%",
+    "Container": "new-api-local",
+    "ID": "1eb9ca593176",
+    "MemPerc": "1.00%",
+    "MemUsage": "37.11MiB / 3.633GiB",
+    "Name": "new-api-local",
+    "NetIO": "16.9MB / 36.3MB",
+    "PIDs": "7"
+  },
+  "probe_disabled": {
+    "probe_user_id": 1328,
+    "user_disabled": true,
+    "token_disabled": true
+  }
+}

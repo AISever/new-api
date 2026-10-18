@@ -1,0 +1,30 @@
+{
+  "backups": [
+    {
+      "verified": true,
+      "local_path": "/home/ctyun/Works/new-api/.env/backups/security-production-20261018/portable-backup-complete.tar.gz",
+      "path": "/opt/new-api-backups/security-20261018-233325/portable-backup.tar.gz",
+      "bytes": 270734579,
+      "sha256": "e5caa817cd30363188e2ada9dec7fa1020fc77de11828029561713f259fa6291"
+    },
+    {
+      "verified": true,
+      "local_path": "/home/ctyun/Works/new-api/.env/backups/security-production-20261018/cutover/database-precutover.dump",
+      "path": "/opt/new-api-backups/security-20261018-233325/database-precutover-1792339582.dump",
+      "bytes": 76954578,
+      "sha256": "a1b0dbc0654a036c2f3c238e257a501e1e496e7071dfabb83fec289671062aea"
+    }
+  ],
+  "portable_archive_members_verified": [
+    "database.dump",
+    "database-fingerprints.csv",
+    "globals.sql",
+    "application-files.tar.gz",
+    "baseline-image.tar",
+    "new-api-local.inspect.json",
+    "caddy-runtime.json",
+    "Caddyfile",
+    "redis.rdb"
+  ],
+  "portable_archive_member_checksums_match": true
+}

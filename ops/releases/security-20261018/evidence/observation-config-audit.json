@@ -1,0 +1,14 @@
+{
+  "at": 1792341080.12997,
+  "configuration_tables_unchanged_during_observation": [
+    "options",
+    "subscription_plans",
+    "channel_config"
+  ],
+  "executed_release_script_sha256": "4a42580f3faa5eac8ca51724062791ff2af9fbca779ded121433c493a6bb90f6",
+  "post_publication_consumption_aggregate": {
+    "consumption_records": 0,
+    "consumed_quota": 0,
+    "negative_records": 0
+  }
+}
