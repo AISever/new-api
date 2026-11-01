@@ -64,6 +64,7 @@ export default function InvitationUsersModal({
       dispatch({ type: 'start', scope });
       API.get('/api/user/self/invitees', {
         disableDuplicate: true,
+        timeout: 10000,
         headers: { 'New-API-User': viewerId },
         params: { p: page, page_size: 20, keyword: query },
         signal: abort.signal,
