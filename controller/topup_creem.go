@@ -184,7 +184,7 @@ type CreemWebhookEvent struct {
 			SubTotal    int    `json:"sub_total"`
 			TaxAmount   int    `json:"tax_amount"`
 			AmountDue   int    `json:"amount_due"`
-			AmountPaid  int    `json:"amount_paid"`
+			AmountPaid  *int64 `json:"amount_paid"`
 			Status      string `json:"status"`
 			Type        string `json:"type"`
 			Transaction string `json:"transaction"`
@@ -302,6 +302,7 @@ func handleCheckoutCompleted(c *gin.Context, event *CreemWebhookEvent) {
 	// Try complete subscription order first
 	LockOrder(referenceId)
 	defer UnlockOrder(referenceId)
+	recordInvitationPayment(referenceId, model.PaymentProviderCreem, invitationOptionalMinor(event.Object.Order.AmountPaid), event.Object.Order.Currency, true)
 	if err := model.CompleteSubscriptionOrder(referenceId, common.GetJsonString(event), model.PaymentProviderCreem, ""); err == nil {
 		logger.LogInfo(c.Request.Context(), fmt.Sprintf("Creem 订阅订单处理成功 trade_no=%s creem_order_id=%s", referenceId, event.Object.Order.Id))
 		c.Status(http.StatusOK)
@@ -319,7 +320,7 @@ func handleCheckoutCompleted(c *gin.Context, event *CreemWebhookEvent) {
 		return
 	}
 
-	logger.LogInfo(c.Request.Context(), fmt.Sprintf("Creem 支付完成回调 trade_no=%s creem_order_id=%s amount_paid=%d currency=%s product_name=%q customer_email=%q customer_name=%q", referenceId, event.Object.Order.Id, event.Object.Order.AmountPaid, event.Object.Order.Currency, event.Object.Product.Name, event.Object.Customer.Email, event.Object.Customer.Name))
+	logger.LogInfo(c.Request.Context(), fmt.Sprintf("Creem 支付完成回调 trade_no=%s creem_order_id=%s amount_paid=%s currency=%s product_name=%q customer_email=%q customer_name=%q", referenceId, event.Object.Order.Id, invitationOptionalMinor(event.Object.Order.AmountPaid), event.Object.Order.Currency, event.Object.Product.Name, event.Object.Customer.Email, event.Object.Customer.Name))
 
 	// 查询本地订单确认存在
 	topUp := model.GetTopUpByTradeNo(referenceId)

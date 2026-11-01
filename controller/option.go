@@ -74,6 +74,9 @@ func GetOptions(c *gin.Context) {
 	optionValues := make(map[string]string)
 	common.OptionMapRWMutex.Lock()
 	for k, v := range common.OptionMap {
+		if k == model.InvitationVisibilityOption {
+			continue
+		}
 		value := common.Interface2String(v)
 		isSensitiveKey := strings.HasSuffix(k, "Token") ||
 			strings.HasSuffix(k, "Secret") ||
@@ -95,6 +98,12 @@ func GetOptions(c *gin.Context) {
 		}
 	}
 	common.OptionMapRWMutex.Unlock()
+	policy, policyErr := model.InvitationVisibilityRaw()
+	if policyErr != nil {
+		common.ApiError(c, policyErr)
+		return
+	}
+	options = append(options, &model.Option{Key: model.InvitationVisibilityOption, Value: policy})
 	options = append(options, &model.Option{
 		Key:   "CompletionRatioMeta",
 		Value: buildCompletionRatioMetaValue(optionValues),

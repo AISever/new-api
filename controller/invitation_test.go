@@ -37,3 +37,23 @@ func TestInvitationEndpointOnlyAuthenticatedOwnerAndNoMoneyByDefault(t *testing.
 	}
 	_ = common.RoleRootUser
 }
+func TestInvitationOptionsReadFreshPolicyRatherThanStaleInstanceCache(t *testing.T) {
+	db := setupUserControllerTestDB(t)
+	if err := db.AutoMigrate(&model.Option{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&model.Option{Key: model.InvitationVisibilityOption, Value: `{"mode":"off","user_ids":[]}`}).Error; err != nil {
+		t.Fatal(err)
+	}
+	common.OptionMapRWMutex.Lock()
+	old := common.OptionMap
+	common.OptionMap = map[string]string{model.InvitationVisibilityOption: `{"mode":"all","user_ids":[]}`}
+	common.OptionMapRWMutex.Unlock()
+	defer func() { common.OptionMapRWMutex.Lock(); common.OptionMap = old; common.OptionMapRWMutex.Unlock() }()
+	c, w := newAuthenticatedContext(t, http.MethodGet, "/api/option/", nil, 1)
+	c.Set("role", 100)
+	GetOptions(c)
+	if strings.Contains(w.Body.String(), `\"mode\":\"all\"`) || !strings.Contains(w.Body.String(), `\"mode\":\"off\"`) {
+		t.Fatalf("stale visibility policy returned: %s", w.Body.String())
+	}
+}

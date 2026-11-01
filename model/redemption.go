@@ -270,6 +270,10 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 		common.SysError("redemption failed: " + err.Error())
 		return RedemptionRedeemResult{}, ErrRedeemFailed
 	}
+	if snapshotErr := RecordInvitationRedemption(redemption); snapshotErr != nil {
+		common.SysError("invitation redemption snapshot unavailable: " + snapshotErr.Error())
+	}
+
 	switch result.RedeemType {
 	case common.RedemptionTypeSubscription:
 		if result.Subscription != nil {

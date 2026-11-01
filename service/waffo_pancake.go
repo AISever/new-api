@@ -64,13 +64,14 @@ type waffoPancakeCreateSessionResponse struct {
 }
 
 type waffoPancakeWebhookData struct {
-	ID          string          `json:"id"`
-	OrderID     string          `json:"orderId"`
-	BuyerEmail  string          `json:"buyerEmail"`
-	Currency    string          `json:"currency"`
-	Amount      dto.StringValue `json:"amount"`
-	TaxAmount   dto.StringValue `json:"taxAmount"`
-	ProductName string          `json:"productName"`
+	ChargedAmount *dto.StringValue `json:"chargedAmount"`
+	ID            string           `json:"id"`
+	OrderID       string           `json:"orderId"`
+	BuyerEmail    string           `json:"buyerEmail"`
+	Currency      string           `json:"currency"`
+	Amount        dto.StringValue  `json:"amount"`
+	TaxAmount     dto.StringValue  `json:"taxAmount"`
+	ProductName   string           `json:"productName"`
 }
 
 type waffoPancakeWebhookEvent struct {

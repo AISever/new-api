@@ -425,7 +425,13 @@ func AdminCreateTopUp(userId int, payMoney float64, callerIp string) error {
 	if err := topUp.Insert(); err != nil {
 		return err
 	}
-	return ManualCompleteTopUp(tradeNo, callerIp)
+	if err := ManualCompleteTopUp(tradeNo, callerIp); err != nil {
+		return err
+	}
+	if err := RecordInvitationAdminTopUp(tradeNo); err != nil {
+		common.SysError("invitation admin snapshot unavailable: " + err.Error())
+	}
+	return nil
 }
 
 func RechargeCreem(referenceId string, customerEmail string, customerName string, callerIp string) (err error) {

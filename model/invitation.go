@@ -22,6 +22,7 @@ type InvitationUser struct {
 }
 type InvitationCurrencyAmount struct {
 	Currency     string `json:"currency"`
+	AdminTopUp   string `json:"admin_topup"`
 	TopUp        string `json:"topup"`
 	Subscription string `json:"subscription"`
 	Redemption   string `json:"redemption"`
@@ -29,10 +30,11 @@ type InvitationCurrencyAmount struct {
 	Estimated    bool   `json:"estimated"`
 }
 type InvitationAmounts struct {
-	Currencies     []InvitationCurrencyAmount `json:"currencies"`
-	UnknownCount   int                        `json:"unknown_count"`
-	UnpricedCount  int                        `json:"unpriced_count"`
-	LegacyRecorded string                     `json:"legacy_recorded"`
+	Currencies      []InvitationCurrencyAmount `json:"currencies"`
+	UnknownCount    int                        `json:"unknown_count"`
+	UnpricedCount   int                        `json:"unpriced_count"`
+	LegacyTruncated bool                       `json:"legacy_truncated"`
+	LegacyRecorded  []InvitationLegacyAmount   `json:"legacy_recorded"`
 }
 type InvitationPage struct {
 	Items          []InvitationUser `json:"items"`
@@ -103,6 +105,18 @@ func saveInvitationVisibility(raw string) error {
 	return nil
 }
 
+func InvitationVisibilityRaw() (string, error) {
+	var option Option
+	result := DB.Where(&Option{Key: InvitationVisibilityOption}).Limit(1).Find(&option)
+	if result.Error != nil {
+		return "", result.Error
+	}
+	if result.RowsAffected == 0 {
+		return `{"mode":"off","user_ids":[]}`, nil
+	}
+	return option.Value, nil
+}
+
 // Read the persisted row on every request: revocations apply across application instances.
 func CanViewInvitationAmounts(userID int) bool {
 	if userID <= 0 {
@@ -145,6 +159,11 @@ func GetInvitationPage(inviterID, page, pageSize int, keyword string, withAmount
 	}
 	if err := query.Select("id", "username").Order("id DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&result.Items).Error; err != nil {
 		return nil, err
+	}
+	if withAmounts {
+		if err := AttachInvitationAmounts(result.Items); err != nil {
+			return nil, err
+		}
 	}
 	return result, nil
 }

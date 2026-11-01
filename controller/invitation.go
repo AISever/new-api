@@ -38,6 +38,12 @@ func GetInvitationUsers(c *gin.Context) {
 		c.JSON(400, gin.H{"success": false, "message": "无法读取邀请名单"})
 		return
 	}
+	if data.CanViewAmounts && !model.CanViewInvitationAmounts(id) {
+		data.CanViewAmounts = false
+		for i := range data.Items {
+			data.Items[i].Amounts = nil
+		}
+	}
 	common.ApiSuccess(c, data)
 }
 func GetInvitationUserChoices(c *gin.Context) {

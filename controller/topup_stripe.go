@@ -265,6 +265,7 @@ func fulfillOrder(ctx context.Context, event stripe.Event, referenceId string, c
 
 	LockOrder(referenceId)
 	defer UnlockOrder(referenceId)
+	recordInvitationPayment(referenceId, model.PaymentProviderStripe, event.GetObjectValue("amount_total"), event.GetObjectValue("currency"), true)
 	payload := map[string]any{
 		"customer":     customerId,
 		"amount_total": event.GetObjectValue("amount_total"),
