@@ -2,12 +2,29 @@ package model
 
 import (
 	"github.com/QuantumNous/new-api/common"
+	"gorm.io/gorm"
 	"strings"
 	"testing"
 )
 
+// Restore the package-wide TestMain database before unrelated tests run.
+func setupInvitationTestDB(t *testing.T) *gorm.DB {
+	oldDB, oldLog := DB, LOG_DB
+	common.OptionMapRWMutex.RLock()
+	oldOptions := common.OptionMap
+	common.OptionMapRWMutex.RUnlock()
+	t.Cleanup(func() {
+		DB = oldDB
+		LOG_DB = oldLog
+		common.OptionMapRWMutex.Lock()
+		common.OptionMap = oldOptions
+		common.OptionMapRWMutex.Unlock()
+	})
+	return setupInviteUserTestDB(t)
+}
+
 func TestInvitationPolicyDefaultsSelectedAndRevocation(t *testing.T) {
-	db := setupInviteUserTestDB(t)
+	db := setupInvitationTestDB(t)
 	if err := db.AutoMigrate(&Option{}); err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +62,7 @@ func TestInvitationPolicyDefaultsSelectedAndRevocation(t *testing.T) {
 }
 
 func TestInvitationPageOwnUsersLiteralSearchAndMinimalFields(t *testing.T) {
-	db := setupInviteUserTestDB(t)
+	db := setupInvitationTestDB(t)
 	users := []User{{Id: 1, Username: "owner", AffCode: "i1"}, {Id: 2, Username: "alice%_", InviterId: 1, AffCode: "i2", Email: "private@example.test", AccessToken: nil}, {Id: 3, Username: "alice", InviterId: 1, AffCode: "i3"}, {Id: 4, Username: "stranger", InviterId: 8, AffCode: "i4"}}
 	for _, u := range users {
 		if err := db.Create(&u).Error; err != nil {
