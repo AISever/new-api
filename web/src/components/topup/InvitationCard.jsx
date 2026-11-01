@@ -17,7 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
+import React, { useState } from 'react';
+import InvitationUsersModal from './modals/InvitationUsersModal';
 import {
   Avatar,
   Typography,
@@ -39,8 +40,15 @@ const InvitationCard = ({
   affLink,
   handleAffLinkClick,
 }) => {
+  const [inviteesOpen, setInviteesOpen] = useState(false);
   return (
     <Card className='!rounded-2xl shadow-sm border-0'>
+      <InvitationUsersModal
+        visible={inviteesOpen}
+        onCancel={() => setInviteesOpen(false)}
+        viewerId={userState?.user?.id}
+        t={t}
+      />
       {/* 卡片头部 */}
       <div className='flex items-center mb-4'>
         <Avatar size='small' color='green' className='mr-3 shadow-md'>
@@ -146,12 +154,21 @@ const InvitationCard = ({
 
                   {/* 邀请人数 */}
                   <div className='text-center'>
-                    <div
-                      className='text-base sm:text-2xl font-bold mb-2'
-                      style={{ color: 'white' }}
+                    <button
+                      type='button'
+                      aria-label={t('查看受邀用户名单')}
+                      onClick={() => setInviteesOpen(true)}
+                      disabled={!userState?.user?.id}
+                      style={{
+                        color: 'white',
+                        background: 'transparent',
+                        border: 0,
+                        cursor: 'pointer',
+                      }}
+                      className='text-base sm:text-2xl font-bold mb-2 underline decoration-dotted'
                     >
                       {userState?.user?.aff_count || 0}
-                    </div>
+                    </button>
                     <div className='flex items-center justify-center text-sm'>
                       <Users
                         size={14}
