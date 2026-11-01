@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: unauthorized response discards every money field even if supplied
+ok 1 - unauthorized response discards every money field even if supplied
+  ---
+  duration_ms: 2.239716
+  type: 'test'
+  ...
+# Subtest: authorized zero and exact decimal amounts survive without numeric coercion
+ok 2 - authorized zero and exact decimal amounts survive without numeric coercion
+  ---
+  duration_ms: 0.703706
+  type: 'test'
+  ...
+# Subtest: selected policy is one canonical JSON value and refuses invalid IDs
+ok 3 - selected policy is one canonical JSON value and refuses invalid IDs
+  ---
+  duration_ms: 0.682028
+  type: 'test'
+  ...
+# Subtest: account changes, later requests and closing invalidate previous sensitive responses
+ok 4 - account changes, later requests and closing invalidate previous sensitive responses
+  ---
+  duration_ms: 0.287179
+  type: 'test'
+  ...
+# Subtest: business failures and malformed list payload are errors rather than saved/success state
+ok 5 - business failures and malformed list payload are errors rather than saved/success state
+  ---
+  duration_ms: 0.341
+  type: 'test'
+  ...
+# Subtest: redemption conversion evidence is retained rather than relabeled with current exchange rates
+ok 6 - redemption conversion evidence is retained rather than relabeled with current exchange rates
+  ---
+  duration_ms: 0.284541
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 142.310947

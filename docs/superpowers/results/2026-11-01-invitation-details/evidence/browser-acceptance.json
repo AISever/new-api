@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "synthetic_data_only": true,
+  "browser": "IAB Chromium",
+  "checks": [
+    "username-only default",
+    "20 + 2 paging",
+    "username search and Enter submission",
+    "empty result",
+    "selected inviter search/save/reload",
+    "unrelated quota draft 0.42 retained on permission save",
+    "USD 6.3 and CNY 10 with mirror dedup",
+    "root API revocation removes displayed money on refresh",
+    "account switch shows foreign-user only",
+    "offline request removes old rows and Retry recovers",
+    "390 x 844 viewport: header visible and body width 390",
+    "viewer sees gross-before-refunds and irrecoverable-history disclaimer"
+  ],
+  "known_console_errors": "4 Axios Network Error entries during intentional network fault injection and test-container rebuilds; no errors before fault injection. See browser-errors.json."
+}

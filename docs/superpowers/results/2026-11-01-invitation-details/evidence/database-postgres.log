@@ -1,9 +1,9 @@
 === RUN   TestInvitationAmountsExternalDatabase
 
-2026/11/01 13:43:16 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
-[0m[33m[0.653ms] [34;1m[rows:0][0m SELECT * FROM "subscription_orders" WHERE trade_no = 'external-paid' LIMIT 1
+2026/11/01 13:56:48 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.791ms] [34;1m[rows:0][0m SELECT * FROM "subscription_orders" WHERE trade_no = 'external-paid' LIMIT 1
 
-2026/11/01 13:43:16 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
-[0m[33m[0.381ms] [34;1m[rows:0][0m SELECT * FROM "subscription_orders" WHERE trade_no = 'external-paid' LIMIT 1
---- PASS: TestInvitationAmountsExternalDatabase (0.73s)
+2026/11/01 13:56:48 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.460ms] [34;1m[rows:0][0m SELECT * FROM "subscription_orders" WHERE trade_no = 'external-paid' LIMIT 1
+--- PASS: TestInvitationAmountsExternalDatabase (0.66s)
 PASS

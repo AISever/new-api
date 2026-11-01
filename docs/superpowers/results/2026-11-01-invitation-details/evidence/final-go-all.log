@@ -2,37 +2,37 @@
 ok  	github.com/QuantumNous/new-api/common	(cached)
 ?   	github.com/QuantumNous/new-api/common/limiter	[no test files]
 ?   	github.com/QuantumNous/new-api/constant	[no test files]
-ok  	github.com/QuantumNous/new-api/controller	6.204s
+ok  	github.com/QuantumNous/new-api/controller	6.451s
 ok  	github.com/QuantumNous/new-api/dto	(cached)
 ?   	github.com/QuantumNous/new-api/i18n	[no test files]
 ?   	github.com/QuantumNous/new-api/logger	[no test files]
-ok  	github.com/QuantumNous/new-api/middleware	0.083s
-ok  	github.com/QuantumNous/new-api/model	4.108s
+ok  	github.com/QuantumNous/new-api/middleware	0.047s
+ok  	github.com/QuantumNous/new-api/model	7.808s
 ?   	github.com/QuantumNous/new-api/oauth	[no test files]
 ?   	github.com/QuantumNous/new-api/ops/tests/security-fixture-server	[no test files]
-ok  	github.com/QuantumNous/new-api/ops/tests/securitydb	3.074s
+ok  	github.com/QuantumNous/new-api/ops/tests/securitydb	3.452s
 ok  	github.com/QuantumNous/new-api/pkg/billingexpr	(cached)
 ?   	github.com/QuantumNous/new-api/pkg/cachex	[no test files]
 ?   	github.com/QuantumNous/new-api/pkg/ionet	[no test files]
 ?   	github.com/QuantumNous/new-api/relay	[no test files]
-ok  	github.com/QuantumNous/new-api/relay/channel	0.050s
+ok  	github.com/QuantumNous/new-api/relay/channel	0.053s
 ?   	github.com/QuantumNous/new-api/relay/channel/ai360	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/ali	[no test files]
-ok  	github.com/QuantumNous/new-api/relay/channel/aws	0.102s
+ok  	github.com/QuantumNous/new-api/relay/channel/aws	0.032s
 ?   	github.com/QuantumNous/new-api/relay/channel/baidu	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/baidu_v2	[no test files]
-ok  	github.com/QuantumNous/new-api/relay/channel/claude	0.042s
+ok  	github.com/QuantumNous/new-api/relay/channel/claude	0.044s
 ?   	github.com/QuantumNous/new-api/relay/channel/cloudflare	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/codex	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/cohere	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/coze	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/deepseek	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/dify	[no test files]
-ok  	github.com/QuantumNous/new-api/relay/channel/gemini	0.055s
+ok  	github.com/QuantumNous/new-api/relay/channel/gemini	0.047s
 ?   	github.com/QuantumNous/new-api/relay/channel/jimeng	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/jina	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/lingyiwanwu	[no test files]
-ok  	github.com/QuantumNous/new-api/relay/channel/minimax	0.037s
+ok  	github.com/QuantumNous/new-api/relay/channel/minimax	0.031s
 ?   	github.com/QuantumNous/new-api/relay/channel/mistral	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/mokaai	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/channel/moonshot	[no test files]
@@ -66,10 +66,10 @@ ok  	github.com/QuantumNous/new-api/relay/channel/minimax	0.037s
 ok  	github.com/QuantumNous/new-api/relay/common	(cached)
 ?   	github.com/QuantumNous/new-api/relay/common_handler	[no test files]
 ?   	github.com/QuantumNous/new-api/relay/constant	[no test files]
-ok  	github.com/QuantumNous/new-api/relay/helper	12.064s
+ok  	github.com/QuantumNous/new-api/relay/helper	12.053s
 ?   	github.com/QuantumNous/new-api/relay/reasonmap	[no test files]
-ok  	github.com/QuantumNous/new-api/router	13.411s
-ok  	github.com/QuantumNous/new-api/service	0.340s
+ok  	github.com/QuantumNous/new-api/router	13.131s
+ok  	github.com/QuantumNous/new-api/service	0.384s
 ?   	github.com/QuantumNous/new-api/service/openaicompat	[no test files]
 ?   	github.com/QuantumNous/new-api/service/passkey	[no test files]
 ok  	github.com/QuantumNous/new-api/setting	(cached)

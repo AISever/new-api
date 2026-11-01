@@ -1,0 +1,33 @@
+
+2026/11/01 22:53:58 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:66 [35;1mSQL logic error: no such table: invitation_amount_snapshots (1)
+[0m[33m[0.096ms] [34;1m[rows:0][0m INSERT INTO `invitation_amount_snapshots` (`source_kind`,`source_id`,`user_id`,`amount`,`currency`,`currency_symbol`,`basis`,`quota`,`quota_per_unit`,`exchange_rate`,`created_at`) VALUES ("redemption",80,2,"1","USD","","redemption",500000,"500000","1",1793541238) ON CONFLICT (`source_kind`,`source_id`) DO NOTHING RETURNING `id`
+[SYS] 2026/11/01 - 22:53:58 | invitation redemption snapshot unavailable: SQL logic error: no such table: invitation_amount_snapshots (1) 
+
+2026/11/01 22:53:58 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/log.go:91 [35;1mSQL logic error: no such table: logs (1)
+[0m[33m[0.237ms] [34;1m[rows:0][0m INSERT INTO `logs` (`user_id`,`created_at`,`type`,`content`,`username`,`token_name`,`model_name`,`quota`,`prompt_tokens`,`completion_tokens`,`use_time`,`is_stream`,`channel_id`,`token_id`,`group`,`ip`,`request_id`,`other`) VALUES (2,1793541238,1,"通过兑换码充值 ＄1.000000 额度，兑换码ID 80","friend","","",0,0,0,0,false,0,0,"","","","") RETURNING `id`
+[SYS] 2026/11/01 - 22:53:58 | failed to record log: SQL logic error: no such table: logs (1) 
+--- FAIL: TestInvitationRedemptionBackfillRetainsEstimatedBasisAfterSnapshotFailure (1.28s)
+    invitation_amount_test.go:189: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:189
+        	Error:      	Should be true
+        	Test:       	TestInvitationRedemptionBackfillRetainsEstimatedBasisAfterSnapshotFailure
+        	Messages:   	backfill cannot recover the original conversion basis
+FAIL
+FAIL	github.com/QuantumNous/new-api/model	1.321s
+--- FAIL: TestInvitationStripeUgandanShillingUsesCompatibilityMinorUnits (0.00s)
+    invitation_payment_test.go:46: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/controller/invitation_payment_test.go:46
+        	Error:      	Not equal: 
+        	            	expected: "5"
+        	            	actual  : "500"
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-5
+        	            	+500
+        	Test:       	TestInvitationStripeUgandanShillingUsesCompatibilityMinorUnits
+FAIL
+FAIL	github.com/QuantumNous/new-api/controller	0.025s
+FAIL

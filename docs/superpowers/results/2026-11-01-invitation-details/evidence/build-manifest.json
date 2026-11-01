@@ -1,0 +1,8 @@
+{
+  "source_commit": "8d4ef4c3546bdc5053d3aca3d9427ff6f2c87009",
+  "test_image": "sha256:04467a8d35c5bdfac926bfced18b0a4459a521f2632ca15a847754d419ebde0b",
+  "binary_sha256": "740ddc7beff8aed2c7a262d8ef8678219c5d5e22fd873778dcf1ad572200194e",
+  "version": "codex/invitation-20261101+test",
+  "production_touched": false,
+  "notes": "Synthetic fixture image only; base image OCI labels inherited. A release image must set its own verified source labels."
+}

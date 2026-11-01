@@ -1,0 +1,24 @@
+# SDD ledger — plan: docs/superpowers/plans/2026-11-01-invitation-details.md
+Spec approved by user 2026-11-01; execution authorized, no production deployment.
+Pre-flight: Task1 owns endpoint DTO/policy; Task2 fills optional amounts; Task3 consumes same contract. No interface conflicts.
+Ruling: Use native inline execution plus one fresh whole-branch reviewer — user authorized implementation in this session; avoid another permission round for routine executor selection — cost: no independent reviewer per intermediate task.
+Ruling: Retain stale IDs when closing policy, validate existence when granting selected — a deleted selected user must not prevent immediately disabling disclosure — cost: stale IDs require removal before re-grant.
+Task 1: full package regression exposed new test helper closing the global DB; fixed by restoring TestMain DB/LOG_DB at cleanup, not by changing product behavior. RED full-suite database-closed errors -> GREEN model/controller full package run (task1-green-full.log).
+Task 2: in progress; RED expected undefined snapshot and aggregation APIs recorded in task2-red.log.
+Ruling: Unknown historical amounts are returned as category/recorded-amount/count groups, not a mixed-currency sum — preserves recorded values without inventing currency — cost: users must reconcile unknown rows before a complete paid total.
+Task 1: complete (commits 3406387..61ed51f, tests: /home/ctyun/.cache/new-api-security-toolchain/go/bin/go test ./model ./controller -run 'InvitationPolicy|InvitationPage|InvitationEndpoint|InvitationOptions' -count=1 → ok  	github.com/QuantumNous/new-api/controller	0.045s)
+Task 2: complete (commits 7f36157..1df4705, tests: /home/ctyun/.cache/new-api-security-toolchain/go/bin/go test ./model ./controller ./service -count=1 → ok  	github.com/QuantumNous/new-api/service	0.273s)
+Task 3: complete (commits 1df4705..72df94e, tests: node --test web/src/components/topup/utils/invitationDetails.test.mjs → # duration_ms 145.359836)
+
+Task 3 browser regression: saving the new permission card called the whole-page refresh and reset another unsaved quota ratio draft from 0.42 to 0. Browser RED observed, removed that unrelated refresh; rebuilt actual UI GREEN retained 0.42, saved selected owner ID 2 and reloaded it successfully.
+Task 3 responsive regression: 390px viewport split decimals/labels in narrow cells. Browser RED screenshot narrow-before.png; changed amount grid to one column on small screens, username proportional width. Rebuilt actual UI GREEN screenshot narrow-final.png.
+Final: Ruling: Real external gateway payment acceptance remains outside this isolated implementation — provider conversion/callback code and fixtures are checked, no real charge authorized — cost: actual gateway end-to-end behavior remains unverified.
+Final: Ruling: Old engine runtime and production-scale migration timing remain unverified — actual SQLite/Postgres16/MySQL8 tests plus compatible GORM SQL support the code claim — cost: publish must measure migration/query performance and validate the target engine.
+Final: Ruling: Preserve existing payment, credit and reward calculation rather than re-audit the whole gateway — this feature writes independent reporting facts only — cost: unrelated pre-existing financial defects are not certified absent.
+Final: Ruling: Keep cumulative successful-record totals before refunds — approved design excludes a refund ledger and the UI now explains this — cost: these totals are not net revenue.
+Final: Ruling: Final browser acceptance is performed by the implementer — the independent reviewer checked source and request isolation, while actual rebuilt UI is verified here — cost: there is no second independent UI acceptance run.
+Final: fixed Stripe UGX 100x report error — TestInvitationStripeUgandanShillingUsesCompatibilityMinorUnits RED→GREEN, full Go suite 20/20 tested packages.
+Final: fixed failed redemption backfill falsely becoming historical — TestInvitationRedemptionBackfillRetainsEstimatedBasisAfterSnapshotFailure RED→GREEN, full Go suite 20/20 tested packages. Live completion captures conversion before fulfillment; historical backfill remains estimated and idempotent.
+Final: fixed viewer-facing coverage disclaimer — prior actual UI missing gross/refund/physical-history boundaries, rebuilt actual UI displays both; 53 related keys covered in 7 locales, Bun54 and production build pass.
+Final review: 0 critical, 3 important fixed in one pass, 0 deferred minors. No re-review dispatched. Actual post-fix HTTP 9/9 and SQLite/Postgres16/MySQL8 pass; race model/controller Invitation pass; browser checks in committed evidence.
+Task 4: complete (commits 72df94e..8d4ef4c, tests: /home/ctyun/.cache/new-api-security-toolchain/go/bin/go test ./... → ?   	github.com/QuantumNous/new-api/web/node_modules/flatted/golang/pkg/flatted	[no test files])
