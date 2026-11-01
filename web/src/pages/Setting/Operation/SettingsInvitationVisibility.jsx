@@ -9,7 +9,7 @@ import {
 } from '../../../components/topup/utils/invitationDetails';
 
 const optionKey = 'InvitationAmountVisibility';
-export default function SettingsInvitationVisibility({ options, refresh }) {
+export default function SettingsInvitationVisibility({ options }) {
   const { t } = useTranslation();
   const [policy, setPolicy] = useState({ mode: 'off', user_ids: [] });
   const [choices, setChoices] = useState([]);
@@ -93,7 +93,6 @@ export default function SettingsInvitationVisibility({ options, refresh }) {
       if (response.data.success !== true)
         throw new Error(response.data.message || 'Save failed');
       showSuccess(t('保存成功'));
-      await refresh();
     } catch {
       showError(t('保存失败，请重试'));
     } finally {

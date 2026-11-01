@@ -156,7 +156,7 @@ const OperationSetting = () => {
           <SettingsCreditLimit options={inputs} refresh={onRefresh} />
         </Card>
         <Card style={{ marginTop: '10px' }}>
-          <SettingsInvitationVisibility options={inputs} refresh={onRefresh} />
+          <SettingsInvitationVisibility options={inputs} />
         </Card>
         {/* 签到设置 */}
         <Card style={{ marginTop: '10px' }}>

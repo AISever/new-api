@@ -90,7 +90,7 @@ export default function InvitationUsersModal({
       {value.currencies.map((c) => (
         <div
           key={`${c.currency}/${c.currency_symbol}`}
-          className='grid grid-cols-2 sm:grid-cols-4 gap-3 w-full py-2'
+          className='grid grid-cols-1 sm:grid-cols-4 gap-3 w-full py-2'
         >
           {[
             [t('充值实付'), c.topup],
@@ -108,7 +108,7 @@ export default function InvitationUsersModal({
           {c.admin_topup && !/^0(?:\.0+)?$/.test(c.admin_topup) && (
             <Typography.Text
               type='tertiary'
-              className='col-span-2 sm:col-span-4'
+              className='col-span-full sm:col-span-4'
             >
               {t('其中管理员充值')}：
               {invitationMoney(c.admin_topup, c.currency_symbol || c.currency)}
@@ -118,7 +118,7 @@ export default function InvitationUsersModal({
             <Typography.Text
               key={`${f.quota_per_unit}/${f.exchange_rate}/${f.estimated}`}
               type='tertiary'
-              className='col-span-2 sm:col-span-4'
+              className='col-span-full sm:col-span-4'
             >
               {t(
                 '折算基准：{{quota}} 额度/USD；1 USD = {{rate}} {{currency}}',
@@ -134,7 +134,7 @@ export default function InvitationUsersModal({
           {c.conversion_incomplete && (
             <Typography.Text
               type='warning'
-              className='col-span-2 sm:col-span-4'
+              className='col-span-full sm:col-span-4'
             >
               {t('部分历史折算基准缺失或过多，请联系管理员核对')}
             </Typography.Text>
@@ -142,7 +142,7 @@ export default function InvitationUsersModal({
           {c.estimated && (
             <Typography.Text
               type='warning'
-              className='col-span-2 sm:col-span-4'
+              className='col-span-full sm:col-span-4'
             >
               {t('部分兑换金额按当前配置估算')}
             </Typography.Text>
@@ -183,7 +183,8 @@ export default function InvitationUsersModal({
     {
       title: t('用户名'),
       dataIndex: 'username',
-      width: data?.can_view_amounts ? 160 : undefined,
+      width: data?.can_view_amounts ? '25%' : undefined,
+      render: (username) => <span className='break-all'>{username}</span>,
     },
   ];
   if (data?.can_view_amounts)
