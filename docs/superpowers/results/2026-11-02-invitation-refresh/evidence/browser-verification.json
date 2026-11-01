@@ -1,0 +1,55 @@
+{
+  "source": "b1438cf3a",
+  "manualPending": {
+    "amountStayedVisible": true,
+    "sameRow": true
+  },
+  "autoBefore": {
+    "scroll": 286,
+    "input": {
+      "focused": true,
+      "start": 6,
+      "value": "未提交的搜索"
+    },
+    "row": 60
+  },
+  "autoAfter": {
+    "scroll": 286,
+    "input": {
+      "focused": true,
+      "start": 6,
+      "value": "未提交的搜索"
+    },
+    "row": 60
+  },
+  "autoResponses": [
+    {
+      "url": "http://127.0.0.1:13019/api/user/self/invitees?p=1&page_size=20&keyword=",
+      "status": 200
+    }
+  ],
+  "autoPageNavigations": 0,
+  "slowRequest": {
+    "elapsedMs": 10090,
+    "failures": [
+      "net::ERR_ABORTED"
+    ],
+    "oldAmountHidden": true,
+    "usernamesPreserved": true,
+    "retryVisible": 1
+  },
+  "columns": [
+    "用户名",
+    "累计总金额"
+  ],
+  "detailsElements": 0,
+  "syntheticDeltaProbe": {
+    "totalBefore": "USD 6.3",
+    "totalAdded": "USD 9.3",
+    "totalRestored": "USD 6.3",
+    "changedRowNodeStayed": 38,
+    "controlRowNode": 39,
+    "removed": true
+  },
+  "networkConditionsRestored": true
+}

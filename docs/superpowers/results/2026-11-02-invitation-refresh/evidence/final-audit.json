@@ -1,0 +1,61 @@
+{
+  "production_unchanged": true,
+  "existing_container_count": 18,
+  "production_version": "codex/sec-v0.13.2-p1+ba844d202+production",
+  "test_version": "codex/invite+b1438cf3a+test",
+  "containers": {
+    "app": {
+      "state": "running",
+      "restarts": 0,
+      "oom_killed": false,
+      "ports": {
+        "3000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "13019"
+          }
+        ]
+      },
+      "image": "sha256:b3c20a1d1cd98301171532db89de6b275eb81fbbd5bd2fea24d26d317b1debd4"
+    },
+    "postgres": {
+      "state": "running",
+      "restarts": 0,
+      "oom_killed": false,
+      "ports": {},
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50"
+    },
+    "redis": {
+      "state": "running",
+      "restarts": 0,
+      "oom_killed": false,
+      "ports": {},
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99"
+    }
+  },
+  "http_acceptance": {
+    "passed": true,
+    "version": "codex/invite+b1438cf3a+test",
+    "totals_only": true,
+    "policy_preserved": {
+      "mode": "selected",
+      "user_ids": [
+        2
+      ]
+    },
+    "owner_amounts_visible": true,
+    "checks": [
+      "health/version",
+      "unauthenticated denial",
+      "22 users / 20+2 paging",
+      "only usernames and authorized totals in DTO",
+      "no source breakdown, conversion or historical record details",
+      "literal USD 6.3 / CNY 10 and unknown indication when authorized",
+      "username search",
+      "foreign inviter ownership and permissions",
+      "wallet/reward/subscription anchors preserved"
+    ],
+    "production_sql_accessed": false
+  },
+  "data": "synthetic only; no production SQL queries or writes"
+}

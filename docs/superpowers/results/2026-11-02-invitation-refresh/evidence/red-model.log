@@ -1,0 +1,36 @@
+
+2026/11/01 23:45:39 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.058ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "totals-only" LIMIT 1
+--- FAIL: TestInvitationPageAmountJSONOnlyExposesCurrencyTotals (0.01s)
+    invitation_amount_test.go:219: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:219
+        	Error:      	Not equal: 
+        	            	expected: map[string]interface {}{"currencies":[]interface {}{map[string]interface {}{"currency":"USD", "estimated":false, "total":"6.3"}}, "unknown_count":0, "unpriced_count":0}
+        	            	actual  : map[string]interface {}{"currencies":[]interface {}{map[string]interface {}{"admin_topup":"0", "currency":"USD", "estimated":false, "redemption":"0", "subscription":"0", "topup":"6.3", "total":"6.3"}}, "legacy_recorded":[]interface {}{}, "legacy_truncated":false, "unknown_count":0, "unpriced_count":0}
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1,6 +1,10 @@
+        	            	-(map[string]interface {}) (len=3) {
+        	            	+(map[string]interface {}) (len=5) {
+        	            	  (string) (len=10) "currencies": ([]interface {}) (len=1) {
+        	            	-  (map[string]interface {}) (len=3) {
+        	            	+  (map[string]interface {}) (len=7) {
+        	            	+   (string) (len=11) "admin_topup": (string) (len=1) "0",
+        	            	    (string) (len=8) "currency": (string) (len=3) "USD",
+        	            	    (string) (len=9) "estimated": (bool) false,
+        	            	+   (string) (len=10) "redemption": (string) (len=1) "0",
+        	            	+   (string) (len=12) "subscription": (string) (len=1) "0",
+        	            	+   (string) (len=5) "topup": (string) (len=3) "6.3",
+        	            	    (string) (len=5) "total": (string) (len=3) "6.3"
+        	            	@@ -8,2 +12,5 @@
+        	            	  },
+        	            	+ (string) (len=15) "legacy_recorded": ([]interface {}) {
+        	            	+ },
+        	            	+ (string) (len=16) "legacy_truncated": (bool) false,
+        	            	  (string) (len=13) "unknown_count": (float64) 0,
+        	Test:       	TestInvitationPageAmountJSONOnlyExposesCurrencyTotals
+FAIL
+FAIL	github.com/QuantumNous/new-api/model	0.053s
+FAIL

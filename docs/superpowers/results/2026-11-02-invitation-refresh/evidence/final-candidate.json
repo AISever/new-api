@@ -1,0 +1,9 @@
+{
+  "source": "b1438cf3a2378ad69318961397990d1f3b41f506",
+  "short": "b1438cf3a",
+  "image": "new-api:invitation-b1438cf3a-test",
+  "version": "codex/invite+b1438cf3a+test",
+  "binary_sha256": "ea010215f3e9a4140af681d75d17636fd56f0a9c1f5244c56f3ab063063178c5",
+  "base": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+  "transport": "rsync delta"
+}

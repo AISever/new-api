@@ -1,0 +1,94 @@
+TAP version 13
+# Subtest: unauthorized response discards every money field even if supplied
+ok 1 - unauthorized response discards every money field even if supplied
+  ---
+  duration_ms: 2.040665
+  type: 'test'
+  ...
+# Subtest: authorized zero and exact decimal amounts survive without numeric coercion
+ok 2 - authorized zero and exact decimal amounts survive without numeric coercion
+  ---
+  duration_ms: 0.591589
+  type: 'test'
+  ...
+# Subtest: selected policy is one canonical JSON value and refuses invalid IDs
+ok 3 - selected policy is one canonical JSON value and refuses invalid IDs
+  ---
+  duration_ms: 0.64355
+  type: 'test'
+  ...
+# Subtest: account changes, later requests and closing invalidate previous sensitive responses
+ok 4 - account changes, later requests and closing invalidate previous sensitive responses
+  ---
+  duration_ms: 0.287047
+  type: 'test'
+  ...
+# Subtest: business failures and malformed list payload are errors rather than saved/success state
+ok 5 - business failures and malformed list payload are errors rather than saved/success state
+  ---
+  duration_ms: 0.253711
+  type: 'test'
+  ...
+# Subtest: authorized list retains totals while discarding source breakdown and payment details
+ok 6 - authorized list retains totals while discarding source breakdown and payment details
+  ---
+  duration_ms: 0.307689
+  type: 'test'
+  ...
+# Subtest: background request preserves visible rows and does not show the initial loader
+ok 7 - background request preserves visible rows and does not show the initial loader
+  ---
+  duration_ms: 1.213184
+  type: 'test'
+  ...
+# Subtest: unchanged background results reuse the complete state without rendering the table again
+ok 8 - unchanged background results reuse the complete state without rendering the table again
+  ---
+  duration_ms: 0.357088
+  type: 'test'
+  ...
+# Subtest: a changed total updates only its own row and preserves every unchanged row reference
+ok 9 - a changed total updates only its own row and preserves every unchanged row reference
+  ---
+  duration_ms: 1.497089
+  type: 'test'
+  ...
+# Subtest: new and deleted invitees follow server order without replacing unchanged survivors
+ok 10 - new and deleted invitees follow server order without replacing unchanged survivors
+  ---
+  duration_ms: 1.333986
+  type: 'test'
+  ...
+# Subtest: revocation immediately removes all amounts while retaining the username list
+ok 11 - revocation immediately removes all amounts while retaining the username list
+  ---
+  duration_ms: 0.979925
+  type: 'test'
+  ...
+# Subtest: failed refresh hides old financial data but keeps non-sensitive usernames and retry state
+ok 12 - failed refresh hides old financial data but keeps non-sensitive usernames and retry state
+  ---
+  duration_ms: 0.301997
+  type: 'test'
+  ...
+# Subtest: account or page changes clear old data and late responses cannot repopulate another scope
+ok 13 - account or page changes clear old data and late responses cannot repopulate another scope
+  ---
+  duration_ms: 0.28444
+  type: 'test'
+  ...
+# Subtest: closing the dialog clears financial state and permits a clean initial load
+ok 14 - closing the dialog clears financial state and permits a clean initial load
+  ---
+  duration_ms: 0.26972
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 104.183778

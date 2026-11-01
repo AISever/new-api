@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "version": "codex/invite+b1438cf3a+test",
+  "totals_only": true,
+  "policy_preserved": {
+    "mode": "selected",
+    "user_ids": [
+      2
+    ]
+  },
+  "owner_amounts_visible": true,
+  "checks": [
+    "health/version",
+    "unauthenticated denial",
+    "22 users / 20+2 paging",
+    "only usernames and authorized totals in DTO",
+    "no source breakdown, conversion or historical record details",
+    "literal USD 6.3 / CNY 10 and unknown indication when authorized",
+    "username search",
+    "foreign inviter ownership and permissions",
+    "wallet/reward/subscription anchors preserved"
+  ],
+  "production_sql_accessed": false
+}
