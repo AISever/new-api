@@ -219,6 +219,8 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 	if common.UsingPostgreSQL {
 		keyCol = `"key"`
 	}
+	// Capture reporting conversion before fulfillment. It never controls financial success.
+	reportingConversion, _ := captureInvitationRedemptionRate()
 	common.RandomSleep()
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(keyCol+" = ?", key).First(redemption).Error
@@ -270,7 +272,7 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 		common.SysError("redemption failed: " + err.Error())
 		return RedemptionRedeemResult{}, ErrRedeemFailed
 	}
-	if snapshotErr := RecordInvitationRedemption(redemption); snapshotErr != nil {
+	if snapshotErr := recordInvitationRedemption(redemption, reportingConversion); snapshotErr != nil {
 		common.SysError("invitation redemption snapshot unavailable: " + snapshotErr.Error())
 	}
 

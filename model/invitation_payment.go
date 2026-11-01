@@ -24,7 +24,7 @@ func NormalizeInvitationPayment(raw, currency string, minor bool) (string, strin
 		}
 		digits := int32(2)
 		switch currency {
-		case "BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF":
+		case "BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF", "VND", "VUV", "XAF", "XOF", "XPF":
 			digits = 0
 		case "BHD", "JOD", "KWD", "OMR", "TND":
 			digits = 3

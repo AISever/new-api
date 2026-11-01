@@ -4229,6 +4229,7 @@
     "仅展示前50种历史金额，未确认记录总数保持完整": "Chỉ hiển thị 50 nhóm số tiền trước đây; tổng số bản ghi chưa xác minh vẫn đầy đủ.",
     "折算基准：{{quota}} 额度/USD；1 USD = {{rate}} {{currency}}": "Quy đổi: {{quota}} hạn mức/USD; 1 USD = {{rate}} {{currency}}",
     "按当前配置估算": "Ước tính theo cấu hình hiện tại",
-    "部分历史折算基准缺失或过多，请联系管理员核对": "Một số cơ sở quy đổi bị thiếu hoặc vượt giới hạn hiển thị. Vui lòng liên hệ quản trị viên."
+    "部分历史折算基准缺失或过多，请联系管理员核对": "Một số cơ sở quy đổi bị thiếu hoặc vượt giới hạn hiển thị. Vui lòng liên hệ quản trị viên.",
+    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Tổng cộng là các giao dịch thành công tích lũy trước hoàn tiền. Bản ghi lịch sử đã xóa vĩnh viễn và không có ảnh chụp không thể khôi phục, nên tổng có thể chưa đầy đủ."
   }
 }

@@ -38,3 +38,10 @@ func TestInvitationWaffoDoesNotGuessActualChargeFromListPrice(t *testing.T) {
 	require.NoError(t, db.Where("source_id = ?", 701).Take(&snapshot).Error)
 	require.Equal(t, "0", snapshot.Amount)
 }
+
+func TestInvitationStripeUgandanShillingUsesCompatibilityMinorUnits(t *testing.T) {
+	amount, currency, err := normalizeInvitationPayment("500", "UGX", true)
+	require.NoError(t, err)
+	require.Equal(t, "UGX", currency)
+	require.Equal(t, "5", amount)
+}

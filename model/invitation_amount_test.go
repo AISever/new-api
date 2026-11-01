@@ -32,7 +32,7 @@ func TestInvitationAmountsDeduplicateSubscriptionAndPreserveWallet(t *testing.T)
 	require.NoError(t, RecordInvitationPayment("subpaid", PaymentProviderEpay, "3.20", "USD"))
 	r := &Redemption{Id: 1, UsedUserId: 2, Key: "used", Status: common.RedemptionCodeStatusUsed, Quota: 500000, RedeemType: RedemptionTypeQuota}
 	require.NoError(t, DB.Create(r).Error)
-	require.NoError(t, RecordInvitationRedemption(r))
+	require.NoError(t, recordInvitationTestRedemption(r))
 	// Retries do not duplicate a payment or change its initial immutable snapshot.
 	require.NoError(t, RecordInvitationPayment("paid", PaymentProviderStripe, "2.10", "USD"))
 	require.Error(t, RecordInvitationPayment("paid", PaymentProviderStripe, "999", "USD"))
@@ -62,7 +62,7 @@ func TestInvitationAmountsZeroUnknownCurrencyAndConversionSnapshot(t *testing.T)
 	require.NoError(t, RecordInvitationPayment("free", PaymentProviderStripe, "0", "JPY"))
 	r := &Redemption{Id: 1, UsedUserId: 2, Key: "unit", Status: common.RedemptionCodeStatusUsed, Quota: 500000, RedeemType: RedemptionTypeQuota}
 	require.NoError(t, DB.Create(r).Error)
-	require.NoError(t, RecordInvitationRedemption(r))
+	require.NoError(t, recordInvitationTestRedemption(r))
 	common.QuotaPerUnit = 1000000
 	// Historical snapshots remain USD 1; only a missing old snapshot uses the current estimate.
 	old := &Redemption{Id: 2, UsedUserId: 2, Key: "legacy", Status: common.RedemptionCodeStatusUsed, Quota: 500000}
@@ -116,7 +116,7 @@ func TestInvitationRetainsRedeemedSnapshotAfterPhysicalCleanupAndLabelsAdminCred
 	setupInvitationAmountTest(t)
 	r := &Redemption{Id: 11, UsedUserId: 2, Key: "cleaned", Status: common.RedemptionCodeStatusUsed, Quota: 500000}
 	require.NoError(t, DB.Create(r).Error)
-	require.NoError(t, RecordInvitationRedemption(r))
+	require.NoError(t, recordInvitationTestRedemption(r))
 	require.NoError(t, DB.Unscoped().Delete(r).Error)
 	require.NoError(t, DB.Create(&TopUp{Id: 1, UserId: 2, TradeNo: "admin-credit", PaymentMethod: "admin", Money: 2.5, Status: common.TopUpStatusSuccess}).Error)
 	require.NoError(t, RecordInvitationAdminTopUp("admin-credit"))
@@ -158,7 +158,7 @@ func TestInvitationCustomRedemptionCurrenciesRemainSeparate(t *testing.T) {
 		settings.CustomCurrencyExchangeRate = float64(7 + i*3)
 		r := &Redemption{Id: 30 + i, UsedUserId: 2, Key: fmt.Sprintf("custom-%d", i), Status: common.RedemptionCodeStatusUsed, Quota: 500000}
 		require.NoError(t, DB.Create(r).Error)
-		require.NoError(t, RecordInvitationRedemption(r))
+		require.NoError(t, recordInvitationTestRedemption(r))
 	}
 	page, err := GetInvitationPage(1, 1, 20, "", true)
 	require.NoError(t, err)
@@ -169,4 +169,39 @@ func TestInvitationCustomRedemptionCurrenciesRemainSeparate(t *testing.T) {
 	require.Contains(t, string(raw), `"currency_symbol":"金币"`)
 	require.Contains(t, string(raw), `"total":"7"`)
 	require.Contains(t, string(raw), `"total":"10"`)
+}
+
+// Simulate the live completion hook with a conversion captured at fulfillment.
+func recordInvitationTestRedemption(r *Redemption) error {
+	rate, err := captureInvitationRedemptionRate()
+	if err != nil {
+		return err
+	}
+	return recordInvitationRedemption(r, rate)
+}
+func TestInvitationRedemptionBackfillRetainsEstimatedBasisAfterSnapshotFailure(t *testing.T) {
+	setupInvitationAmountTest(t)
+	require.NoError(t, DB.Migrator().DropTable(&InvitationAmountSnapshot{}))
+	r := &Redemption{Id: 80, Key: "failed-snapshot-backfill", Status: common.RedemptionCodeStatusEnabled, Quota: 500000}
+	require.NoError(t, DB.Create(r).Error)
+	_, err := Redeem(r.Key, 2)
+	require.NoError(t, err)
+	common.QuotaPerUnit = 1000000
+	require.NoError(t, DB.AutoMigrate(&InvitationAmountSnapshot{}))
+	require.NoError(t, DB.First(r, 80).Error)
+	require.NoError(t, RecordInvitationRedemption(r))
+	page, err := GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	a := page.Items[0].Amounts.Currencies[0]
+	require.Equal(t, "0.5", a.Redemption)
+	require.True(t, a.Estimated, "backfill cannot recover the original conversion basis")
+	require.True(t, a.Conversions[0].Estimated)
+	common.QuotaPerUnit = 2000000
+	require.NoError(t, RecordInvitationRedemption(r), "retry must retain the existing immutable estimate")
+	page, err = GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	require.Equal(t, "0.5", page.Items[0].Amounts.Currencies[0].Redemption)
+	var user User
+	require.NoError(t, DB.First(&user, 2).Error)
+	require.Equal(t, 509876, user.Quota)
 }

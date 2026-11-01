@@ -3841,6 +3841,7 @@
     "仅展示前50种历史金额，未确认记录总数保持完整": "Only the first 50 historical amount groups are shown; the unconfirmed record count is complete.",
     "折算基准：{{quota}} 额度/USD；1 USD = {{rate}} {{currency}}": "Conversion: {{quota}} quota/USD; 1 USD = {{rate}} {{currency}}",
     "按当前配置估算": "Estimated using current settings",
-    "部分历史折算基准缺失或过多，请联系管理员核对": "Some historical conversion details are unavailable or exceed the display limit. Contact the administrator."
+    "部分历史折算基准缺失或过多，请联系管理员核对": "Some historical conversion details are unavailable or exceed the display limit. Contact the administrator.",
+    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Totals reflect accumulated successful records before refunds. Physically deleted historical records without snapshots cannot be recovered, so totals may be incomplete."
   }
 }

@@ -115,32 +115,69 @@ func RecordInvitationPayment(tradeNo, provider, amount, currency string) error {
 	}
 	return saveInvitationSnapshot(&s)
 }
-func invitationRedemptionValue(quota int64) (string, string, string, string, string, error) {
+
+type invitationRedemptionRate struct {
+	currency, symbol, unit, rate string
+}
+
+func captureInvitationRedemptionRate() (*invitationRedemptionRate, error) {
 	common.OptionMapRWMutex.RLock()
 	defer common.OptionMapRWMutex.RUnlock()
 	unit := common.QuotaPerUnit
 	rate := operation_setting.GetUsdToCurrencyRate(operation_setting.USDExchangeRate)
-	if quota <= 0 || math.IsNaN(unit) || math.IsInf(unit, 0) || unit <= 0 || math.IsNaN(rate) || math.IsInf(rate, 0) || rate <= 0 {
-		return "", "", "", "", "", errors.New("redemption value unavailable")
-	}
 	currency := operation_setting.GetQuotaDisplayType()
 	if currency == operation_setting.QuotaDisplayTypeTokens {
-		currency = "USD"
-		rate = 1
+		currency, rate = "USD", 1
 	}
-	if !invitationCurrencyPattern.MatchString(currency) {
-		return "", "", "", "", "", errors.New("invalid display currency")
+	if math.IsNaN(unit) || math.IsInf(unit, 0) || unit <= 0 || math.IsNaN(rate) || math.IsInf(rate, 0) || rate <= 0 || !invitationCurrencyPattern.MatchString(currency) {
+		return nil, errors.New("redemption conversion unavailable")
 	}
 	symbol := ""
 	if currency == operation_setting.QuotaDisplayTypeCustom {
 		symbol = operation_setting.GetCurrencySymbol()
 	}
-	u, r := decimal.NewFromFloat(unit), decimal.NewFromFloat(rate)
-	return decimal.NewFromInt(quota).Mul(r).DivRound(u, 30).String(), currency, symbol, u.String(), r.String(), nil
+	return &invitationRedemptionRate{currency: currency, symbol: symbol, unit: decimal.NewFromFloat(unit).String(), rate: decimal.NewFromFloat(rate).String()}, nil
 }
+func (r *invitationRedemptionRate) value(quota int64) (string, error) {
+	if quota <= 0 {
+		return "", errors.New("redemption value unavailable")
+	}
+	unit, e1 := decimal.NewFromString(r.unit)
+	rate, e2 := decimal.NewFromString(r.rate)
+	if e1 != nil || e2 != nil || unit.Sign() <= 0 || rate.Sign() <= 0 {
+		return "", errors.New("invalid redemption conversion")
+	}
+	return decimal.NewFromInt(quota).Mul(rate).DivRound(unit, 30).String(), nil
+}
+func invitationRedemptionValue(quota int64) (string, string, string, string, string, error) {
+	r, err := captureInvitationRedemptionRate()
+	if err != nil {
+		return "", "", "", "", "", err
+	}
+	value, err := r.value(quota)
+	return value, r.currency, r.symbol, r.unit, r.rate, err
+}
+
+// Backfill cannot establish the original conversion rate. Preserve the estimate
+// marker permanently; live redemption supplies its captured conversion separately.
 func RecordInvitationRedemption(redemption *Redemption) error {
+	return recordInvitationRedemption(redemption, nil)
+}
+
+func recordInvitationRedemption(redemption *Redemption, conversion *invitationRedemptionRate) error {
 	if redemption == nil || redemption.Status != common.RedemptionCodeStatusUsed || redemption.UsedUserId <= 0 {
 		return errors.New("redemption not used")
+	}
+	var existing InvitationAmountSnapshot
+	err := DB.Where("source_kind = ? AND source_id = ?", "redemption", redemption.Id).Take(&existing).Error
+	if err == nil {
+		if existing.UserID != redemption.UsedUserId {
+			return errors.New("conflicting immutable invitation owner")
+		}
+		return nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
 	}
 	quota := int64(redemption.Quota)
 	if NormalizeRedemptionType(redemption.RedeemType) == RedemptionTypeSubscription {
@@ -155,8 +192,15 @@ func RecordInvitationRedemption(redemption *Redemption) error {
 		s.Basis = "unpriced"
 		return saveInvitationSnapshot(&s)
 	}
-	var err error
-	s.Amount, s.Currency, s.CurrencySymbol, s.QuotaPerUnit, s.ExchangeRate, err = invitationRedemptionValue(quota)
+	if conversion == nil {
+		s.Basis = "redemption_estimated"
+		conversion, err = captureInvitationRedemptionRate()
+		if err != nil {
+			return err
+		}
+	}
+	s.Currency, s.CurrencySymbol, s.QuotaPerUnit, s.ExchangeRate = conversion.currency, conversion.symbol, conversion.unit, conversion.rate
+	s.Amount, err = conversion.value(quota)
 	if err != nil {
 		return err
 	}
@@ -294,7 +338,8 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 						symbol = *r.CurrencySymbol
 					}
 					asset := invitationAssetKey(*r.Currency, symbol)
-					if err = a.add(kind, *r.ReportAmount, *r.Currency, symbol, false); err != nil {
+					estimated := r.Basis != nil && *r.Basis == "redemption_estimated"
+					if err = a.add(kind, *r.ReportAmount, *r.Currency, symbol, estimated); err != nil {
 						a.result.UnknownCount++
 					} else if kind == "topup" && r.Basis != nil && *r.Basis == "admin" {
 						d, _ := invitationDecimal(*r.ReportAmount)
@@ -308,7 +353,7 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 						if r.SnapshotRate != nil {
 							rate = *r.SnapshotRate
 						}
-						a.conversion(asset, unit, rate, false)
+						a.conversion(asset, unit, rate, estimated)
 					}
 					continue
 				}

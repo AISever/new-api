@@ -240,6 +240,13 @@ export default function InvitationUsersModal({
             )}
           />
         )}
+        {data?.can_view_amounts && (
+          <Typography.Text type='tertiary'>
+            {t(
+              '统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。',
+            )}
+          </Typography.Text>
+        )}
         {error && (
           <Banner
             type='danger'
