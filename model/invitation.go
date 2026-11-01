@@ -38,7 +38,11 @@ type InvitationCurrencyAmount struct {
 	Estimated            bool                   `json:"estimated"`
 }
 type InvitationAmounts struct {
-	Currencies      []InvitationCurrencyAmount `json:"currencies"`
+	Currency        string                     `json:"currency"`
+	CurrencySymbol  string                     `json:"currency_symbol"`
+	Total           *string                    `json:"total"`
+	Estimated       bool                       `json:"estimated"`
+	Currencies      []InvitationCurrencyAmount `json:"-"`
 	UnknownCount    int                        `json:"unknown_count"`
 	UnpricedCount   int                        `json:"unpriced_count"`
 	LegacyTruncated bool                       `json:"-"`

@@ -147,7 +147,7 @@ func TestInvitationPaymentsPreserveSmallVerifiedAmounts(t *testing.T) {
 	require.Equal(t, "0.000000000000000001", page.Items[0].Amounts.Currencies[0].Total)
 }
 
-func TestInvitationCustomRedemptionCurrenciesRemainSeparate(t *testing.T) {
+func TestInvitationCustomRedemptionSnapshotsRetainOriginalUnits(t *testing.T) {
 	setupInvitationAmountTest(t)
 	settings := operation_setting.GetGeneralSetting()
 	oldSymbol, oldRate := settings.CustomCurrencySymbol, settings.CustomCurrencyExchangeRate
@@ -165,10 +165,13 @@ func TestInvitationCustomRedemptionCurrenciesRemainSeparate(t *testing.T) {
 	require.Len(t, page.Items[0].Amounts.Currencies, 2)
 	raw, err := common.Marshal(page.Items[0].Amounts)
 	require.NoError(t, err)
-	require.Contains(t, string(raw), `"currency_symbol":"积分"`)
+	require.Equal(t, "积分", page.Items[0].Amounts.Currencies[0].CurrencySymbol)
+	require.Equal(t, "7", page.Items[0].Amounts.Currencies[0].Total)
+	require.Equal(t, "金币", page.Items[0].Amounts.Currencies[1].CurrencySymbol)
+	require.Equal(t, "10", page.Items[0].Amounts.Currencies[1].Total)
+	require.NotContains(t, string(raw), `"currencies"`)
 	require.Contains(t, string(raw), `"currency_symbol":"金币"`)
-	require.Contains(t, string(raw), `"total":"7"`)
-	require.Contains(t, string(raw), `"total":"10"`)
+	require.Contains(t, string(raw), `"total":"20.00"`)
 }
 
 // Simulate the live completion hook with a conversion captured at fulfillment.
@@ -216,5 +219,74 @@ func TestInvitationPageAmountJSONOnlyExposesCurrencyTotals(t *testing.T) {
 	require.NoError(t, err)
 	var actual map[string]any
 	require.NoError(t, common.Unmarshal(raw, &actual))
-	require.Equal(t, map[string]any{"currencies": []any{map[string]any{"currency": "USD", "total": "6.3", "estimated": false}}, "unknown_count": float64(0), "unpriced_count": float64(0)}, actual)
+	require.Equal(t, map[string]any{"currency": "USD", "currency_symbol": "$", "total": "6.30", "estimated": false, "unknown_count": float64(0), "unpriced_count": float64(0)}, actual)
+}
+
+func TestInvitationSingleDisplayTotalFollowsSiteCurrency(t *testing.T) {
+	setupInvitationAmountTest(t)
+	settings := operation_setting.GetGeneralSetting()
+	oldSymbol, oldCustomRate := settings.CustomCurrencySymbol, settings.CustomCurrencyExchangeRate
+	t.Cleanup(func() { settings.CustomCurrencySymbol, settings.CustomCurrencyExchangeRate = oldSymbol, oldCustomRate })
+	operation_setting.USDExchangeRate = 10
+	settings.CustomCurrencySymbol = "积分"
+	settings.CustomCurrencyExchangeRate = 5
+	for _, row := range []TopUp{{Id: 101, UserId: 2, TradeNo: "single-usd", PaymentProvider: PaymentProviderStripe, Status: common.TopUpStatusSuccess}, {Id: 102, UserId: 2, TradeNo: "single-cny", PaymentProvider: PaymentProviderEpay, Status: common.TopUpStatusSuccess}} {
+		require.NoError(t, DB.Create(&row).Error)
+	}
+	require.NoError(t, RecordInvitationPayment("single-usd", PaymentProviderStripe, "6.3", "USD"))
+	require.NoError(t, RecordInvitationPayment("single-cny", PaymentProviderEpay, "10", "CNY"))
+	for _, tc := range []struct{ mode, currency, symbol, total string }{{"USD", "USD", "$", "7.30"}, {"CNY", "CNY", "¥", "73.00"}, {"CUSTOM", "CUSTOM", "积分", "36.50"}, {"TOKENS", "USD", "$", "7.30"}} {
+		settings.QuotaDisplayType = tc.mode
+		page, err := GetInvitationPage(1, 1, 20, "", true)
+		require.NoError(t, err)
+		raw, err := common.Marshal(page.Items[0].Amounts)
+		require.NoError(t, err)
+		var got map[string]any
+		require.NoError(t, common.Unmarshal(raw, &got))
+		require.Equal(t, tc.currency, got["currency"])
+		require.Equal(t, tc.symbol, got["currency_symbol"])
+		require.Equal(t, tc.total, got["total"])
+		require.NotContains(t, got, "currencies")
+	}
+	var user User
+	require.NoError(t, DB.First(&user, 2).Error)
+	require.Equal(t, 9876, user.Quota)
+}
+func TestInvitationDisplayUsesFrozenRedemptionRateAndCurrentPaymentRate(t *testing.T) {
+	setupInvitationAmountTest(t)
+	settings := operation_setting.GetGeneralSetting()
+	settings.QuotaDisplayType = "CNY"
+	operation_setting.USDExchangeRate = 7
+	r := &Redemption{Id: 111, UsedUserId: 2, Key: "currency-frozen", Status: common.RedemptionCodeStatusUsed, Quota: 500000}
+	require.NoError(t, DB.Create(r).Error)
+	require.NoError(t, recordInvitationTestRedemption(r))
+	require.NoError(t, DB.Create(&TopUp{Id: 112, UserId: 2, TradeNo: "paid-fourteen", PaymentProvider: PaymentProviderEpay, Status: common.TopUpStatusSuccess}).Error)
+	require.NoError(t, RecordInvitationPayment("paid-fourteen", PaymentProviderEpay, "14", "CNY"))
+	settings.QuotaDisplayType = "USD"
+	operation_setting.USDExchangeRate = 14
+	page, err := GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	raw, err := common.Marshal(page.Items[0].Amounts)
+	require.NoError(t, err)
+	var got map[string]any
+	require.NoError(t, common.Unmarshal(raw, &got))
+	require.Equal(t, "2.00", got["total"])
+	var snapshot InvitationAmountSnapshot
+	require.NoError(t, DB.Where("source_kind = ? AND source_id = ?", "redemption", 111).Take(&snapshot).Error)
+	require.Equal(t, "7", snapshot.Amount)
+	require.Equal(t, "7", snapshot.ExchangeRate)
+}
+func TestInvitationDisplayDoesNotInventExchangeRatesOrUnknownZero(t *testing.T) {
+	setupInvitationAmountTest(t)
+	require.NoError(t, DB.Create(&TopUp{Id: 121, UserId: 2, TradeNo: "unknown-fx", PaymentProvider: PaymentProviderStripe, Status: common.TopUpStatusSuccess}).Error)
+	require.NoError(t, RecordInvitationPayment("unknown-fx", PaymentProviderStripe, "5", "EUR"))
+	page, err := GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	raw, err := common.Marshal(page.Items[0].Amounts)
+	require.NoError(t, err)
+	var got map[string]any
+	require.NoError(t, common.Unmarshal(raw, &got))
+	require.Contains(t, got, "total")
+	require.Nil(t, got["total"])
+	require.Equal(t, float64(1), got["unknown_count"])
 }

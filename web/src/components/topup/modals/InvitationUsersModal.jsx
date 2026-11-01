@@ -93,15 +93,10 @@ export default function InvitationUsersModal({
 
   const money = (value) => (
     <Space vertical align='start'>
-      {value.currencies.length === 0 && (
-        <Typography.Text type='tertiary'>—</Typography.Text>
-      )}
-      {value.currencies.map((c) => (
-        <Typography.Text key={`${c.currency}/${c.currency_symbol}`}>
-          {invitationMoney(c.total, c.currency_symbol || c.currency)}
-          {c.estimated ? ` (${t('含估算')})` : ''}
-        </Typography.Text>
-      ))}
+      <Typography.Text>
+        {invitationMoney(value.total, value.currency_symbol || value.currency)}
+        {value.estimated ? ` (${t('含估算')})` : ''}
+      </Typography.Text>
       {(value.unknown_count > 0 || value.unpriced_count > 0) && (
         <Typography.Text type='warning'>
           {t('部分金额未确认，合计可能不完整')}

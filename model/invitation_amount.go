@@ -234,6 +234,10 @@ type invitationAmountRow struct {
 	GrantedQuota   *int64
 }
 type invitationAccumulator struct {
+	display              *invitationDisplayCurrency
+	displaySum           decimal.Decimal
+	displayCount         int
+	displayEstimated     bool
 	conversions          map[string]map[string]InvitationConversion
 	conversionIncomplete map[string]bool
 	result               *InvitationAmounts
@@ -250,7 +254,7 @@ func invitationAssetKey(currency, symbol string) string {
 	return currency
 }
 
-func (a *invitationAccumulator) add(kind, amount, currency, symbol string, estimated bool) error {
+func (a *invitationAccumulator) add(kind, amount, currency, symbol, sourceRate string, estimated bool) error {
 	d, err := invitationDecimal(amount)
 	if err != nil {
 		return err
@@ -273,6 +277,15 @@ func (a *invitationAccumulator) add(kind, amount, currency, symbol string, estim
 	}
 	v[index] = v[index].Add(d)
 	a.estimated[currency] = a.estimated[currency] || estimated
+	sourceCurrency, _, _ := strings.Cut(currency, "\x00")
+	value, converted, ok := a.display.convert(d, sourceCurrency, symbol, sourceRate)
+	if ok {
+		a.displaySum = a.displaySum.Add(value)
+		a.displayCount++
+		a.displayEstimated = a.displayEstimated || estimated || converted
+	} else {
+		a.result.UnknownCount++
+	}
 	return nil
 }
 
@@ -305,12 +318,13 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 	if len(items) == 0 {
 		return nil
 	}
+	display := captureInvitationDisplayCurrency()
 	ids := make([]int, 0, len(items))
 	acc := map[int]*invitationAccumulator{}
 	for i := range items {
-		items[i].Amounts = &InvitationAmounts{Currencies: []InvitationCurrencyAmount{}, LegacyRecorded: []InvitationLegacyAmount{}}
+		items[i].Amounts = &InvitationAmounts{Currency: display.currency, CurrencySymbol: display.symbol, Currencies: []InvitationCurrencyAmount{}, LegacyRecorded: []InvitationLegacyAmount{}}
 		ids = append(ids, items[i].ID)
-		acc[items[i].ID] = &invitationAccumulator{result: items[i].Amounts, conversions: map[string]map[string]InvitationConversion{}, conversionIncomplete: map[string]bool{}, totals: map[string]*[3]decimal.Decimal{}, estimated: map[string]bool{}, admin: map[string]decimal.Decimal{}, legacy: map[string]*InvitationLegacyAmount{}}
+		acc[items[i].ID] = &invitationAccumulator{display: display, result: items[i].Amounts, conversions: map[string]map[string]InvitationConversion{}, conversionIncomplete: map[string]bool{}, totals: map[string]*[3]decimal.Decimal{}, estimated: map[string]bool{}, admin: map[string]decimal.Decimal{}, legacy: map[string]*InvitationLegacyAmount{}}
 	}
 	consume := func(q *gorm.DB, kind string) error {
 		rows, err := q.Rows()
@@ -339,7 +353,11 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 					}
 					asset := invitationAssetKey(*r.Currency, symbol)
 					estimated := r.Basis != nil && *r.Basis == "redemption_estimated"
-					if err = a.add(kind, *r.ReportAmount, *r.Currency, symbol, estimated); err != nil {
+					sourceRate := ""
+					if kind == "redemption" && r.SnapshotRate != nil {
+						sourceRate = *r.SnapshotRate
+					}
+					if err = a.add(kind, *r.ReportAmount, *r.Currency, symbol, sourceRate, estimated); err != nil {
 						a.result.UnknownCount++
 					} else if kind == "topup" && r.Basis != nil && *r.Basis == "admin" {
 						d, _ := invitationDecimal(*r.ReportAmount)
@@ -372,7 +390,7 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 					a.result.UnpricedCount++
 					continue
 				}
-				if err = a.add(kind, value, currency, symbol, true); err != nil {
+				if err = a.add(kind, value, currency, symbol, rate, true); err != nil {
 					a.result.UnpricedCount++
 					continue
 				}
@@ -382,7 +400,7 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 			if kind == "subscription" {
 				amount, currency, e := invitationStoredPayment(r.Payload, r.Provider)
 				if e == nil {
-					if e = a.add(kind, amount, currency, "", false); e != nil {
+					if e = a.add(kind, amount, currency, "", "", false); e != nil {
 						return e
 					}
 					continue
@@ -429,6 +447,11 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 		return err
 	}
 	for _, a := range acc {
+		if a.displayCount > 0 || (a.result.UnknownCount == 0 && a.result.UnpricedCount == 0) {
+			total := a.displaySum.StringFixed(2)
+			a.result.Total = &total
+		}
+		a.result.Estimated = a.displayEstimated
 		currencies := make([]string, 0, len(a.totals))
 		for c := range a.totals {
 			currencies = append(currencies, c)

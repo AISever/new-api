@@ -33,41 +33,41 @@ test('authorized zero and exact decimal amounts survive without numeric coercion
     success: true,
     data: {
       can_view_amounts: true,
-      total: 1,
       items: [
         {
           username: 'alice',
           amounts: {
-            currencies: [
-              {
-                currency: 'JPY',
-                topup: '0',
-                subscription: '0',
-                redemption: '0',
-                total: '0',
-              },
-              {
-                currency: 'USD',
-                topup: '999999999999999.01',
-                subscription: '0',
-                redemption: '0',
-                total: '999999999999999.01',
-              },
-            ],
+            currency: 'USD',
+            currency_symbol: '$',
+            total: '0.00',
+            estimated: false,
+            unknown_count: 0,
+            unpriced_count: 0,
+          },
+        },
+        {
+          username: 'bob',
+          amounts: {
+            currency: 'USD',
+            currency_symbol: '$',
+            total: '999999999999999.01',
+            estimated: false,
             unknown_count: 1,
             unpriced_count: 0,
-            legacy_recorded: [{ category: 'topup', amount: '9.99', count: 1 }],
           },
         },
       ],
     },
   });
   assert.equal(
-    invitationMoney(page.items[0].amounts.currencies[0].total, 'JPY'),
-    'JPY 0',
+    invitationMoney(
+      page.items[0].amounts.total,
+      page.items[0].amounts.currency_symbol,
+    ),
+    '$0.00',
   );
-  assert.equal(page.items[0].amounts.currencies[1].total, '999999999999999.01');
-  assert.equal(page.items[0].amounts.unknown_count, 1);
+  assert.equal(page.items[1].amounts.total, '999999999999999.01');
+  assert.equal(page.items[1].amounts.unknown_count, 1);
 });
 test('selected policy is one canonical JSON value and refuses invalid IDs', () => {
   assert.equal(
@@ -100,7 +100,7 @@ test('business failures and malformed list payload are errors rather than saved/
     decodeInvitationPage({ success: true, data: { items: {} } }),
   );
 });
-test('authorized list retains totals while discarding source breakdown and payment details', () => {
+test('authorized list retains one total while discarding source breakdown and payment details', () => {
   const page = decodeInvitationPage({
     success: true,
     data: {
@@ -109,37 +109,58 @@ test('authorized list retains totals while discarding source breakdown and payme
         {
           username: 'alice',
           amounts: {
-            currencies: [
-              {
-                currency: 'USD',
-                total: '6.3',
-                estimated: false,
-                topup: '2.1',
-                subscription: '3.2',
-                redemption: '1',
-                admin_topup: '0',
-                conversions: [
-                  {
-                    quota_per_unit: '500000',
-                    exchange_rate: '1',
-                    estimated: false,
-                  },
-                ],
-              },
-            ],
+            currency: 'USD',
+            currency_symbol: '$',
+            total: '6.30',
+            estimated: false,
             unknown_count: 1,
             unpriced_count: 0,
-            legacy_recorded: [{ category: 'topup', amount: '9.99', count: 1 }],
+            topup: '2.1',
+            subscription: '3.2',
+            redemption: '1',
+            legacy_recorded: [{ amount: '9.99' }],
           },
         },
       ],
     },
   });
   assert.deepEqual(page.items[0].amounts, {
-    currencies: [
-      { currency: 'USD', currency_symbol: '', total: '6.3', estimated: false },
-    ],
+    currency: 'USD',
+    currency_symbol: '$',
+    total: '6.30',
+    estimated: false,
     unknown_count: 1,
     unpriced_count: 0,
   });
+});
+test('one site-currency total is shown without retaining any currency list', () => {
+  const page = decodeInvitationPage({
+    success: true,
+    data: {
+      can_view_amounts: true,
+      items: [
+        {
+          username: 'alice',
+          amounts: {
+            currency: 'USD',
+            currency_symbol: '$',
+            total: '7.30',
+            estimated: true,
+            unknown_count: 0,
+            unpriced_count: 0,
+            currencies: [{ currency: 'CNY', total: '10' }],
+          },
+        },
+      ],
+    },
+  });
+  assert.deepEqual(page.items[0].amounts, {
+    currency: 'USD',
+    currency_symbol: '$',
+    total: '7.30',
+    estimated: true,
+    unknown_count: 0,
+    unpriced_count: 0,
+  });
+  assert.equal(invitationMoney(page.items[0].amounts.total, '$'), '$7.30');
 });

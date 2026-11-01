@@ -36,7 +36,9 @@ export function createInvitationRequestFence() {
 const amount = (value) =>
   typeof value === 'string' && moneyPattern.test(value) ? value : null;
 export function invitationMoney(value, currency) {
-  return amount(value) === null ? '—' : `${currency} ${value}`;
+  return amount(value) === null
+    ? '—'
+    : `${currency}${/^[A-Z]{3,8}$/.test(currency) ? ' ' : ''}${value}`;
 }
 export function decodeInvitationPage(response) {
   const page = response?.data;
@@ -55,18 +57,17 @@ export function decodeInvitationPage(response) {
         const row = { username: item.username };
         if (allowed && item.amounts) {
           const a = item.amounts;
+          if (
+            typeof a.currency !== 'string' ||
+            !/^[A-Z]{3,8}$/.test(a.currency)
+          )
+            throw new Error('Invalid site currency');
           row.amounts = {
-            currencies: (Array.isArray(a.currencies) ? a.currencies : [])
-              .filter((c) => /^[A-Z]{3,8}$/.test(c.currency))
-              .map((c) => ({
-                currency: c.currency,
-                currency_symbol:
-                  typeof c.currency_symbol === 'string'
-                    ? c.currency_symbol
-                    : '',
-                total: amount(c.total),
-                estimated: c.estimated === true,
-              })),
+            currency: a.currency,
+            currency_symbol:
+              typeof a.currency_symbol === 'string' ? a.currency_symbol : '',
+            total: amount(a.total),
+            estimated: a.estimated === true,
             unknown_count: count(a.unknown_count),
             unpriced_count: count(a.unpriced_count),
           };

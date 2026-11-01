@@ -14,14 +14,10 @@ const page = () => ({
     {
       username: 'alice',
       amounts: {
-        currencies: [
-          {
-            currency: 'USD',
-            currency_symbol: '',
-            total: '6.3',
-            estimated: false,
-          },
-        ],
+        currency: 'USD',
+        currency_symbol: '$',
+        total: '6.30',
+        estimated: false,
         unknown_count: 0,
         unpriced_count: 0,
       },
@@ -29,14 +25,10 @@ const page = () => ({
     {
       username: 'bob',
       amounts: {
-        currencies: [
-          {
-            currency: 'CNY',
-            currency_symbol: '',
-            total: '10',
-            estimated: false,
-          },
-        ],
+        currency: 'USD',
+        currency_symbol: '$',
+        total: '10.00',
+        estimated: false,
         unknown_count: 0,
         unpriced_count: 0,
       },
@@ -49,7 +41,7 @@ test('background request preserves visible rows and does not show the initial lo
   const next = invitationViewReducer(current, { type: 'start', scope });
   assert.strictEqual(next, current);
   assert.equal(next.loading, false);
-  assert.equal(next.data.items[0].amounts.currencies[0].total, '6.3');
+  assert.equal(next.data.items[0].amounts.total, '6.30');
 });
 test('unchanged background results reuse the complete state without rendering the table again', () => {
   const current = loaded();
@@ -61,16 +53,16 @@ test('unchanged background results reuse the complete state without rendering th
 test('a changed total updates only its own row and preserves every unchanged row reference', () => {
   const current = loaded();
   const response = page();
-  response.items[0].amounts.currencies[0].total = '9.3';
+  response.items[0].amounts.total = '9.30';
   const next = invitationViewReducer(current, {
     type: 'success',
     scope,
     data: response,
   });
-  assert.equal(next.data.items[0].amounts.currencies[0].total, '9.3');
+  assert.equal(next.data.items[0].amounts.total, '9.30');
   assert.notStrictEqual(next.data.items[0], current.data.items[0]);
   assert.strictEqual(next.data.items[1], current.data.items[1]);
-  assert.equal(current.data.items[0].amounts.currencies[0].total, '6.3');
+  assert.equal(current.data.items[0].amounts.total, '6.30');
 });
 test('new and deleted invitees follow server order without replacing unchanged survivors', () => {
   const current = loaded();
@@ -79,7 +71,14 @@ test('new and deleted invitees follow server order without replacing unchanged s
     response.items[1],
     {
       username: 'charlie',
-      amounts: { currencies: [], unknown_count: 0, unpriced_count: 0 },
+      amounts: {
+        currency: 'USD',
+        currency_symbol: '$',
+        total: '0.00',
+        estimated: false,
+        unknown_count: 0,
+        unpriced_count: 0,
+      },
     },
   ];
   const next = invitationViewReducer(current, {
@@ -147,5 +146,5 @@ test('closing the dialog clears financial state and permits a clean initial load
     data: page(),
   });
   assert.equal(ready.loading, false);
-  assert.equal(ready.data.items[0].amounts.currencies[0].total, '6.3');
+  assert.equal(ready.data.items[0].amounts.total, '6.30');
 });
