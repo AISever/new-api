@@ -136,6 +136,7 @@ func InitOptionMap() {
 	common.OptionMap["QuotaForNewUser"] = strconv.Itoa(common.QuotaForNewUser)
 	common.OptionMap["QuotaForInviter"] = strconv.Itoa(common.QuotaForInviter)
 	common.OptionMap["QuotaForInvitee"] = strconv.Itoa(common.QuotaForInvitee)
+	common.OptionMap[InvitationVisibilityOption] = `{"mode":"off","user_ids":[]}`
 	common.OptionMap["InviteRewardMode"] = common.NormalizeInviteRewardMode(common.InviteRewardMode)
 	common.OptionMap["InviteRewardRatio"] = strconv.FormatFloat(common.InviteRewardRatio, 'f', -1, 64)
 	common.OptionMap["QuotaRemindThreshold"] = strconv.Itoa(common.QuotaRemindThreshold)
@@ -210,6 +211,9 @@ func SyncOptions(frequency int) {
 }
 
 func UpdateOption(key string, value string) error {
+	if key == InvitationVisibilityOption {
+		return saveInvitationVisibility(value)
+	}
 	// Save to database first
 	option := Option{
 		Key: key,
