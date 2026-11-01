@@ -64,46 +64,76 @@ export function decodeInvitationPage(response) {
                   typeof c.currency_symbol === 'string'
                     ? c.currency_symbol
                     : '',
-                admin_topup: amount(c.admin_topup),
-                topup: amount(c.topup),
-                subscription: amount(c.subscription),
-                redemption: amount(c.redemption),
                 total: amount(c.total),
                 estimated: c.estimated === true,
-                conversion_incomplete: c.conversion_incomplete === true,
-                conversions: (Array.isArray(c.conversions) ? c.conversions : [])
-                  .filter(
-                    (f) =>
-                      amount(f.quota_per_unit) !== null &&
-                      amount(f.exchange_rate) !== null,
-                  )
-                  .slice(0, 50)
-                  .map((f) => ({
-                    quota_per_unit: f.quota_per_unit,
-                    exchange_rate: f.exchange_rate,
-                    estimated: f.estimated === true,
-                  })),
               })),
-            legacy_truncated: a.legacy_truncated === true,
             unknown_count: count(a.unknown_count),
             unpriced_count: count(a.unpriced_count),
-            legacy_recorded: (Array.isArray(a.legacy_recorded)
-              ? a.legacy_recorded
-              : []
-            )
-              .filter(
-                (r) =>
-                  amount(r.amount) !== null &&
-                  ['topup', 'subscription'].includes(r.category),
-              )
-              .map((r) => ({
-                category: r.category,
-                amount: r.amount,
-                count: count(r.count),
-              })),
           };
         }
         return row;
       }),
   };
+}
+
+export const initialInvitationView = {
+  scope: null,
+  data: null,
+  loading: false,
+  error: false,
+};
+
+function reconcileInvitationPage(previous, next) {
+  if (!previous) return next;
+  const byUsername = new Map(previous.items.map((row) => [row.username, row]));
+  const items = next.items.map((row) => {
+    const old = byUsername.get(row.username);
+    return old && JSON.stringify(old) === JSON.stringify(row) ? old : row;
+  });
+  const sameItems =
+    items.length === previous.items.length &&
+    items.every((row, i) => row === previous.items[i]);
+  if (
+    sameItems &&
+    previous.total === next.total &&
+    previous.page === next.page &&
+    previous.page_size === next.page_size &&
+    previous.can_view_amounts === next.can_view_amounts
+  )
+    return previous;
+  return { ...next, items: sameItems ? previous.items : items };
+}
+
+export function invitationViewReducer(state, action) {
+  if (action.type === 'clear') return initialInvitationView;
+  if (action.type === 'start') {
+    if (state.scope === action.scope && state.data) {
+      return state.loading || state.error
+        ? { ...state, loading: false, error: false }
+        : state;
+    }
+    return { scope: action.scope, data: null, loading: true, error: false };
+  }
+  if (state.scope !== action.scope) return state;
+  if (action.type === 'success') {
+    const data = reconcileInvitationPage(state.data, action.data);
+    return data === state.data && !state.loading && !state.error
+      ? state
+      : { ...state, data, loading: false, error: false };
+  }
+  if (action.type === 'failure') {
+    // Keep only public usernames when authorization could not be revalidated.
+    const safe = state.data && {
+      ...state.data,
+      can_view_amounts: false,
+      items: state.data.items.map(({ username }) => ({ username })),
+    };
+    return {
+      ...state,
+      data: safe && reconcileInvitationPage(state.data, safe),
+      loading: false,
+      error: true,
+    };
+  }
+  return state;
 }

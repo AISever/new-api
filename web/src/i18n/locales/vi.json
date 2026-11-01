@@ -4230,6 +4230,10 @@
     "折算基准：{{quota}} 额度/USD；1 USD = {{rate}} {{currency}}": "Quy đổi: {{quota}} hạn mức/USD; 1 USD = {{rate}} {{currency}}",
     "按当前配置估算": "Ước tính theo cấu hình hiện tại",
     "部分历史折算基准缺失或过多，请联系管理员核对": "Một số cơ sở quy đổi bị thiếu hoặc vượt giới hạn hiển thị. Vui lòng liên hệ quản trị viên.",
-    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Tổng cộng là các giao dịch thành công tích lũy trước hoàn tiền. Bản ghi lịch sử đã xóa vĩnh viễn và không có ảnh chụp không thể khôi phục, nên tổng có thể chưa đầy đủ."
+    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Tổng cộng là các giao dịch thành công tích lũy trước hoàn tiền. Bản ghi lịch sử đã xóa vĩnh viễn và không có ảnh chụp không thể khôi phục, nên tổng có thể chưa đầy đủ.",
+    "累计总金额": "Tổng số tiền tích lũy",
+    "含估算": "gồm ước tính",
+    "部分金额未确认，合计可能不完整": "Một số khoản chưa xác nhận; tổng có thể chưa đầy đủ",
+    "合计包含兑换折算；未确认或已清除且无快照的历史记录可能未计入，未扣除退款。": "Tổng gồm giá trị quy đổi mã, chưa trừ hoàn tiền; có thể thiếu khoản chưa xác nhận hoặc lịch sử đã xóa không có ảnh chụp."
   }
 }

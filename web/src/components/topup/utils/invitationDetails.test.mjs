@@ -100,7 +100,7 @@ test('business failures and malformed list payload are errors rather than saved/
     decodeInvitationPage({ success: true, data: { items: {} } }),
   );
 });
-test('redemption conversion evidence is retained rather than relabeled with current exchange rates', () => {
+test('authorized list retains totals while discarding source breakdown and payment details', () => {
   const page = decodeInvitationPage({
     success: true,
     data: {
@@ -111,26 +111,35 @@ test('redemption conversion evidence is retained rather than relabeled with curr
           amounts: {
             currencies: [
               {
-                currency: 'CNY',
-                topup: '0',
-                subscription: '0',
-                redemption: '7',
-                total: '7',
+                currency: 'USD',
+                total: '6.3',
+                estimated: false,
+                topup: '2.1',
+                subscription: '3.2',
+                redemption: '1',
+                admin_topup: '0',
                 conversions: [
                   {
                     quota_per_unit: '500000',
-                    exchange_rate: '7',
+                    exchange_rate: '1',
                     estimated: false,
                   },
                 ],
               },
             ],
+            unknown_count: 1,
+            unpriced_count: 0,
+            legacy_recorded: [{ category: 'topup', amount: '9.99', count: 1 }],
           },
         },
       ],
     },
   });
-  assert.deepEqual(page.items[0].amounts.currencies[0].conversions, [
-    { quota_per_unit: '500000', exchange_rate: '7', estimated: false },
-  ]);
+  assert.deepEqual(page.items[0].amounts, {
+    currencies: [
+      { currency: 'USD', currency_symbol: '', total: '6.3', estimated: false },
+    ],
+    unknown_count: 1,
+    unpriced_count: 0,
+  });
 });

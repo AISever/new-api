@@ -26,14 +26,14 @@ type InvitationConversion struct {
 	Estimated    bool   `json:"estimated"`
 }
 type InvitationCurrencyAmount struct {
-	Conversions          []InvitationConversion `json:"conversions,omitempty"`
-	ConversionIncomplete bool                   `json:"conversion_incomplete,omitempty"`
+	Conversions          []InvitationConversion `json:"-"`
+	ConversionIncomplete bool                   `json:"-"`
 	Currency             string                 `json:"currency"`
 	CurrencySymbol       string                 `json:"currency_symbol,omitempty"`
-	AdminTopUp           string                 `json:"admin_topup"`
-	TopUp                string                 `json:"topup"`
-	Subscription         string                 `json:"subscription"`
-	Redemption           string                 `json:"redemption"`
+	AdminTopUp           string                 `json:"-"`
+	TopUp                string                 `json:"-"`
+	Subscription         string                 `json:"-"`
+	Redemption           string                 `json:"-"`
 	Total                string                 `json:"total"`
 	Estimated            bool                   `json:"estimated"`
 }
@@ -41,8 +41,8 @@ type InvitationAmounts struct {
 	Currencies      []InvitationCurrencyAmount `json:"currencies"`
 	UnknownCount    int                        `json:"unknown_count"`
 	UnpricedCount   int                        `json:"unpriced_count"`
-	LegacyTruncated bool                       `json:"legacy_truncated"`
-	LegacyRecorded  []InvitationLegacyAmount   `json:"legacy_recorded"`
+	LegacyTruncated bool                       `json:"-"`
+	LegacyRecorded  []InvitationLegacyAmount   `json:"-"`
 }
 type InvitationPage struct {
 	Items          []InvitationUser `json:"items"`

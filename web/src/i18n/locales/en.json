@@ -3842,6 +3842,10 @@
     "折算基准：{{quota}} 额度/USD；1 USD = {{rate}} {{currency}}": "Conversion: {{quota}} quota/USD; 1 USD = {{rate}} {{currency}}",
     "按当前配置估算": "Estimated using current settings",
     "部分历史折算基准缺失或过多，请联系管理员核对": "Some historical conversion details are unavailable or exceed the display limit. Contact the administrator.",
-    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Totals reflect accumulated successful records before refunds. Physically deleted historical records without snapshots cannot be recovered, so totals may be incomplete."
+    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Totals reflect accumulated successful records before refunds. Physically deleted historical records without snapshots cannot be recovered, so totals may be incomplete.",
+    "累计总金额": "Cumulative total",
+    "含估算": "includes estimates",
+    "部分金额未确认，合计可能不完整": "Some amounts are unconfirmed; the total may be incomplete",
+    "合计包含兑换折算；未确认或已清除且无快照的历史记录可能未计入，未扣除退款。": "Totals include redemption equivalents before refunds; unconfirmed or deleted history without snapshots may be missing."
   }
 }

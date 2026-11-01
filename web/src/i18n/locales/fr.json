@@ -3696,6 +3696,10 @@
     "折算基准：{{quota}} 额度/USD；1 USD = {{rate}} {{currency}}": "Conversion : {{quota}} unités/USD ; 1 USD = {{rate}} {{currency}}",
     "按当前配置估算": "Estimation selon les paramètres actuels",
     "部分历史折算基准缺失或过多，请联系管理员核对": "Certains détails de conversion sont absents ou dépassent la limite. Contactez un administrateur.",
-    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Les totaux cumulent les opérations réussies avant remboursements. Les anciens enregistrements supprimés physiquement sans instantané sont irrécupérables ; les totaux peuvent être incomplets."
+    "统计为累计成功记录额，未扣除退款；已物理清除且无快照的历史记录无法恢复，合计可能不完整。": "Les totaux cumulent les opérations réussies avant remboursements. Les anciens enregistrements supprimés physiquement sans instantané sont irrécupérables ; les totaux peuvent être incomplets.",
+    "累计总金额": "Total cumulé",
+    "含估算": "estimations incluses",
+    "部分金额未确认，合计可能不完整": "Certains montants sont non confirmés ; le total peut être incomplet",
+    "合计包含兑换折算；未确认或已清除且无快照的历史记录可能未计入，未扣除退款。": "Les totaux incluent les équivalents des codes, avant remboursements. Les anciens montants non confirmés ou supprimés sans instantané peuvent être absents."
   }
 }

@@ -205,3 +205,16 @@ func TestInvitationRedemptionBackfillRetainsEstimatedBasisAfterSnapshotFailure(t
 	require.NoError(t, DB.First(&user, 2).Error)
 	require.Equal(t, 509876, user.Quota)
 }
+
+func TestInvitationPageAmountJSONOnlyExposesCurrencyTotals(t *testing.T) {
+	setupInvitationAmountTest(t)
+	require.NoError(t, DB.Create(&TopUp{Id: 1, UserId: 2, TradeNo: "totals-only", PaymentProvider: PaymentProviderStripe, Status: common.TopUpStatusSuccess}).Error)
+	require.NoError(t, RecordInvitationPayment("totals-only", PaymentProviderStripe, "6.30", "USD"))
+	page, err := GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	raw, err := common.Marshal(page.Items[0].Amounts)
+	require.NoError(t, err)
+	var actual map[string]any
+	require.NoError(t, common.Unmarshal(raw, &actual))
+	require.Equal(t, map[string]any{"currencies": []any{map[string]any{"currency": "USD", "total": "6.3", "estimated": false}}, "unknown_count": float64(0), "unpriced_count": float64(0)}, actual)
+}
