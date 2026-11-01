@@ -1,0 +1,8 @@
+--- FAIL: TestInvitationCustomRedemptionCurrenciesRemainSeparate (0.01s)
+    invitation_amount_test.go:165: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:165
+        	Error:      	"[{[{500000 10 false} {500000 7 false}] false CUSTOM 0 0 0 17 17 false}]" should have 2 item(s), but has 1
+        	Test:       	TestInvitationCustomRedemptionCurrenciesRemainSeparate
+FAIL
+FAIL	github.com/QuantumNous/new-api/model	0.057s
+FAIL

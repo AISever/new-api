@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "checks": [
+    "default username-only response and pagination",
+    "three-source exact totals, subscription dedup and separate currencies",
+    "selected grant, unselected denial and inviter parameter ignored",
+    "ordinary user cannot self-authorize (legacy auth uses HTTP 200 + success=false)",
+    "revocation effective on next request",
+    "all inviters mode applies without changing ownership",
+    "empty selected list grants nobody",
+    "malformed policy rejected",
+    "wallets, rewards, invite links and subscription quota/reset anchors preserved"
+  ],
+  "version": "codex/invitation-20261101+test",
+  "production_touched": false
+}

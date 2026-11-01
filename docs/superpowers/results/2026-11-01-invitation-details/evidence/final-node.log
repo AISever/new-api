@@ -1,0 +1,298 @@
+TAP version 13
+# Subtest: parseHelpGroupCardsOption falls back to defaults when option is empty
+ok 1 - parseHelpGroupCardsOption falls back to defaults when option is empty
+  ---
+  duration_ms: 1.225454
+  type: 'test'
+  ...
+# Subtest: stringifyHelpGroupCardsOption serializes cards into formatted json
+ok 2 - stringifyHelpGroupCardsOption serializes cards into formatted json
+  ---
+  duration_ms: 0.365025
+  type: 'test'
+  ...
+# Subtest: buildDisplayHelpGroupCards sorts by sort_order and filters disabled cards
+ok 3 - buildDisplayHelpGroupCards sorts by sort_order and filters disabled cards
+  ---
+  duration_ms: 1.050175
+  type: 'test'
+  ...
+# Subtest: readHelpGroupCardsOption reports invalid json instead of silently accepting it
+ok 4 - readHelpGroupCardsOption reports invalid json instead of silently accepting it
+  ---
+  duration_ms: 2.758037
+  type: 'test'
+  ...
+# Subtest: getHelpGroupCardsValidationError catches duplicate ids and missing titles
+ok 5 - getHelpGroupCardsValidationError catches duplicate ids and missing titles
+  ---
+  duration_ms: 0.530532
+  type: 'test'
+  ...
+# Subtest: unauthorized response discards every money field even if supplied
+ok 6 - unauthorized response discards every money field even if supplied
+  ---
+  duration_ms: 4.407276
+  type: 'test'
+  ...
+# Subtest: authorized zero and exact decimal amounts survive without numeric coercion
+ok 7 - authorized zero and exact decimal amounts survive without numeric coercion
+  ---
+  duration_ms: 0.714649
+  type: 'test'
+  ...
+# Subtest: selected policy is one canonical JSON value and refuses invalid IDs
+ok 8 - selected policy is one canonical JSON value and refuses invalid IDs
+  ---
+  duration_ms: 0.790703
+  type: 'test'
+  ...
+# Subtest: account changes, later requests and closing invalidate previous sensitive responses
+ok 9 - account changes, later requests and closing invalidate previous sensitive responses
+  ---
+  duration_ms: 0.948688
+  type: 'test'
+  ...
+# Subtest: business failures and malformed list payload are errors rather than saved/success state
+ok 10 - business failures and malformed list payload are errors rather than saved/success state
+  ---
+  duration_ms: 0.585489
+  type: 'test'
+  ...
+# Subtest: redemption conversion evidence is retained rather than relabeled with current exchange rates
+ok 11 - redemption conversion evidence is retained rather than relabeled with current exchange rates
+  ---
+  duration_ms: 0.369355
+  type: 'test'
+  ...
+# Subtest: applyBrandingToDocument uses custom logo as favicon
+ok 12 - applyBrandingToDocument uses custom logo as favicon
+  ---
+  duration_ms: 1.335581
+  type: 'test'
+  ...
+# Subtest: applyBrandingToDocument keeps default favicon when logo is empty
+ok 13 - applyBrandingToDocument keeps default favicon when logo is empty
+  ---
+  duration_ms: 0.209044
+  type: 'test'
+  ...
+# Subtest: normalizeDocsManifestPath accepts enterprise static manifest paths
+ok 14 - normalizeDocsManifestPath accepts enterprise static manifest paths
+  ---
+  duration_ms: 1.138318
+  type: 'test'
+  ...
+# Subtest: normalizeDocsManifestPath rejects remote or unsafe paths
+ok 15 - normalizeDocsManifestPath rejects remote or unsafe paths
+  ---
+  duration_ms: 0.200907
+  type: 'test'
+  ...
+# Subtest: getDocsAvailability prefers local docs when manifest exists
+ok 16 - getDocsAvailability prefers local docs when manifest exists
+  ---
+  duration_ms: 1.814145
+  type: 'test'
+  ...
+# Subtest: getDocsAvailability keeps legacy docs link when local docs are absent
+ok 17 - getDocsAvailability keeps legacy docs link when local docs are absent
+  ---
+  duration_ms: 0.261603
+  type: 'test'
+  ...
+# Subtest: shouldUseLocalDocs only enables the in-app docs experience for valid manifests
+ok 18 - shouldUseLocalDocs only enables the in-app docs experience for valid manifests
+  ---
+  duration_ms: 2.573159
+  type: 'test'
+  ...
+# Subtest: normalizeAnnouncementPublishDate serializes Date values to RFC3339
+ok 19 - normalizeAnnouncementPublishDate serializes Date values to RFC3339
+  ---
+  duration_ms: 4.166096
+  type: 'test'
+  ...
+# Subtest: normalizeAnnouncementPublishDate accepts ISO date strings from DatePicker state
+ok 20 - normalizeAnnouncementPublishDate accepts ISO date strings from DatePicker state
+  ---
+  duration_ms: 0.283871
+  type: 'test'
+  ...
+# Subtest: normalizeAnnouncementPublishDate rejects invalid publishDate values
+ok 21 - normalizeAnnouncementPublishDate rejects invalid publishDate values
+  ---
+  duration_ms: 0.735983
+  type: 'test'
+  ...
+# Subtest: ensureOptionUpdateSucceeded throws when option save fails
+ok 22 - ensureOptionUpdateSucceeded throws when option save fails
+  ---
+  duration_ms: 0.372939
+  type: 'test'
+  ...
+# Subtest: ensureOptionUpdateSucceeded tolerates successful option saves
+ok 23 - ensureOptionUpdateSucceeded tolerates successful option saves
+  ---
+  duration_ms: 1.790045
+  type: 'test'
+  ...
+# Subtest: getSubmitBlockingError returns the first non-empty card error
+ok 24 - getSubmitBlockingError returns the first non-empty card error
+  ---
+  duration_ms: 5.571269
+  type: 'test'
+  ...
+# Subtest: getCompactEditorLayoutMode keeps desktop rows on non-mobile widths
+ok 25 - getCompactEditorLayoutMode keeps desktop rows on non-mobile widths
+  ---
+  duration_ms: 3.059872
+  type: 'test'
+  ...
+# Subtest: getCompactEditorLayoutMode uses stacked cards for mobile widths
+ok 26 - getCompactEditorLayoutMode uses stacked cards for mobile widths
+  ---
+  duration_ms: 0.295365
+  type: 'test'
+  ...
+# Subtest: shouldUseSharedInlineHeaders only enables shared headers for inline mobile layout
+ok 27 - shouldUseSharedInlineHeaders only enables shared headers for inline mobile layout
+  ---
+  duration_ms: 0.343549
+  type: 'test'
+  ...
+# Subtest: ratio editors default to json mode
+ok 28 - ratio editors default to json mode
+  ---
+  duration_ms: 0.922085
+  type: 'test'
+  ...
+# Subtest: resolveAppendedRowFocus returns appended row id when requested
+ok 29 - resolveAppendedRowFocus returns appended row id when requested
+  ---
+  duration_ms: 1.267386
+  type: 'test'
+  ...
+# Subtest: resolveAppendedRowFocus ignores unchanged row counts
+ok 30 - resolveAppendedRowFocus ignores unchanged row counts
+  ---
+  duration_ms: 0.270677
+  type: 'test'
+  ...
+# Subtest: detects whether a group is visible in user usable groups
+ok 31 - detects whether a group is visible in user usable groups
+  ---
+  duration_ms: 1.218673
+  type: 'test'
+  ...
+# Subtest: enabling visibility appends a missing user usable group row
+ok 32 - enabling visibility appends a missing user usable group row
+  ---
+  duration_ms: 1.018622
+  type: 'test'
+  ...
+# Subtest: disabling visibility removes the linked user usable group row
+ok 33 - disabling visibility removes the linked user usable group row
+  ---
+  duration_ms: 0.251748
+  type: 'test'
+  ...
+# Subtest: renaming a visible group preserves its display name
+ok 34 - renaming a visible group preserves its display name
+  ---
+  duration_ms: 0.587728
+  type: 'test'
+  ...
+# Subtest: renaming to an existing target keeps the existing row and removes the old one
+ok 35 - renaming to an existing target keeps the existing row and removes the old one
+  ---
+  duration_ms: 0.482767
+  type: 'test'
+  ...
+# Subtest: parseSimpleMapOption parses numeric map into editable rows
+ok 36 - parseSimpleMapOption parses numeric map into editable rows
+  ---
+  duration_ms: 2.648301
+  type: 'test'
+  ...
+# Subtest: stringifySimpleMapOption serializes editable numeric rows into formatted json
+ok 37 - stringifySimpleMapOption serializes editable numeric rows into formatted json
+  ---
+  duration_ms: 0.535759
+  type: 'test'
+  ...
+# Subtest: stringifySimpleMapOption preserves wildcard model names
+ok 38 - stringifySimpleMapOption preserves wildcard model names
+  ---
+  duration_ms: 0.340384
+  type: 'test'
+  ...
+# Subtest: parseGroupRelationOption flattens nested relation map into rows
+ok 39 - parseGroupRelationOption flattens nested relation map into rows
+  ---
+  duration_ms: 0.747409
+  type: 'test'
+  ...
+# Subtest: stringifyGroupRelationOption rebuilds nested relation map from rows
+ok 40 - stringifyGroupRelationOption rebuilds nested relation map from rows
+  ---
+  duration_ms: 0.358
+  type: 'test'
+  ...
+# Subtest: parseSpecialUsableGroupOption expands add remove and direct rules
+ok 41 - parseSpecialUsableGroupOption expands add remove and direct rules
+  ---
+  duration_ms: 0.67069
+  type: 'test'
+  ...
+# Subtest: stringifySpecialUsableGroupOption rebuilds prefixed rule keys
+ok 42 - stringifySpecialUsableGroupOption rebuilds prefixed rule keys
+  ---
+  duration_ms: 0.499322
+  type: 'test'
+  ...
+# Subtest: parseOrderedStringListOption preserves array order
+ok 43 - parseOrderedStringListOption preserves array order
+  ---
+  duration_ms: 0.324522
+  type: 'test'
+  ...
+# Subtest: stringifyOrderedStringListOption rebuilds formatted array json
+ok 44 - stringifyOrderedStringListOption rebuilds formatted array json
+  ---
+  duration_ms: 0.678318
+  type: 'test'
+  ...
+# Subtest: validateUserUsableGroupRows rejects rows with label but missing group key
+ok 45 - validateUserUsableGroupRows rejects rows with label but missing group key
+  ---
+  duration_ms: 3.242288
+  type: 'test'
+  ...
+# Subtest: validateUserUsableGroupRows allows blank label when key exists
+ok 46 - validateUserUsableGroupRows allows blank label when key exists
+  ---
+  duration_ms: 0.414088
+  type: 'test'
+  ...
+# Subtest: validateSpecialUsableGroupRows rejects rows missing target group
+ok 47 - validateSpecialUsableGroupRows rejects rows missing target group
+  ---
+  duration_ms: 1.616953
+  type: 'test'
+  ...
+# Subtest: validateSpecialUsableGroupRows ignores untouched blank rows
+ok 48 - validateSpecialUsableGroupRows ignores untouched blank rows
+  ---
+  duration_ms: 0.354184
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 273.738023

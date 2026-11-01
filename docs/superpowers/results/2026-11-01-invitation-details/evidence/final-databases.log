@@ -1,0 +1,3 @@
+Owned loopback-only PostgreSQL/MySQL ready
+postgres schema/migration/exact aggregation passed
+mysql schema/migration/exact aggregation passed
