@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "version": "codex/invite+63dfacf31+test",
+  "totals_only": true,
+  "one_site_currency": true,
+  "policy_preserved": {
+    "mode": "selected",
+    "user_ids": [
+      2
+    ]
+  },
+  "owner_amounts_visible": true,
+  "checks": [
+    "health/version",
+    "unauthenticated denial",
+    "22 users / 20+2 paging",
+    "only usernames and authorized totals in DTO",
+    "no source breakdown, conversion or historical record details",
+    "one site-currency total $7.67 using configured USD/CNY rate 7.3",
+    "username search",
+    "foreign inviter ownership and permissions",
+    "wallet/reward/subscription anchors preserved"
+  ],
+  "production_sql_accessed": false
+}

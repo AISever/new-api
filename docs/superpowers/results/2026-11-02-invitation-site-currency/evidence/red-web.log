@@ -1,0 +1,102 @@
+TAP version 13
+# Subtest: unauthorized response discards every money field even if supplied
+ok 1 - unauthorized response discards every money field even if supplied
+  ---
+  duration_ms: 1.802208
+  type: 'test'
+  ...
+# Subtest: authorized zero and exact decimal amounts survive without numeric coercion
+ok 2 - authorized zero and exact decimal amounts survive without numeric coercion
+  ---
+  duration_ms: 0.548078
+  type: 'test'
+  ...
+# Subtest: selected policy is one canonical JSON value and refuses invalid IDs
+ok 3 - selected policy is one canonical JSON value and refuses invalid IDs
+  ---
+  duration_ms: 2.075065
+  type: 'test'
+  ...
+# Subtest: account changes, later requests and closing invalidate previous sensitive responses
+ok 4 - account changes, later requests and closing invalidate previous sensitive responses
+  ---
+  duration_ms: 0.352738
+  type: 'test'
+  ...
+# Subtest: business failures and malformed list payload are errors rather than saved/success state
+ok 5 - business failures and malformed list payload are errors rather than saved/success state
+  ---
+  duration_ms: 0.243591
+  type: 'test'
+  ...
+# Subtest: authorized list retains totals while discarding source breakdown and payment details
+ok 6 - authorized list retains totals while discarding source breakdown and payment details
+  ---
+  duration_ms: 0.312058
+  type: 'test'
+  ...
+# Subtest: one site-currency total is shown without retaining any currency list
+not ok 7 - one site-currency total is shown without retaining any currency list
+  ---
+  duration_ms: 1.885664
+  type: 'test'
+  location: '/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/web/src/components/topup/utils/invitationDetails.test.mjs:147:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   currencies: [
+    +     {
+    +       currency: 'CNY',
+    +       currency_symbol: '',
+    +       estimated: false,
+    +       total: '10'
+    +     }
+    +   ],
+    -   currency: 'USD',
+    -   currency_symbol: '$',
+    -   estimated: true,
+    -   total: '7.30',
+        unknown_count: 0,
+        unpriced_count: 0
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    currency: 'USD'
+    currency_symbol: '$'
+    total: '7.30'
+    estimated: true
+    unknown_count: 0
+    unpriced_count: 0
+  actual:
+    currencies:
+      0:
+        currency: 'CNY'
+        currency_symbol: ''
+        total: '10'
+        estimated: false
+    unknown_count: 0
+    unpriced_count: 0
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/web/src/components/topup/utils/invitationDetails.test.mjs:149:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 6
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 99.06384

@@ -1,0 +1,16 @@
+{
+  "oneCurrencyOnly": true,
+  "sameRow": true,
+  "sameTable": true,
+  "columns": [
+    "用户名",
+    "累计总金额"
+  ],
+  "responses": [
+    {
+      "url": "http://127.0.0.1:13019/api/user/self/invitees?p=1&page_size=20&keyword=invitee-22",
+      "status": 200
+    }
+  ],
+  "pageNavigations": 0
+}

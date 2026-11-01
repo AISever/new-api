@@ -1,0 +1,270 @@
+{
+  "version": "codex/invite+63dfacf31+test",
+  "source": "63dfacf311337722d168eec16f0708b9f41da054",
+  "image": "sha256:e3412f0470c08ae39d0a8759727eefff8415c3243ddb5ac8a3903402f1202a31",
+  "binary_sha256": "95edf73d027120ec52fcb00e1f64269d4b60e6956d3b3f7898dd32f595aeee27",
+  "production_unchanged": true,
+  "production_version": "codex/sec-v0.13.2-p1+ba844d202+production",
+  "existing_container_count": 18,
+  "old_test_app_retained": "new-api-invitation-20261101-rollback-63dfacf31",
+  "test_database_preserved": true,
+  "app_restarts": 0,
+  "production_before": {
+    "new-api-local": {
+      "id": "1eb9ca593176302c310e0471489dcb052cfebb9bac3778becf69e50a50003ea3",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T16:06:50.00918918Z",
+      "running": true,
+      "restarts": 0
+    },
+    "new-api-local-failed-security-5a7aae3bf": {
+      "id": "5a7aae3bfe92cd3d977639b22adbdeb8366c2d8bfdb54dc6e383b507ed86c996",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T16:04:17.381918486Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-restore-20261018-app": {
+      "id": "7bb7df2a799438b0e87862b8c075f1384f67be8f4d7be22662997791f9a97d67",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T15:43:24.119614068Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-restore-20261018-redis": {
+      "id": "31fa23195fcb644b04bc87d4c330bb78918126d954b459a3df8da402b1d29fbb",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-10-18T15:43:23.73505917Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-restore-20261018-postgres": {
+      "id": "f3ef426073d99a222f1a87ffc6c2a7c624c2b57cc952f9e8bb60eb096e3d6aa5",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started": "2026-10-18T16:08:50.253920676Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-redis-restore-20261018": {
+      "id": "6433e256f031c151a75a5c0c8b8bfc3c146b4fe900f43289f3951f5f9a5247cd",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-10-18T15:39:20.135370922Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-rollback": {
+      "id": "f503192198a1ca44027adb3986d1c59fb51afe4a90d4cbc2b8fe2b93a103d5fb",
+      "image": "sha256:13a6bcdccd8424b3e6c962d3f072f2cdc14158e07b256f34dcd4650f790455d7",
+      "started": "2026-10-18T10:59:41.070026678Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-app": {
+      "id": "39d12d1511cf84ca60d9c51b434b0d3bcbdc79d7f20e59554a390377305ddef1",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T10:59:48.112639558Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-fixture": {
+      "id": "d55aa1356e00316f78a1ea804149b17d6fbe1821d6a13e15915e6e2224135118",
+      "image": "sha256:f1c06ea2d803cd89c9772498c4e37045e7d6617b1ff2ba2cdc899ec631a62d23",
+      "started": "2026-10-18T10:57:34.939016151Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-redis": {
+      "id": "e888a112be8030356ddb3e172e1fab65d0b86fa49cb24697df134b6f3720d2a4",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-10-18T10:57:34.651568758Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-postgres": {
+      "id": "1ed3e647d03b4b8b82aa93d344645f00a8590bb0ab914ed92bbdb07c8baa7bed",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started": "2026-10-18T10:57:34.17696041Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-local-rollback-security-20261018": {
+      "id": "986a046e81792121a47f7ccce7e1e7179c36217a8c08620c3fbacf788d3b9e79",
+      "image": "sha256:13a6bcdccd8424b3e6c962d3f072f2cdc14158e07b256f34dcd4650f790455d7",
+      "started": "2026-10-18T16:04:34.163947224Z",
+      "running": false,
+      "restarts": 0
+    },
+    "snowlight-caddy": {
+      "id": "2690ef4c95b34d37d20b2c382e9931181114988982c44d42b5d61e9799330e1b",
+      "image": "sha256:8852dff945f68ac7aa3c89a78cec8516212b93b9670949d707b101f86722b4c4",
+      "started": "2026-06-01T13:49:16.704368321Z",
+      "running": true,
+      "restarts": 0
+    },
+    "new-api-test": {
+      "id": "5115aff4470ce8bb9c218b2d7faedaafc23b363867b33c1684167ed7572aad52",
+      "image": "sha256:310ffb9a55ec522e3f91a447d672daa2f9a2491c09373e0f0b5b2370c717dabb",
+      "started": "2026-05-17T12:03:12.003606547Z",
+      "running": true,
+      "restarts": 0
+    },
+    "video-upstream-a": {
+      "id": "beb5ba34d0967a3b92eabdcfec769770eebc67f06fb2590da4d324b47865c0ca",
+      "image": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+      "started": "2026-05-17T07:04:02.330156576Z",
+      "running": true,
+      "restarts": 0
+    },
+    "condescending_snyder": {
+      "id": "806f16960979ea449ffd38a0af97b1575e0e487c6ce04064b6a4233cebc9e19b",
+      "image": "sha256:650ee45e053d2ff11f3ccbf21307eee88f50e0c734987e24e13240ddace278b9",
+      "started": "2026-05-14T02:47:39.520235382Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-redis": {
+      "id": "889fc0b715f8ec12bd6a75ccb5fb14827cc686371cb7aa1b092d37c8b26379e9",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-05-14T03:06:21.141344558Z",
+      "running": true,
+      "restarts": 0
+    },
+    "new-api-postgres": {
+      "id": "b0ecbb114f584dd4f691e13fec0e3fad4e7d35408ff5e7431394fb27e6b8084c",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started": "2026-05-14T03:06:21.12972494Z",
+      "running": true,
+      "restarts": 0
+    },
+    "caddy_sha256": "a2939e3e956b657b35eccec998e704a8f2f8528c543fcf205aa8d7d9c519fbb5"
+  },
+  "production_after": {
+    "new-api-local": {
+      "id": "1eb9ca593176302c310e0471489dcb052cfebb9bac3778becf69e50a50003ea3",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T16:06:50.00918918Z",
+      "running": true,
+      "restarts": 0
+    },
+    "new-api-local-failed-security-5a7aae3bf": {
+      "id": "5a7aae3bfe92cd3d977639b22adbdeb8366c2d8bfdb54dc6e383b507ed86c996",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T16:04:17.381918486Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-restore-20261018-app": {
+      "id": "7bb7df2a799438b0e87862b8c075f1384f67be8f4d7be22662997791f9a97d67",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T15:43:24.119614068Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-restore-20261018-redis": {
+      "id": "31fa23195fcb644b04bc87d4c330bb78918126d954b459a3df8da402b1d29fbb",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-10-18T15:43:23.73505917Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-restore-20261018-postgres": {
+      "id": "f3ef426073d99a222f1a87ffc6c2a7c624c2b57cc952f9e8bb60eb096e3d6aa5",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started": "2026-10-18T16:08:50.253920676Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-release-redis-restore-20261018": {
+      "id": "6433e256f031c151a75a5c0c8b8bfc3c146b4fe900f43289f3951f5f9a5247cd",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-10-18T15:39:20.135370922Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-rollback": {
+      "id": "f503192198a1ca44027adb3986d1c59fb51afe4a90d4cbc2b8fe2b93a103d5fb",
+      "image": "sha256:13a6bcdccd8424b3e6c962d3f072f2cdc14158e07b256f34dcd4650f790455d7",
+      "started": "2026-10-18T10:59:41.070026678Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-app": {
+      "id": "39d12d1511cf84ca60d9c51b434b0d3bcbdc79d7f20e59554a390377305ddef1",
+      "image": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+      "started": "2026-10-18T10:59:48.112639558Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-fixture": {
+      "id": "d55aa1356e00316f78a1ea804149b17d6fbe1821d6a13e15915e6e2224135118",
+      "image": "sha256:f1c06ea2d803cd89c9772498c4e37045e7d6617b1ff2ba2cdc899ec631a62d23",
+      "started": "2026-10-18T10:57:34.939016151Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-redis": {
+      "id": "e888a112be8030356ddb3e172e1fab65d0b86fa49cb24697df134b6f3720d2a4",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-10-18T10:57:34.651568758Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-security-20261018-postgres": {
+      "id": "1ed3e647d03b4b8b82aa93d344645f00a8590bb0ab914ed92bbdb07c8baa7bed",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started": "2026-10-18T10:57:34.17696041Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-local-rollback-security-20261018": {
+      "id": "986a046e81792121a47f7ccce7e1e7179c36217a8c08620c3fbacf788d3b9e79",
+      "image": "sha256:13a6bcdccd8424b3e6c962d3f072f2cdc14158e07b256f34dcd4650f790455d7",
+      "started": "2026-10-18T16:04:34.163947224Z",
+      "running": false,
+      "restarts": 0
+    },
+    "snowlight-caddy": {
+      "id": "2690ef4c95b34d37d20b2c382e9931181114988982c44d42b5d61e9799330e1b",
+      "image": "sha256:8852dff945f68ac7aa3c89a78cec8516212b93b9670949d707b101f86722b4c4",
+      "started": "2026-06-01T13:49:16.704368321Z",
+      "running": true,
+      "restarts": 0
+    },
+    "new-api-test": {
+      "id": "5115aff4470ce8bb9c218b2d7faedaafc23b363867b33c1684167ed7572aad52",
+      "image": "sha256:310ffb9a55ec522e3f91a447d672daa2f9a2491c09373e0f0b5b2370c717dabb",
+      "started": "2026-05-17T12:03:12.003606547Z",
+      "running": true,
+      "restarts": 0
+    },
+    "video-upstream-a": {
+      "id": "beb5ba34d0967a3b92eabdcfec769770eebc67f06fb2590da4d324b47865c0ca",
+      "image": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+      "started": "2026-05-17T07:04:02.330156576Z",
+      "running": true,
+      "restarts": 0
+    },
+    "condescending_snyder": {
+      "id": "806f16960979ea449ffd38a0af97b1575e0e487c6ce04064b6a4233cebc9e19b",
+      "image": "sha256:650ee45e053d2ff11f3ccbf21307eee88f50e0c734987e24e13240ddace278b9",
+      "started": "2026-05-14T02:47:39.520235382Z",
+      "running": false,
+      "restarts": 0
+    },
+    "new-api-redis": {
+      "id": "889fc0b715f8ec12bd6a75ccb5fb14827cc686371cb7aa1b092d37c8b26379e9",
+      "image": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "started": "2026-05-14T03:06:21.141344558Z",
+      "running": true,
+      "restarts": 0
+    },
+    "new-api-postgres": {
+      "id": "b0ecbb114f584dd4f691e13fec0e3fad4e7d35408ff5e7431394fb27e6b8084c",
+      "image": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "started": "2026-05-14T03:06:21.12972494Z",
+      "running": true,
+      "restarts": 0
+    },
+    "caddy_sha256": "a2939e3e956b657b35eccec998e704a8f2f8528c543fcf205aa8d7d9c519fbb5"
+  }
+}

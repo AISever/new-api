@@ -1,0 +1,37 @@
+
+2026/11/02 00:31:36 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.053ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "single-usd" LIMIT 1
+
+2026/11/02 00:31:36 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.052ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "single-cny" LIMIT 1
+--- FAIL: TestInvitationSingleDisplayTotalFollowsSiteCurrency (0.01s)
+    invitation_amount_test.go:237: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:237
+        	Error:      	Not equal: 
+        	            	expected: string("USD")
+        	            	actual  : <nil>(<nil>)
+        	Test:       	TestInvitationSingleDisplayTotalFollowsSiteCurrency
+
+2026/11/02 00:31:36 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.057ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 111 LIMIT 1
+
+2026/11/02 00:31:36 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.047ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "paid-fourteen" LIMIT 1
+--- FAIL: TestInvitationDisplayUsesFrozenRedemptionRateAndCurrentPaymentRate (0.01s)
+    invitation_amount_test.go:251: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:251
+        	Error:      	Not equal: 
+        	            	expected: string("2.00")
+        	            	actual  : <nil>(<nil>)
+        	Test:       	TestInvitationDisplayUsesFrozenRedemptionRateAndCurrentPaymentRate
+
+2026/11/02 00:31:36 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.052ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "unknown-fx" LIMIT 1
+--- FAIL: TestInvitationDisplayDoesNotInventExchangeRatesOrUnknownZero (0.01s)
+    invitation_amount_test.go:261: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:261
+        	Error:      	map[string]interface {}{"currencies":[]interface {}{map[string]interface {}{"currency":"EUR", "estimated":false, "total":"5"}}, "unknown_count":0, "unpriced_count":0} does not contain "total"
+        	Test:       	TestInvitationDisplayDoesNotInventExchangeRatesOrUnknownZero
+FAIL
+FAIL	github.com/QuantumNous/new-api/model	0.081s
+FAIL

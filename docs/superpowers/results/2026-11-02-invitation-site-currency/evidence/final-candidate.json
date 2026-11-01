@@ -1,0 +1,9 @@
+{
+  "source": "63dfacf311337722d168eec16f0708b9f41da054",
+  "short": "63dfacf31",
+  "image": "new-api:invitation-63dfacf31-test",
+  "version": "codex/invite+63dfacf31+test",
+  "binary_sha256": "95edf73d027120ec52fcb00e1f64269d4b60e6956d3b3f7898dd32f595aeee27",
+  "base": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+  "transport": "rsync delta"
+}
