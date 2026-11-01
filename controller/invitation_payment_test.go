@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/model"
 	"github.com/stretchr/testify/require"
+	"github.com/waffo-com/waffo-go/core"
 	"testing"
 )
 
@@ -18,4 +21,20 @@ func TestInvitationPaidAmountsRespectGatewayUnitsAndMissingValues(t *testing.T) 
 		_, _, err := normalizeInvitationPayment(raw, "USD", true)
 		require.Error(t, err)
 	}
+}
+func TestInvitationWaffoDoesNotGuessActualChargeFromListPrice(t *testing.T) {
+	db := setupUserControllerTestDB(t)
+	require.NoError(t, db.AutoMigrate(&model.TopUp{}, &model.SubscriptionOrder{}, &model.InvitationAmountSnapshot{}))
+	require.NoError(t, db.Create(&model.TopUp{Id: 701, UserId: 2, TradeNo: "waffo-actual-fixture", Money: 20, PaymentProvider: model.PaymentProviderWaffo, Status: common.TopUpStatusSuccess}).Error)
+	result := &core.PaymentNotificationResult{MerchantOrderID: "waffo-actual-fixture", OrderAmount: "20", OrderCurrency: "USD"}
+	recordWaffoInvitationPayment(result)
+	var count int64
+	require.NoError(t, db.Model(&model.InvitationAmountSnapshot{}).Where("source_id = ?", 701).Count(&count).Error)
+	require.Zero(t, count)
+	result.FinalDealAmount = "0"
+	result.UserCurrency = "USD"
+	recordWaffoInvitationPayment(result)
+	var snapshot model.InvitationAmountSnapshot
+	require.NoError(t, db.Where("source_id = ?", 701).Take(&snapshot).Error)
+	require.Equal(t, "0", snapshot.Amount)
 }

@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/waffo-com/waffo-go/core"
 	"strconv"
 )
 
@@ -25,4 +26,10 @@ func invitationOptionalMinor(amount *int64) string {
 		return ""
 	}
 	return strconv.FormatInt(*amount, 10)
+}
+
+func recordWaffoInvitationPayment(result *core.PaymentNotificationResult) {
+	if result != nil && result.FinalDealAmount != "" && result.UserCurrency != "" {
+		recordInvitationPayment(result.MerchantOrderID, model.PaymentProviderWaffo, result.FinalDealAmount, result.UserCurrency, false)
+	}
 }

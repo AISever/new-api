@@ -48,7 +48,7 @@ func GetInvitationUsers(c *gin.Context) {
 }
 func GetInvitationUserChoices(c *gin.Context) {
 	c.Header("Cache-Control", "private, no-store")
-	if c.GetInt("role") < common.RoleRootUser {
+	if c.GetInt("role") < common.RoleRootUser || !model.InvitationRootActive(c.GetInt("id")) {
 		c.JSON(403, gin.H{"success": false})
 		return
 	}

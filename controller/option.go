@@ -141,6 +141,10 @@ func UpdateOption(c *gin.Context) {
 	default:
 		option.Value = fmt.Sprintf("%v", option.Value)
 	}
+	if option.Key == model.InvitationVisibilityOption && !model.InvitationRootActive(c.GetInt("id")) {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "message": "无权修改邀请金额权限"})
+		return
+	}
 	switch option.Key {
 	case "GitHubOAuthEnabled":
 		if option.Value == "true" && common.GitHubClientId == "" {

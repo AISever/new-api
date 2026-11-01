@@ -52,6 +52,10 @@ func TestInvitationAmountsExternalDatabase(t *testing.T) {
 		common.UsingMySQL = oldMySQL
 	})
 	require.NoError(t, db.AutoMigrate(&User{}, &Option{}, &TopUp{}, &SubscriptionOrder{}, &Redemption{}, &UserSubscription{}, &InvitationAmountSnapshot{}))
+	// Re-running the isolated fixture must not depend on previous generated users.
+	for _, table := range []any{&InvitationAmountSnapshot{}, &UserSubscription{}, &SubscriptionOrder{}, &TopUp{}, &Redemption{}, &Option{}, &User{}} {
+		require.NoError(t, db.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(table).Error)
+	}
 	// A second migration must preserve the same schema/data and unique snapshot key.
 	require.NoError(t, db.AutoMigrate(&InvitationAmountSnapshot{}))
 	require.NoError(t, db.Create(&User{Id: 1, Username: "owner", AffCode: "db-owner", Quota: 9876}).Error)

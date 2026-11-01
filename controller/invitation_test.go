@@ -57,3 +57,16 @@ func TestInvitationOptionsReadFreshPolicyRatherThanStaleInstanceCache(t *testing
 		t.Fatalf("stale visibility policy returned: %s", w.Body.String())
 	}
 }
+func TestInvitationPolicyWriteRechecksCurrentRootInsteadOfCachedSessionRole(t *testing.T) {
+	db := setupUserControllerTestDB(t)
+	if err := db.AutoMigrate(&model.Option{}); err != nil {
+		t.Fatal(err)
+	}
+	seedUserForUpdateTest(t, db, &model.User{Id: 953, Username: "former-root-invite", AffCode: "former-root", Role: common.RoleCommonUser, Status: common.UserStatusEnabled})
+	c, w := newAuthenticatedContext(t, http.MethodPut, "/api/option/", map[string]any{"key": model.InvitationVisibilityOption, "value": `{"mode":"all","user_ids":[]}`}, 953)
+	c.Set("role", common.RoleRootUser)
+	UpdateOption(c)
+	if w.Code != 403 {
+		t.Fatalf("former root could change invitation disclosure: %d %s", w.Code, w.Body.String())
+	}
+}

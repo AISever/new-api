@@ -394,11 +394,7 @@ func handleWaffoPayment(c *gin.Context, wh *core.WebhookHandler, result *core.Pa
 
 	LockOrder(merchantOrderId)
 	defer UnlockOrder(merchantOrderId)
-	if result.FinalDealAmount != "" && result.UserCurrency != "" {
-		recordInvitationPayment(merchantOrderId, model.PaymentProviderWaffo, result.FinalDealAmount, result.UserCurrency, false)
-	} else {
-		recordInvitationPayment(merchantOrderId, model.PaymentProviderWaffo, result.OrderAmount, result.OrderCurrency, false)
-	}
+	recordWaffoInvitationPayment(result)
 
 	if err := model.RechargeWaffo(merchantOrderId, c.ClientIP()); err != nil {
 		logger.LogError(c.Request.Context(), fmt.Sprintf("Waffo 充值处理失败 trade_no=%s client_ip=%s error=%q", merchantOrderId, c.ClientIP(), err.Error()))

@@ -99,3 +99,30 @@ func TestInvitationPageOwnUsersLiteralSearchAndMinimalFields(t *testing.T) {
 		t.Fatalf("deleted users not excluded: %+v %v", page, err)
 	}
 }
+func TestInvitationAmountsDenyDisabledOrDeletedAccountsEvenWithExistingGrant(t *testing.T) {
+	db := setupInvitationTestDB(t)
+	if err := db.AutoMigrate(&Option{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&User{Id: 12, Username: "grant-status", AffCode: "grant-status", Status: common.UserStatusEnabled}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := UpdateOption(InvitationVisibilityOption, `{"mode":"all","user_ids":[]}`); err != nil {
+		t.Fatal(err)
+	}
+	if !CanViewInvitationAmounts(12) {
+		t.Fatal("enabled inviter missing grant")
+	}
+	if err := db.Model(&User{}).Where("id = ?", 12).Update("status", common.UserStatusDisabled).Error; err != nil {
+		t.Fatal(err)
+	}
+	if CanViewInvitationAmounts(12) {
+		t.Fatal("disabled account retained sensitive amount access")
+	}
+	if err := db.Delete(&User{}, 12).Error; err != nil {
+		t.Fatal(err)
+	}
+	if CanViewInvitationAmounts(12) {
+		t.Fatal("deleted account retained sensitive amount access")
+	}
+}

@@ -20,14 +20,22 @@ type InvitationUser struct {
 	Username string             `json:"username"`
 	Amounts  *InvitationAmounts `json:"amounts,omitempty" gorm:"-"`
 }
-type InvitationCurrencyAmount struct {
-	Currency     string `json:"currency"`
-	AdminTopUp   string `json:"admin_topup"`
-	TopUp        string `json:"topup"`
-	Subscription string `json:"subscription"`
-	Redemption   string `json:"redemption"`
-	Total        string `json:"total"`
+type InvitationConversion struct {
+	QuotaPerUnit string `json:"quota_per_unit"`
+	ExchangeRate string `json:"exchange_rate"`
 	Estimated    bool   `json:"estimated"`
+}
+type InvitationCurrencyAmount struct {
+	Conversions          []InvitationConversion `json:"conversions,omitempty"`
+	ConversionIncomplete bool                   `json:"conversion_incomplete,omitempty"`
+	Currency             string                 `json:"currency"`
+	CurrencySymbol       string                 `json:"currency_symbol,omitempty"`
+	AdminTopUp           string                 `json:"admin_topup"`
+	TopUp                string                 `json:"topup"`
+	Subscription         string                 `json:"subscription"`
+	Redemption           string                 `json:"redemption"`
+	Total                string                 `json:"total"`
+	Estimated            bool                   `json:"estimated"`
 }
 type InvitationAmounts struct {
 	Currencies      []InvitationCurrencyAmount `json:"currencies"`
@@ -131,17 +139,30 @@ func CanViewInvitationAmounts(userID int) bool {
 		return false
 	}
 	if p.Mode == "all" {
-		return true
+		return activeInvitationViewer(userID)
 	}
 	if p.Mode == "selected" {
 		for _, id := range p.UserIDs {
 			if id == userID {
-				return true
+				return activeInvitationViewer(userID)
 			}
 		}
 	}
 	return false
 }
+func InvitationRootActive(id int) bool {
+	if id <= 0 {
+		return false
+	}
+	var count int64
+	return DB.Model(&User{}).Where(&User{Id: id, Role: common.RoleRootUser, Status: common.UserStatusEnabled}).Count(&count).Error == nil && count == 1
+}
+
+func activeInvitationViewer(id int) bool {
+	var count int64
+	return DB.Model(&User{}).Where("id = ? AND status = ?", id, common.UserStatusEnabled).Count(&count).Error == nil && count == 1
+}
+
 func invitationPattern(keyword string) string {
 	return "%" + strings.NewReplacer("!", "!!", "%", "!%", "_", "!_").Replace(keyword) + "%"
 }

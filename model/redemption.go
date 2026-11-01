@@ -20,7 +20,7 @@ type Redemption struct {
 	Id                     int            `json:"id"`
 	UserId                 int            `json:"user_id"`
 	Key                    string         `json:"key" gorm:"type:char(32);uniqueIndex"`
-	Status                 int            `json:"status" gorm:"default:1"`
+	Status                 int            `json:"status" gorm:"default:1;index:idx_redemption_used_status,priority:2"`
 	Name                   string         `json:"name" gorm:"index"`
 	Quota                  int            `json:"quota" gorm:"default:100"`
 	RedeemType             string         `json:"redeem_type" gorm:"type:varchar(32);not null;default:quota"`
@@ -30,7 +30,7 @@ type Redemption struct {
 	CreatedTime            int64          `json:"created_time" gorm:"bigint"`
 	RedeemedTime           int64          `json:"redeemed_time" gorm:"bigint"`
 	Count                  int            `json:"count" gorm:"-:all"` // only for api request
-	UsedUserId             int            `json:"used_user_id"`
+	UsedUserId             int            `json:"used_user_id" gorm:"index:idx_redemption_used_status,priority:1"`
 	DeletedAt              gorm.DeletedAt `gorm:"index"`
 	ExpiredTime            int64          `json:"expired_time" gorm:"bigint"` // 过期时间，0 表示不过期
 }

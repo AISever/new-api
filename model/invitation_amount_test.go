@@ -80,12 +80,14 @@ func TestInvitationAmountsZeroUnknownCurrencyAndConversionSnapshot(t *testing.T)
 	require.Equal(t, "USD", a.Currencies[1].Currency)
 	require.Equal(t, "1.5", a.Currencies[1].Total)
 	require.True(t, a.Currencies[1].Estimated)
+	require.Len(t, a.Currencies[1].Conversions, 2)
+	require.Equal(t, "1000000", a.Currencies[1].Conversions[0].QuotaPerUnit)
 	require.Equal(t, "9.99", a.LegacyRecorded[0].Amount)
 }
 func TestInvitationPaymentValidationRejectsUnboundedOrNegativeMoney(t *testing.T) {
 	setupInvitationAmountTest(t)
 	require.NoError(t, DB.Create(&TopUp{Id: 1, UserId: 2, TradeNo: "x", PaymentProvider: PaymentProviderStripe, Status: common.TopUpStatusSuccess}).Error)
-	for _, value := range []string{"-1", "NaN", "1e99999999", "", "2.12345678912345"} {
+	for _, value := range []string{"-1", "NaN", "1e99999999", "", "2.1234567891234567891234567891234"} {
 		require.Error(t, RecordInvitationPayment("x", PaymentProviderStripe, value, "USD"))
 	}
 	require.Error(t, RecordInvitationPayment("x", PaymentProviderStripe, "1", "not-a-currency"))
@@ -135,4 +137,36 @@ func TestInvitationLegacyDetailsHaveBoundedMemoryButCountsRemainComplete(t *test
 	require.Equal(t, 55, a.UnknownCount)
 	require.Len(t, a.LegacyRecorded, 50)
 	require.True(t, a.LegacyTruncated)
+}
+func TestInvitationPaymentsPreserveSmallVerifiedAmounts(t *testing.T) {
+	setupInvitationAmountTest(t)
+	require.NoError(t, DB.Create(&TopUp{Id: 1, UserId: 2, TradeNo: "small", PaymentProvider: PaymentProviderWaffo, Status: common.TopUpStatusSuccess}).Error)
+	require.NoError(t, RecordInvitationPayment("small", PaymentProviderWaffo, "0.000000000000000001", "ETH"))
+	page, err := GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	require.Equal(t, "0.000000000000000001", page.Items[0].Amounts.Currencies[0].Total)
+}
+
+func TestInvitationCustomRedemptionCurrenciesRemainSeparate(t *testing.T) {
+	setupInvitationAmountTest(t)
+	settings := operation_setting.GetGeneralSetting()
+	oldSymbol, oldRate := settings.CustomCurrencySymbol, settings.CustomCurrencyExchangeRate
+	t.Cleanup(func() { settings.CustomCurrencySymbol, settings.CustomCurrencyExchangeRate = oldSymbol, oldRate })
+	settings.QuotaDisplayType = "CUSTOM"
+	for i, symbol := range []string{"积分", "金币"} {
+		settings.CustomCurrencySymbol = symbol
+		settings.CustomCurrencyExchangeRate = float64(7 + i*3)
+		r := &Redemption{Id: 30 + i, UsedUserId: 2, Key: fmt.Sprintf("custom-%d", i), Status: common.RedemptionCodeStatusUsed, Quota: 500000}
+		require.NoError(t, DB.Create(r).Error)
+		require.NoError(t, RecordInvitationRedemption(r))
+	}
+	page, err := GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	require.Len(t, page.Items[0].Amounts.Currencies, 2)
+	raw, err := common.Marshal(page.Items[0].Amounts)
+	require.NoError(t, err)
+	require.Contains(t, string(raw), `"currency_symbol":"积分"`)
+	require.Contains(t, string(raw), `"currency_symbol":"金币"`)
+	require.Contains(t, string(raw), `"total":"7"`)
+	require.Contains(t, string(raw), `"total":"10"`)
 }
