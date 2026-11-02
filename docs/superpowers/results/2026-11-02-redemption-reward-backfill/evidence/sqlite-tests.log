@@ -1,0 +1,90 @@
+=== RUN   TestPreviewExactAndReadOnly
+--- PASS: TestPreviewExactAndReadOnly (0.15s)
+=== RUN   TestPreviewSubscriptionUsesGrantedTotal
+--- PASS: TestPreviewSubscriptionUsesGrantedTotal (0.16s)
+=== RUN   TestPreviewPersonalRatioAndSkips
+=== RUN   TestPreviewPersonalRatioAndSkips/personal
+=== RUN   TestPreviewPersonalRatioAndSkips/zero
+=== RUN   TestPreviewPersonalRatioAndSkips/disabled
+--- PASS: TestPreviewPersonalRatioAndSkips (0.41s)
+    --- PASS: TestPreviewPersonalRatioAndSkips/personal (0.14s)
+    --- PASS: TestPreviewPersonalRatioAndSkips/zero (0.14s)
+    --- PASS: TestPreviewPersonalRatioAndSkips/disabled (0.13s)
+=== RUN   TestPreviewCutoffAndMissingBasis
+--- PASS: TestPreviewCutoffAndMissingBasis (0.13s)
+=== RUN   TestApplyOnceAndAfterLogCleanup
+--- PASS: TestApplyOnceAndAfterLogCleanup (0.15s)
+=== RUN   TestApplyLogFailureRollsBackCreditAndLedger
+--- PASS: TestApplyLogFailureRollsBackCreditAndLedger (0.15s)
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/ratio
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/inviter
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/basis
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/status
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/hash
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/entry
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/duplicate
+=== RUN   TestApplyRefusesDriftAndTamperingBeforeWrites/total
+--- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites (1.00s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/ratio (0.13s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/inviter (0.14s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/basis (0.13s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/status (0.12s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/hash (0.12s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/entry (0.12s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/duplicate (0.12s)
+    --- PASS: TestApplyRefusesDriftAndTamperingBeforeWrites/total (0.12s)
+=== RUN   TestApplyOverflowAndNativeRewardExclusion
+=== RUN   TestApplyOverflowAndNativeRewardExclusion/overflow
+=== RUN   TestApplyOverflowAndNativeRewardExclusion/native_log
+--- PASS: TestApplyOverflowAndNativeRewardExclusion (0.28s)
+    --- PASS: TestApplyOverflowAndNativeRewardExclusion/overflow (0.15s)
+    --- PASS: TestApplyOverflowAndNativeRewardExclusion/native_log (0.14s)
+=== RUN   TestApplyConcurrentOnce
+--- PASS: TestApplyConcurrentOnce (0.15s)
+=== RUN   TestApplyRejectsDifferentDatabaseWithIdenticalRows
+--- PASS: TestApplyRejectsDifferentDatabaseWithIdenticalRows (0.26s)
+=== RUN   TestApplyProcessCrashRecovery
+--- PASS: TestApplyProcessCrashRecovery (0.18s)
+=== RUN   TestHistoricalEligibilityBoundaries
+=== RUN   TestHistoricalEligibilityBoundaries/no_inviter
+=== RUN   TestHistoricalEligibilityBoundaries/self_invitation
+=== RUN   TestHistoricalEligibilityBoundaries/missing_inviter
+=== RUN   TestHistoricalEligibilityBoundaries/deleted_inviter
+=== RUN   TestHistoricalEligibilityBoundaries/deleted_invitee
+=== RUN   TestHistoricalEligibilityBoundaries/unknown_type
+=== RUN   TestHistoricalEligibilityBoundaries/unlimited_subscription
+=== RUN   TestHistoricalEligibilityBoundaries/rounds_to_zero
+=== RUN   TestHistoricalEligibilityBoundaries/fixed_mode
+--- PASS: TestHistoricalEligibilityBoundaries (1.16s)
+    --- PASS: TestHistoricalEligibilityBoundaries/no_inviter (0.14s)
+    --- PASS: TestHistoricalEligibilityBoundaries/self_invitation (0.14s)
+    --- PASS: TestHistoricalEligibilityBoundaries/missing_inviter (0.13s)
+    --- PASS: TestHistoricalEligibilityBoundaries/deleted_inviter (0.12s)
+    --- PASS: TestHistoricalEligibilityBoundaries/deleted_invitee (0.12s)
+    --- PASS: TestHistoricalEligibilityBoundaries/unknown_type (0.12s)
+    --- PASS: TestHistoricalEligibilityBoundaries/unlimited_subscription (0.13s)
+    --- PASS: TestHistoricalEligibilityBoundaries/rounds_to_zero (0.13s)
+    --- PASS: TestHistoricalEligibilityBoundaries/fixed_mode (0.12s)
+=== RUN   TestSoftDeletedUsedCodeRetainsFulfillmentEntitlement
+--- PASS: TestSoftDeletedUsedCodeRetainsFulfillmentEntitlement (0.15s)
+=== RUN   TestNativeLogIDBoundaryAndBadRatios
+=== RUN   TestNativeLogIDBoundaryAndBadRatios/ID_10_cannot_suppress_ID_1
+=== RUN   TestNativeLogIDBoundaryAndBadRatios/invalid_personal_ratio
+=== RUN   TestNativeLogIDBoundaryAndBadRatios/invalid_personal_ratio#01
+--- PASS: TestNativeLogIDBoundaryAndBadRatios (0.36s)
+    --- PASS: TestNativeLogIDBoundaryAndBadRatios/ID_10_cannot_suppress_ID_1 (0.12s)
+    --- PASS: TestNativeLogIDBoundaryAndBadRatios/invalid_personal_ratio (0.12s)
+    --- PASS: TestNativeLogIDBoundaryAndBadRatios/invalid_personal_ratio#01 (0.12s)
+=== RUN   TestExternalTransactions
+    external_test.go:21: explicit isolated database not supplied
+--- SKIP: TestExternalTransactions (0.00s)
+=== RUN   TestCLIReadOnlyPreviewAndExplicitApply
+--- PASS: TestCLIReadOnlyPreviewAndExplicitApply (0.14s)
+=== RUN   TestCLIRejectsUnsafeInputs
+--- PASS: TestCLIRejectsUnsafeInputs (0.00s)
+=== RUN   TestPrivateSnapshotPreview
+    snapshot_test.go:20: private snapshot preview not requested
+--- SKIP: TestPrivateSnapshotPreview (0.00s)
+PASS
+ok  	github.com/QuantumNous/new-api/ops/tools/redemption-reward-backfill	4.851s

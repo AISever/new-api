@@ -1,0 +1,4 @@
+=== RUN   TestPrivateSnapshotPreview
+--- PASS: TestPrivateSnapshotPreview (0.32s)
+PASS
+ok  	github.com/QuantumNous/new-api/ops/tools/redemption-reward-backfill	0.353s

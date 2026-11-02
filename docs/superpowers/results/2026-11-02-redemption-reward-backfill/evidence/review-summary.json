@@ -1,0 +1,19 @@
+{
+  "reviewer": "independent read-only subagent",
+  "remaining_confirmed_critical_or_important_findings": 0,
+  "corrections": [
+    "bind plans to database/effective PostgreSQL schema/role/source identities",
+    "reject PostgreSQL schema fallback that can hide ledger",
+    "guard transactional MySQL engines and metadata aliases",
+    "drain/flush/stop all writers before final backup, restore verification and baselines"
+  ],
+  "verification": {
+    "whole_go_test_packages": 21,
+    "race": true,
+    "sqlite": true,
+    "postgres16": true,
+    "mysql8": true,
+    "browser_inviter_logs": true
+  },
+  "production_apply_performed": false
+}

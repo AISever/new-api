@@ -1,0 +1,13 @@
+{
+  "production_version": "codex/invite+b77dd3008+production",
+  "app_identity_image_restart_count_unchanged": true,
+  "both_public_domains_healthy": true,
+  "fhy131_beijing_midnight_schedule_preserved": true,
+  "production_backfill_ledger_absent": true,
+  "production_backfill_logs": 0,
+  "production_apply_performed": false,
+  "production_snapshot_export": "SELECT only in READ ONLY transaction",
+  "current_amount_policy_mode": "selected",
+  "tool_configuration_writes": false,
+  "options_differ_from_release_snapshot": true
+}

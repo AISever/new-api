@@ -1,0 +1,12 @@
+=== RUN   TestExternalTransactions
+=== RUN   TestExternalTransactions/same_code_8_workers
+=== RUN   TestExternalTransactions/8_codes_shared_inviter
+=== RUN   TestExternalTransactions/log_failure_is_atomic
+=== RUN   TestExternalTransactions/nontransactional_source_rejected
+--- PASS: TestExternalTransactions (3.97s)
+    --- PASS: TestExternalTransactions/same_code_8_workers (0.82s)
+    --- PASS: TestExternalTransactions/8_codes_shared_inviter (1.49s)
+    --- PASS: TestExternalTransactions/log_failure_is_atomic (0.86s)
+    --- PASS: TestExternalTransactions/nontransactional_source_rejected (0.79s)
+PASS
+ok  	github.com/QuantumNous/new-api/ops/tools/redemption-reward-backfill	3.993s

@@ -1,0 +1,1 @@
+{"beneficiary_count":2,"historical_codes":69,"local_preview_database_writes":false,"pending_codes":34,"pending_reward_display":"$331.250000","pending_reward_quota":"165625000","plan_bound_to_local_copy_not_production":true,"production_apply_performed":false,"source":"minimal read-only production SELECT export in isolated local copy"}

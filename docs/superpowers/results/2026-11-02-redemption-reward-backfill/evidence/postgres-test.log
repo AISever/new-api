@@ -1,0 +1,14 @@
+=== RUN   TestExternalTransactions
+=== RUN   TestExternalTransactions/same_code_8_workers
+=== RUN   TestExternalTransactions/8_codes_shared_inviter
+=== RUN   TestExternalTransactions/log_failure_is_atomic
+=== RUN   TestExternalTransactions/fallback_schema_cannot_hide_existing_ledger
+=== RUN   TestExternalTransactions/same_database_different_schema_rejected
+--- PASS: TestExternalTransactions (2.87s)
+    --- PASS: TestExternalTransactions/same_code_8_workers (0.80s)
+    --- PASS: TestExternalTransactions/8_codes_shared_inviter (1.13s)
+    --- PASS: TestExternalTransactions/log_failure_is_atomic (0.30s)
+    --- PASS: TestExternalTransactions/fallback_schema_cannot_hide_existing_ledger (0.24s)
+    --- PASS: TestExternalTransactions/same_database_different_schema_rejected (0.38s)
+PASS
+ok  	github.com/QuantumNous/new-api/ops/tools/redemption-reward-backfill	2.887s

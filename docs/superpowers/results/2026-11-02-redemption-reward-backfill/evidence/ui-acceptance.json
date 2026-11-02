@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "version": "codex/invite+b77dd3008+backfill-test",
+  "synthetic_codes": 2,
+  "unique_rewards": 2,
+  "unique_inviter_system_logs": 2,
+  "repeat_apply_no_duplicate": true,
+  "log_ownership_and_cross_user_isolation": true,
+  "anonymous_log_access_denied": true,
+  "wallet_sources_subscriptions_options_preserved": true,
+  "amount_visibility_off": true,
+  "production_apply_performed": false
+}
