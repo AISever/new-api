@@ -1,7 +1,8 @@
 """Recover the same application if the operation worker is lost; never issue credits."""
 import json,os,signal,subprocess,time
 from pathlib import Path
-S=Path.home()/'.local/state/new-api-reward-backfill-20261102'
+SUFFIX=os.environ.get('BACKFILL_OPERATION_SUFFIX','');assert SUFFIX in ['', '-retry1']
+S=Path.home()/('.local/state/new-api-reward-backfill-20261102'+SUFFIX)
 while True:
  try:j=json.loads((S/'journal.json').read_text())
  except (FileNotFoundError,ValueError):time.sleep(2);continue

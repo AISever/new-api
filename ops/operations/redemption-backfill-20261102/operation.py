@@ -3,10 +3,11 @@ import copy,csv,fcntl,hashlib,io,json,os,re,signal,subprocess,sys,tarfile,time,u
 from pathlib import Path
 import controls
 os.umask(0o077)
-S=Path.home()/'.local/state/new-api-reward-backfill-20261102'
+SUFFIX=os.environ.get('BACKFILL_OPERATION_SUFFIX','');assert SUFFIX in ['', '-retry1']
+S=Path.home()/('.local/state/new-api-reward-backfill-20261102'+SUFFIX)
 SUPPORT=Path.home()/'.local/state/new-api-invitation-production-20261102-r2'
-PREFIX='new-api-reward-backfill-20261102'
-LABEL='redemption-backfill-20261102'
+PREFIX='new-api-reward-backfill-20261102'+SUFFIX
+LABEL='redemption-backfill-20261102'+SUFFIX
 
 def initialize():
  global w,C,APP,ROOT,A,J
@@ -56,14 +57,19 @@ def fingerprints(tables,restore=False):
 def digest_query(expression,table,condition='true'):
  return sql("SELECT count(*)::text||'|'||md5(coalesce(string_agg(h,'' ORDER BY h),'')) FROM (SELECT md5("+expression+") h FROM "+table+' t WHERE '+condition+') x')
 def capture(logmax=None):
- if logmax is None:logmax=int(sql('SELECT coalesce(max(id),0) FROM logs'))
+ initial=logmax is None
+ if initial:logmax=int(sql('SELECT coalesce(max(id),0) FROM logs'))
+ tables=current_tables();fp=fingerprints(tables if initial else [t for t in tables if t!='logs'])
+ if initial:old='|'.join(fp['logs'])
+ else:
+  old=digest_query('row_to_json(t)::text','logs','id<='+str(logmax));new=digest_query('row_to_json(t)::text','logs','id>'+str(logmax));fp['logs']=controls.log_fingerprint(old,new)
  selected=json.loads(sql("SELECT json_object_agg(id,row_to_json(t)) FROM users t WHERE id IN (1,21)"))
- return {'fingerprints':fingerprints(current_tables()),'users_normalized':digest_query("CASE WHEN id IN (1,21) THEN (to_jsonb(t)-'aff_quota'-'aff_history')::text ELSE to_jsonb(t)::text END",'users'),'old_logs':digest_query('row_to_json(t)::text','logs','id<='+str(logmax)),'logmax':logmax,'selected_users':selected,'fhy131':w.fhy()}
+ return {'fingerprints':fp,'users_normalized':digest_query("CASE WHEN id IN (1,21) THEN (to_jsonb(t)-'aff_quota'-'aff_history')::text ELSE to_jsonb(t)::text END",'users'),'old_logs':old,'logmax':logmax,'selected_users':selected,'fhy131':w.fhy()}
 def rows(table,condition='true'):
  assert table in ['redemption_reward_backfills','logs']
  return json.loads(sql('SELECT coalesce(json_agg(row_to_json(t)),\'[]\'::json) FROM '+table+' t WHERE '+condition))
-def audit(partial=False,persist=True):
- before=json.loads((S/'before.json').read_text());after=capture(before['logmax']);ledger=rows('redemption_reward_backfills') if inspect_ledger() else [];logs=rows('logs','id>'+str(before['logmax']))
+def audit(partial=False,persist=True,after=None):
+ before=json.loads((S/'before.json').read_text());after=after if after is not None else capture(before['logmax']);ledger=rows('redemption_reward_backfills') if inspect_ledger() else [];logs=rows('logs','id>'+str(before['logmax']))
  result=controls.audit(before,after,A,ledger,logs,J['plan_hash'],partial)
  if persist:
   (S/'after-private.json').write_text(json.dumps(after));(S/'ledger-private.json').write_text(json.dumps(ledger));(S/'logs-private.json').write_text(json.dumps(logs))
@@ -98,7 +104,7 @@ def backup_and_restore():
  no_clients();assert capture(before['logmax'])==before,'production data changed during backup'
  with (ROOT/'globals.sql').open('rb') as inp:run(['docker','exec','-i',PREFIX+'-postgres','psql','-XqAt','-U','restore_admin','-d','postgres','-v','ON_ERROR_STOP=1'],stdin=inp)
  run(['docker','exec',PREFIX+'-postgres','psql','-XqAt','-U','restore_admin','-d','postgres','-v','ON_ERROR_STOP=1','-c','CREATE DATABASE restore_data'])
- with (ROOT/'database.dump').open('rb') as inp:run(['docker','exec','-i',PREFIX+'-postgres','pg_restore','-U','restore_admin','-d','restore_data','--no-owner','--no-privileges','--exit-on-error'],stdin=inp,timeout=300)
+ run(['docker','exec',PREFIX+'-postgres','pg_restore','-U','restore_admin','-d','restore_data','--no-owner','--no-privileges','--exit-on-error','--jobs=2','/backup/database.dump'],timeout=420)
  restored=fingerprints(tables,True);assert restored==before['fingerprints'],'restored table data differs'
  (ROOT/'restored-fingerprints.json').write_text(json.dumps(restored,indent=2))
  archive=ROOT/'application-files.tar.gz'
@@ -119,7 +125,8 @@ def backup_and_restore():
  with tarfile.open(ROOT/'current-image.tar') as src,tarfile.open(ROOT/'untagged-restore-image.tar','w') as dest:
   manifest=json.load(src.extractfile('manifest.json'));manifest[0]['RepoTags']=[];data=json.dumps(manifest).encode();member=tarfile.TarInfo('manifest.json');member.size=len(data);dest.addfile(member,io.BytesIO(data))
   for name in [manifest[0]['Config'],*manifest[0]['Layers']]:dest.addfile(src.getmember(name),src.extractfile(name))
- with (ROOT/'untagged-restore-image.tar').open('rb') as inp:run(['docker','image','load'],stdin=inp,timeout=90)
+ with (ROOT/'untagged-restore-image.tar').open('rb') as inp:loaded_output=run(['docker','image','load'],stdin=inp,timeout=90)
+ (ROOT/'image-load-output.txt').write_text(loaded_output);normalized_id=controls.loaded_image_id(loaded_output)
  loaded=json.loads(run(['docker','image','inspect',normalized_id]))[0];assert loaded['RootFS']['Layers']==image['RootFS']['Layers'] and loaded['Config']==image['Config'];assert inspect('new-api-local')['Image']==APP['Image']
  redis_restore()
  proof={'database_restored':True,'all_tables_match':True,'files_restored':True,'image_verified':True,'redis_restored':True,'app_stopped':not inspect('new-api-local')['State']['Running'],'table_count':len(tables),'row_count':sum(int(v[0]) for v in restored.values()),'file_count':files,'file_bytes':file_bytes}
@@ -189,7 +196,7 @@ def execute():
  phase('applying',apply_started=True)
  applied=tool('apply','production-plan.json');assert applied['success'] and applied['result']['credited']==34 and applied['result']['already_completed']==0
  result=audit();(S/'initial-financial-audit.json').write_text(json.dumps(result,indent=2));phase('financial_verified',credited_codes=result['credited_codes'],total_quota=result['total_quota'])
- before_repeat=capture(json.loads((S/'before.json').read_text())['logmax']);repeat=tool('repeat','production-plan.json');assert repeat['success'] and repeat['result']['credited']==0 and repeat['result']['already_completed']==34;assert capture(before_repeat['logmax'])==before_repeat;assert audit()==result
+ before_repeat=capture(json.loads((S/'before.json').read_text())['logmax']);repeat=tool('repeat','production-plan.json');assert repeat['success'] and repeat['result']['credited']==0 and repeat['result']['already_completed']==34;after_repeat=capture(before_repeat['logmax']);assert after_repeat==before_repeat;assert audit(after=after_repeat)==result
  (S/'financial-verified.json').write_text(json.dumps(result,indent=2))
  run(['docker','stop','-t','10',PREFIX+'-postgres'])
  run(['docker','start','new-api-local']);w.wait_health(w.VERSION);verify_runtime();w.ungate();w.health(w.VERSION,True);phase('observing',service_restored_at=time.time(),repeat_created_zero_rewards=True)

@@ -2,7 +2,8 @@
 import copy,datetime,hashlib,json,os,secrets,subprocess,urllib.parse,time
 from pathlib import Path
 os.umask(0o077)
-S=Path.home()/'.local/state/new-api-reward-backfill-20261102';assert json.loads((S/'owner.json').read_text())['approved'];assert not (S/'context.json').exists() and not (S/'journal.json').exists()
+SUFFIX=os.environ.get('BACKFILL_OPERATION_SUFFIX','');assert SUFFIX in ['', '-retry1']
+S=Path.home()/('.local/state/new-api-reward-backfill-20261102'+SUFFIX);assert json.loads((S/'owner.json').read_text())['approved'];assert not (S/'context.json').exists() and not (S/'journal.json').exists()
 expected=json.loads((S/'expectations.json').read_text())
 def run(*args):return subprocess.check_output(args,stderr=subprocess.PIPE,text=True).strip()
 def inspect(name):return json.loads(run('docker','inspect',name))[0]
@@ -34,9 +35,9 @@ root=Path('/opt/new-api-backups')/('redemption-backfill-'+stamp);run('sudo','-n'
 context={'initial':initial,'caddy':caddy,'subnet':'172.18.0.0/16','caddy_file_sha256':hashlib.sha256((root/'Caddyfile').read_bytes()).hexdigest(),'backup_dir':str(root)}
 (S/'context.json').write_text(json.dumps(context));(S/'other-services.json').write_text(json.dumps(others))
 with (root/'current-image.tar').open('wb') as out,open(S/'image-save-stderr.txt','wb') as err:subprocess.run(['docker','image','save',app['Image']],stdout=out,stderr=err,check=True,timeout=120)
-name='new-api-reward-backfill-20261102-postgres';assert subprocess.run(['docker','inspect',name],capture_output=True).returncode!=0
+name='new-api-reward-backfill-20261102'+SUFFIX+'-postgres';assert subprocess.run(['docker','inspect',name],capture_output=True).returncode!=0
 pg_env=S/'restore-postgres.env';pg_env.write_text('POSTGRES_USER=restore_admin\nPOSTGRES_PASSWORD='+secrets.token_hex(24)+'\nPOSTGRES_DB=postgres\n')
-run('docker','run','-d','--name',name,'--label','codex.operation=redemption-backfill-20261102','--network','none','--memory=512m','--cpus=0.75','--pids-limit=128','--restart=no','--env-file',str(pg_env),initial['postgres']['Image'],'postgres','-c','shared_buffers=64MB','-c','max_connections=20')
+run('docker','run','-d','--name',name,'--label','codex.operation=redemption-backfill-20261102'+SUFFIX,'--network','none','--memory=512m','--cpus=1.25','--pids-limit=128','--restart=no','--env-file',str(pg_env),'-v',str(root)+':/backup:ro',initial['postgres']['Image'],'postgres','-c','shared_buffers=64MB','-c','max_connections=20')
 for _ in range(30):
  if subprocess.run(['docker','exec',name,'pg_isready','-U','restore_admin'],capture_output=True).returncode==0:break
  time.sleep(1)

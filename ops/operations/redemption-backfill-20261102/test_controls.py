@@ -78,5 +78,15 @@ class Controls(unittest.TestCase):
     with real_open(operation.S/'operation.lock','rb') as second:
      with self.assertRaises(BlockingIOError):fcntl.flock(second,fcntl.LOCK_EX|fcntl.LOCK_NB)
     lock.close()
+ def test_loaded_id_is_taken_from_actual_restore_not_export_config(self):
+  actual='sha256:'+'a'*64
+  self.assertEqual(controls.loaded_image_id('Loaded image ID: '+actual+'\n'),actual)
+  for text in ['', 'Loaded image: wrong',('Loaded image ID: '+actual+'\n')*2]:
+   with self.assertRaises(AssertionError):controls.loaded_image_id(text)
+ def test_log_digest_preserves_empty_delta_and_detects_either_change(self):
+  self.assertEqual(controls.log_fingerprint('10|old','0|empty'),['10','old'])
+  digest=controls.log_fingerprint('10|old','2|new');self.assertEqual(digest[0],'12')
+  self.assertNotEqual(digest,controls.log_fingerprint('10|tampered','2|new'))
+  self.assertNotEqual(digest,controls.log_fingerprint('10|old','2|tampered'))
 
 if __name__=='__main__':unittest.main()

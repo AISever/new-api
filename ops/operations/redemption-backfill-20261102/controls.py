@@ -1,5 +1,5 @@
 """Pure acceptance gates for the explicitly authorized one-off operation."""
-import collections,copy,gzip,hashlib,json,tarfile
+import collections,copy,gzip,hashlib,json,tarfile,re
 
 def scope(plan, approved):
     expected={e['redemption_id']:e for e in approved['entries']}
@@ -58,3 +58,12 @@ def verify_image(path,image):
             for block in iter(lambda:inp.read(1024*1024),b''):h.update(block)
             assert 'sha256:'+h.hexdigest()==expected,'image layer payload digest mismatch'
     return 'sha256:'+digest
+
+def loaded_image_id(output):
+    ids=re.findall(r'Loaded image ID: (sha256:[0-9a-f]{64})',output)
+    assert len(ids)==1,'expected one untagged restored image'
+    return ids[0]
+
+def log_fingerprint(old,new):
+    count,digest=old.split('|');n,ndigest=new.split('|')
+    return [str(int(count)+int(n)),digest if int(n)==0 else hashlib.sha256((old+'|'+new).encode()).hexdigest()]
