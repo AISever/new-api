@@ -12,7 +12,10 @@ class Controls(unittest.TestCase):
   before={'routes':[{'handler':'reverse_proxy','upstreams':[{'dial':'172.17.0.1:3000'}]},{'handler':'reverse_proxy','upstreams':[{'dial':'172.17.0.1:3000'}]},{'handler':'reverse_proxy','upstreams':[{'dial':'127.0.0.1:8080'}]}]}
   loaded=[];commands=[]
   e={'copy':copy,'CADDY':before,'caddy_get':lambda:before,'canonical':lambda x:json.dumps(x,sort_keys=True),'phase':lambda *a,**kw:None,'time':types.SimpleNamespace(time=lambda:1),'caddy_load':lambda x:loaded.append(x),'subprocess':types.SimpleNamespace(run=lambda *a,**k:types.SimpleNamespace(returncode=1)),'RULE':['scoped-rule'],'run':lambda *a:commands.append(a),'J':{},'save':lambda:None}
-  function('gate',e)();self.assertEqual(loaded[0]['routes'][2],before['routes'][2]);self.assertEqual(before['routes'][0]['handler'],'reverse_proxy');self.assertEqual([r['status_code'] for r in loaded[0]['routes'][:2]],[503,503]);self.assertIn('DOCKER-USER',commands[0])
+  function('gate',e)();self.assertEqual(loaded[0]['routes'][2],before['routes'][2]);self.assertEqual(before['routes'][0]['handler'],'reverse_proxy');
+  for route in loaded[0]['routes'][:2]:
+   self.assertEqual(route['handler'],'subroute');self.assertTrue(route['routes'][0]['terminal']);self.assertEqual(route['routes'][0]['handle'][0]['status_code'],503);self.assertEqual(route['routes'][1]['handle'][0],before['routes'][0])
+  self.assertIn('DOCKER-USER',commands[0])
  def test_clone_changes_only_image_and_version(self):
   original={'Config':{'Env':['SQL_DSN=preserved','SESSION_SECRET=preserved','VERSION=old'],'Image':'old','Cmd':['--log-dir','/app/logs'],'Labels':{'custom':'keep','org.opencontainers.image.revision':'old'}},'HostConfig':{'NetworkMode':'new-api_default','RestartPolicy':{'Name':'always'},'Binds':['/opt/new-api/data:/data']}}
   bodies=[]
@@ -75,4 +78,27 @@ class EmergencyControls(unittest.TestCase):
   e={'datetime':datetime};function('check_fhy',e)
   function('check_fhy_transition',e)(row,after,row['next_reset_time']+1)
   with self.assertRaises(AssertionError):e['check_fhy_transition'](row,after,row['next_reset_time']-1)
+class DrainControls(unittest.TestCase):
+ def test_missing_or_invalid_telemetry_is_not_zero(self):
+  for rows in [[],[{'address':'172.17.0.1:3000','num_requests':-1}],[{'address':'172.17.0.1:3000','num_requests':None}]]:
+   with self.assertRaises(AssertionError):function('active_requests',{'caddy_get':lambda *a:rows})()
+  self.assertEqual(function('active_requests',{'caddy_get':lambda *a:[{'address':'172.17.0.1:3000','num_requests':0}]})(),0)
+ def test_settlement_covers_effective_batch_interval(self):
+  e={'ORIGINAL':{'Config':{'Env':['BATCH_UPDATE_ENABLED=true','BATCH_UPDATE_INTERVAL=30']}}};self.assertEqual(function('settlement_seconds',e)(),63)
+  e['ORIGINAL']['Config']['Env']=['BATCH_UPDATE_ENABLED=true'];self.assertEqual(e['settlement_seconds'](),13)
+ def test_direct_existing_ingress_prevents_disconnect(self):
+  import ipaddress
+  e={'INITIAL':{'caddy':{'NetworkSettings':{'Networks':{}},'State':{'Pid':77}}},'json':json,'ipaddress':ipaddress,'run':lambda *a,**k:json.dumps([{'IPAM':{'Config':[{'Gateway':'172.18.0.1'}]}}]) if a[:3]==('docker','network','inspect') else ('0 0 172.17.0.2:4567 172.17.0.1:3000' if 'dport' in a else '0 0 172.18.0.6:3000 203.0.113.9:4567')}
+  with self.assertRaises(AssertionError):function('require_known_ingress',e)(123)
+  e['run']=lambda *a,**k:json.dumps([{'IPAM':{'Config':[{'Gateway':'172.18.0.1'}]}}]) if a[:3]==('docker','network','inspect') else ('0 0 172.17.0.2:4567 172.17.0.1:3000' if 'dport' in a else '0 0 172.18.0.6:3000 172.18.0.1:4567')
+  e['require_known_ingress'](123)
+  e['run']=lambda *a,**k:json.dumps([{'IPAM':{'Config':[{'Gateway':'172.18.0.1'}]}}]) if a[:3]==('docker','network','inspect') else ('0 0 172.17.0.2:4567 172.17.0.1:3000' if 'dport' in a else '0 0 172.18.0.6:3000 172.18.0.1:9999')
+  with self.assertRaises(AssertionError):e['require_known_ingress'](123)
+ def test_safe_abort_retry_refuses_any_completed_or_uncertain_cutover(self):
+  original={'Id':'old','Image':'image','State':{'Running':True,'StartedAt':'start'},'RestartCount':0,'Config':{'Env':['VERSION=old']},'HostConfig':{'RestartPolicy':{'Name':'always'}}}
+  journal={'phase':'rolled_back','rollback_verified':True,'error':'inflight requests did not drain safely'}
+  f=function('can_retry_safe_abort',{})
+  self.assertTrue(f(journal,original,original,True,True,False))
+  for extra in [{'new_id':'new'},{'published_at':123},{'retry_number':1}]:self.assertFalse(f({**journal,**extra},original,original,True,True,False))
+  self.assertFalse(f(journal,original,original,False,True,False));self.assertFalse(f(journal,original,original,True,False,False));self.assertFalse(f(journal,original,original,True,True,True))
 if __name__=='__main__':unittest.main()

@@ -6,7 +6,7 @@ os.umask(0o077)
 S=Path.home()/'.local/state/new-api-invitation-production-20261102-r2';B=json.loads((S/'backup-state.json').read_text());ROOT=Path(B['backup_dir'])
 OLD=B['old_image'];NEW=json.loads((S/'candidate.json').read_text())['image_id']
 VERSION='codex/invite+b77dd3008+production';NAME='new-api-local';RETAIN='new-api-local-rollback-invitation-20261102-r2'
-J={'phase':'preflight','worker_pid':os.getpid(),'old_id':B['app_id'],'new_image':NEW,'version':VERSION,'started':time.time()}
+J={'phase':'preflight','worker_pid':os.getpid(),'old_id':B['app_id'],'new_image':NEW,'version':VERSION,'started':time.time(),'retry_number':1 if (S/'retry-authorized.json').exists() else 0}
 INITIAL=json.loads((S/'initial-inspect.json').read_text());ORIGINAL=INITIAL['app'];CADDY=json.loads((S/'caddy-before.json').read_text())
 RULE=['-p','tcp','-d','172.18.0.0/16','-m','conntrack','--ctstate','NEW','--ctorigdstport','3000','-m','comment','--comment','new-api-invitation-production-20261102-r2','-j','REJECT','--reject-with','tcp-reset']
 def save():
@@ -55,7 +55,7 @@ def gate():
   nonlocal count
   if isinstance(x,dict):
    if x.get('handler')=='reverse_proxy' and any(u.get('dial')=='172.17.0.1:3000' for u in x.get('upstreams',[])):
-    assert all(u.get('dial')=='172.17.0.1:3000' for u in x['upstreams']);x.clear();x.update({'handler':'static_response','status_code':503,'headers':{'Retry-After':['60'],'Content-Type':['application/json']},'body':'{"maintenance":"invitation-release-20261102-r2"}'});count+=1;return
+    assert all(u.get('dial')=='172.17.0.1:3000' for u in x['upstreams']);proxy=copy.deepcopy(x);x.clear();x.update({'handler':'subroute','routes':[{'handle':[{'handler':'static_response','status_code':503,'headers':{'Retry-After':['60'],'Content-Type':['application/json']},'body':'{"maintenance":"invitation-release-20261102-r2"}'}],'terminal':True},{'handle':[proxy]}]});count+=1;return
    for v in x.values():walk(v)
   elif isinstance(x,list):
    for v in x:walk(v)
@@ -105,6 +105,44 @@ def check_fhy_transition(before,now,at):
  if now['last_reset_time']==before['last_reset_time'] and now['next_reset_time']==before['next_reset_time']:return
  assert at>=before['next_reset_time'],'fhy reset advanced before scheduled midnight'
  assert now['last_reset_time']==before['next_reset_time'] and now['next_reset_time']==before['next_reset_time']+86400,'fhy midnight anchor changed'
+
+def active_requests():
+ rows=[x for x in caddy_get('/reverse_proxy/upstreams') if x.get('address')=='172.17.0.1:3000']
+ assert rows and all(type(x.get('num_requests')) is int and x['num_requests']>=0 for x in rows),'request drain telemetry missing or invalid'
+ return sum(x['num_requests'] for x in rows)
+
+def require_known_ingress(pid):
+ net=json.loads(run('docker','network','inspect','new-api_default'))[0]
+ allowed={ipaddress.ip_address('127.0.0.1'),ipaddress.ip_address('::1')}
+ for c in net['IPAM']['Config']:
+  if c.get('Gateway'):allowed.add(ipaddress.ip_address(c['Gateway']))
+ for c in INITIAL['caddy']['NetworkSettings']['Networks'].values():
+  if c.get('IPAddress'):allowed.add(ipaddress.ip_address(c['IPAddress']))
+ def proxy_ports():
+  rows=run('sudo','-n','nsenter','-t',str(INITIAL['caddy']['State']['Pid']),'-n','ss','-Htn','state','established','dport','=',':3000')
+  ports=set()
+  for line in rows.splitlines():
+   local,peer=line.split()[-2:]
+   if peer.rsplit(':',1)[0].strip('[]')=='172.17.0.1':ports.add(local.rsplit(':',1)[-1])
+  return ports
+ ports=proxy_ports()
+ sockets=run('sudo','-n','nsenter','-t',str(pid),'-n','ss','-Htn','state','established','sport','=',':3000')
+ ports|=proxy_ports()
+ for line in sockets.splitlines():
+  peer,port=line.split()[-1].rsplit(':',1);addr=ipaddress.ip_address(peer.strip('[]'))
+  if getattr(addr,'ipv4_mapped',None):addr=addr.ipv4_mapped
+  assert addr in allowed and port in ports,'direct or unproven ingress is not covered by proxy request accounting'
+
+def settlement_seconds():
+ env=dict(x.split('=',1) for x in ORIGINAL['Config']['Env'] if '='in x)
+ interval=int(env.get('BATCH_UPDATE_INTERVAL','5')) if env.get('BATCH_UPDATE_ENABLED')=='true' else 0
+ assert interval>=0
+ return max(13,interval*2+3)
+
+def can_retry_safe_abort(j,current,original,routing_original,rule_absent,retained_exists):
+ if j.get('phase')!='rolled_back' or not j.get('rollback_verified') or j.get('new_id') or j.get('published_at') or j.get('retry_number',0):return False
+ if j.get('error')!='inflight requests did not drain safely' or not routing_original or not rule_absent or retained_exists:return False
+ return current['Id']==original['Id'] and current['Image']==original['Image'] and current['State']['Running'] and current['State']['StartedAt']==original['State']['StartedAt'] and current['RestartCount']==original['RestartCount'] and current['Config']==original['Config'] and current['HostConfig']==original['HostConfig']
 
 def visibility_off():
  raw=sql("SELECT value FROM options WHERE key='InvitationAmountVisibility'")
@@ -195,18 +233,22 @@ def deploy():
  while int(sql("SELECT count(*) FROM user_subscriptions WHERE status='active' AND ((next_reset_time>0 AND next_reset_time<"+str(int(time.time())+90)+") OR (end_time>0 AND end_time<"+str(int(time.time())+90)+"))")):
   assert time.time()<scheduled_deadline,'scheduled subscription activity did not settle'
   phase('waiting_for_scheduled_subscription_task');time.sleep(20)
- gate();pid=inspect(NAME)['State']['Pid'];deadline=time.time()+120
- while True:
-  active=sum(x.get('num_requests',0) for x in caddy_get('/reverse_proxy/upstreams') if x.get('address')=='172.17.0.1:3000')
-  sockets=run('sudo','-n','nsenter','-t',str(pid),'-n','ss','-Htn','state','established');external=[]
-  for line in sockets.splitlines():
-   fields=line.split();local,peer=fields[-2:]
-   if local.rsplit(':',1)[-1]!='3000' and peer.rsplit(':',1)[-1] not in ['5432','6379']:external.append(line)
-  if not active and not external:break
-  if time.time()>deadline:raise RuntimeError('inflight requests did not drain safely')
-  time.sleep(2)
+ # Prefer a traffic gap without extending maintenance for an existing long request.
+ phase('waiting_for_quiet_entrypoint');deadline=time.time()+600
+ while active_requests():
+  assert time.time()<deadline,'no quiet request window before deployment'
+  J['heartbeat']=time.time();save();time.sleep(1)
+ pid=inspect(NAME)['State']['Pid'];require_known_ingress(pid)
+ gate();deadline=time.time()+120
+ while active_requests():
+  assert time.time()<deadline,'inflight requests did not drain safely'
+  J['heartbeat']=time.time();save();time.sleep(2)
+ # Merely established upstream TLS sockets may be pooled forever; they are not requests.
+ require_known_ingress(pid)
  run('sudo','-n','nsenter','-t',str(pid),'-n','ss','-K','-t','state','established','sport','=',':3000')
- time.sleep(13)
+ until=time.time()+settlement_seconds()
+ while time.time()<until:
+  J['heartbeat']=time.time();save();time.sleep(max(0,min(2,until-time.time())))
  stable=snapshot();time.sleep(2);assert snapshot()==stable,'financial writes still active after drain'
  phase('cutover',drained=True);run('docker','update','--restart=no',B['app_id']);run('docker','stop','-t','30',B['app_id'])
  before=snapshot();other_before=snapshot();row=fhy();check_fhy(row)
@@ -251,7 +293,7 @@ def ensure_new_run():
 
 def handle_release_failure(error):
  safe_note('release-error.txt',repr(error));J['error']=str(error);safe_save()
- if J.get('phase')=='preflight' and not J.get('new_id') and not J.get('gate_active'):
+ if J.get('phase') in ['preflight','waiting_for_quiet_entrypoint'] and not J.get('new_id') and not J.get('gate_active'):
   emergency_phase('aborted_before_cutover');return
  try:rollback()
  except BaseException as rollback_error:
