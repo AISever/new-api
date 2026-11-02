@@ -1,0 +1,141 @@
+{
+  "verified_at_unix": 1793598580.8838747,
+  "journal": {
+    "phase": "verified",
+    "started": 1793597675.516603,
+    "maintenance_started": 1793597677.327899,
+    "app_stopped_at": 1793597694.2595491,
+    "service_restored_at": 1793598052.6896276,
+    "finished_at": 1793598372.4502048,
+    "observation_seconds": 300,
+    "plan_hash": "ab70277ad77c20ad199595347077201ed95325450fa783ab65767ed0fac5023e",
+    "repeat_created_zero_rewards": true,
+    "gate_active": false
+  },
+  "financial": {
+    "credited_codes": 34,
+    "visible_inviter_logs": 34,
+    "total_quota": 165625000,
+    "beneficiaries": {
+      "1": {
+        "quota": 5000000,
+        "codes": 1
+      },
+      "21": {
+        "quota": 160625000,
+        "codes": 33
+      }
+    },
+    "other_user_fields_configuration_subscriptions_and_old_logs_preserved": true,
+    "fhy131_full_row_preserved": true
+  },
+  "repeat_apply": {
+    "mode": "apply",
+    "result": {
+      "credited": 0,
+      "already_completed": 34,
+      "skipped": 35
+    },
+    "success": true
+  },
+  "restore": {
+    "database_restored": true,
+    "all_tables_match": true,
+    "files_restored": true,
+    "image_verified": true,
+    "redis_restored": true,
+    "app_stopped": true,
+    "table_count": 26,
+    "row_count": 966842,
+    "file_count": 51,
+    "file_bytes": 1346829862
+  },
+  "api": {
+    "production_payments_or_new_redemptions_performed": false,
+    "new_credentials_created": false,
+    "users": {
+      "1": {
+        "username": "admin1",
+        "log_count": 1,
+        "log_ownership_and_content_verified": true,
+        "own_authenticated_endpoint_verified": true,
+        "admin_filtered_endpoint_verified": false
+      },
+      "21": {
+        "username": "Yancy776",
+        "log_count": 33,
+        "log_ownership_and_content_verified": true,
+        "own_authenticated_endpoint_verified": false,
+        "admin_filtered_endpoint_verified": true
+      }
+    },
+    "unauthenticated_log_access_denied": true,
+    "caller_supplied_user_id_does_not_override_ownership": true
+  },
+  "backup_dir": "/opt/new-api-backups/redemption-backfill-20261102-143226",
+  "backup_manifest": {
+    "database.dump": {
+      "sha256": "446718685e923e91eb14f2a6675259b6cb8430583ce95625790dd8f397c4f5ed",
+      "bytes": 78865023
+    },
+    "globals.sql": {
+      "sha256": "76f43b73d73706c975dfeee24678c14b7c7fc60c218a946a5735cea3bb931084",
+      "bytes": 667
+    },
+    "application-files.tar.gz": {
+      "sha256": "1d4c72807687d97d9441c7066089eed664f1cd6fe0ff29105e471105ba2186cd",
+      "bytes": 160838076
+    },
+    "current-image.tar": {
+      "sha256": "5d209d66e3f58db72fcf8482fb3c9615b9458cb8536fa30aa1bb16d92286d5a1",
+      "bytes": 108773888
+    },
+    "app-inspect.json": {
+      "sha256": "59d93d4a98837f089953e41cc3bc1311142439fd5841b2b324337c80e145bad7",
+      "bytes": 5555
+    },
+    "caddy-runtime.json": {
+      "sha256": "ff3fefbf1a20ebf6677ccdfbbc97081f230a60ccac91bb25308bc62f08274319",
+      "bytes": 899
+    },
+    "Caddyfile": {
+      "sha256": "a2939e3e956b657b35eccec998e704a8f2f8528c543fcf205aa8d7d9c519fbb5",
+      "bytes": 396
+    },
+    "redis.rdb": {
+      "sha256": "368e41f297facfabd80e4f5a162b8068408a78042ee7269d7bd97cb25f26b5b1",
+      "bytes": 28279
+    },
+    "restore-proof.json": {
+      "sha256": "f5951346205d861426ff27f0f968354f76e07af0f4a82205465b36fa6925d11e",
+      "bytes": 252
+    }
+  },
+  "runtime": {
+    "version": "codex/invite+b77dd3008+production",
+    "container_id": "2ff6f11702b891a0be83a25348a750e34763e42cf8d8ff5379e4c5318649a2ad",
+    "image_id": "sha256:c20f6e579dbf37ec9f7fdc8c270e3b4ea796695342c09ac20f9f0c3d680843b9",
+    "same_container_image_config_hostconfig": true,
+    "manual_stop_start_completed": true,
+    "crash_restart_count": 0,
+    "oom_killed": false,
+    "both_public_domains_healthy": true,
+    "other_original_containers_preserved": 32,
+    "caddy_file_and_runtime_preserved": true,
+    "both_attempts_temporary_firewall_rules_absent": true,
+    "all_existing_options_still_match_baseline": true,
+    "fhy131_midnight_schedule_and_entitlement_preserved": true
+  },
+  "first_attempt": {
+    "phase": "recovered_service",
+    "apply_started": false,
+    "reason": "Docker image load assigned a normalized ID different from exported config digest; no credits issued; service safely restored"
+  },
+  "limits": {
+    "yancy_existing_own_management_token_available": false,
+    "yancy_log_ownership_and_admin_filtered_api_verified": true,
+    "production_paid_transactions_or_extra_redemptions_performed": false,
+    "production_new_access_credentials_created": false,
+    "natural_midnight_execution_observed": false
+  }
+}

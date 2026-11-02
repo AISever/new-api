@@ -1,0 +1,23 @@
+{
+  "offhost_critical_database_and_runtime_backup_verified": true,
+  "local_directory": "/home/ctyun/Works/new-api/.env/backups/redemption-backfill-20261102-retry1",
+  "server_full_backup_directory": "/opt/new-api-backups/redemption-backfill-20261102-143226",
+  "database_bytes": 78865023,
+  "database_sha256": "446718685e923e91eb14f2a6675259b6cb8430583ce95625790dd8f397c4f5ed",
+  "files": [
+    "database.dump",
+    "globals.sql",
+    "app-inspect.json",
+    "caddy-runtime.json",
+    "Caddyfile",
+    "redis.rdb",
+    "restore-proof.json",
+    "production-plan.json",
+    "approved.json",
+    "financial-verified.json",
+    "ledger-private.json",
+    "logs-private.json"
+  ],
+  "server_application_files_and_image_also_backed_up_and_restored": true,
+  "application_files_and_image_copied_offhost_in_this_operation": false
+}
