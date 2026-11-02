@@ -1,0 +1,99 @@
+{
+  "verified_at_unix": 1793590682.8315916,
+  "journal": {
+    "phase": "verified",
+    "version": "codex/invite+b77dd3008+production",
+    "new_image": "sha256:c20f6e579dbf37ec9f7fdc8c270e3b4ea796695342c09ac20f9f0c3d680843b9",
+    "new_id": "2ff6f11702b891a0be83a25348a750e34763e42cf8d8ff5379e4c5318649a2ad",
+    "started": 1793589861.3068957,
+    "maintenance_started": 1793589862.622705,
+    "published_at": 1793589896.8960667,
+    "heartbeat": 1793590503.9401274,
+    "health_samples": 38,
+    "observation_seconds": 600,
+    "retry_number": 1,
+    "gate_active": false,
+    "configuration_preserved": true,
+    "all_existing_quota_rows_preserved": true,
+    "fhy131_unchanged_at_cutover": true,
+    "midnight_reset_observed": false,
+    "read_only_verification": true
+  },
+  "final_audit": {
+    "both_public_domains_healthy": true,
+    "container_running": true,
+    "restart_count": 0,
+    "oom_killed": false,
+    "runtime_configuration_preserved_except_version_and_image_labels": true,
+    "other_original_containers_preserved": 25,
+    "caddy_runtime_and_file_preserved": true,
+    "release_firewall_rule_absent": true,
+    "all_existing_options_unchanged": true,
+    "amount_visibility_off": true,
+    "fhy131_beijing_midnight_schedule_preserved": true,
+    "fhy131_entitlement_preserved": true,
+    "old_container_and_image_retained_stopped": true
+  },
+  "smoke": {
+    "passed": true,
+    "phase": "candidate",
+    "checks": [
+      "status/version",
+      "existing authenticated account remains readable",
+      "default username-only invitation list",
+      "no monetary fields exposed",
+      "direct-invite count matches database",
+      "unauthenticated invitation access denied",
+      "root config reports off with no selected users",
+      "wallet/admin/custom help pages served"
+    ],
+    "writes": false,
+    "payments_or_redemptions_performed": false
+  },
+  "restore": {
+    "migration_seconds": 4.826853275299072,
+    "migration_existing_data_preserved": true,
+    "old_image_boots_migrated_database": true,
+    "recoverability_verified": true,
+    "backup_dir": "/opt/new-api-backups/invitation-20261102-101617",
+    "tables_verified": 25,
+    "total_rows_verified": 966606,
+    "file_count_verified": 49,
+    "file_bytes_verified": 1345943494,
+    "baseline_image_restore_verified": true,
+    "baseline_archive_loaded_image_id": "sha256:2a57cd72627e5007be5b6abd9d33bc27b872211f4f91b7977fec4548a8503e25",
+    "baseline_archive_rootfs_identical": true,
+    "candidate_boots_restored_production_data": true,
+    "candidate_image_id": "sha256:c20f6e579dbf37ec9f7fdc8c270e3b4ea796695342c09ac20f9f0c3d680843b9",
+    "restore_network_internal": true,
+    "restore_has_no_published_ports": true
+  },
+  "cutover_restore": {
+    "cutover_dump_restore_verified": true,
+    "financial_and_configuration_fingerprints_match": true,
+    "fhy131_full_row_matches": true,
+    "dump_sha256": "f6d8bdbe6985d8d9103721bb8787da201006cd538eae1d1c2100510d534e1ef1",
+    "dump_bytes": 78843155,
+    "production_database_restored": false
+  },
+  "redis_restore": {
+    "redis_backup_restore_verified": true,
+    "bytes": 2169,
+    "sha256": "1b79fcbd09a6908ca25f723905cf24ceb7d603bf268f6d848478e184ae410bb0",
+    "check_rdb_success": true,
+    "network": "none",
+    "ports_published": false,
+    "source_selected_database": "0",
+    "restored_selected_db_keys": 15
+  },
+  "offhost_backup": {
+    "offhost_backup_verified": true,
+    "directory": "/home/ctyun/Works/new-api/.env/backups/invitation-production-20261102-r2",
+    "archive_path": "/home/ctyun/Works/new-api/.env/backups/invitation-production-20261102-r2/portable-backup-complete.tar.gz",
+    "archive_bytes": 271639986,
+    "archive_sha256": "58a4139292cabe524a79b263ad3981f912cabc67e68eeed86ea932434aaa619b",
+    "all_manifest_files_verified": true,
+    "redis_sha256": "1b79fcbd09a6908ca25f723905cf24ceb7d603bf268f6d848478e184ae410bb0",
+    "transport": "bounded small SSH ranges with retained verified prefix; IPQoS none and AES-GCM"
+  }
+}
