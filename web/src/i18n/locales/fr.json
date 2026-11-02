@@ -626,6 +626,7 @@
     "个人邀请返奖比例": "Taux de récompense d'invitation personnel",
     "固定模式在注册时奖励，比例模式在每次成功充值后按支付金额返奖": "Le mode fixe récompense à l'inscription, le mode proportionnel récompense après chaque recharge réussie selon le montant payé",
     "固定模式在注册时奖励，比例模式在每次成功充值或订阅购买后按支付金额返奖": "Le mode fixe récompense à l'inscription, le mode proportionnel récompense après chaque recharge ou achat d'abonnement réussi selon le montant payé",
+    "固定模式在注册时奖励；比例模式支持充值、订阅购买和兑换码，兑换码按授予额度返奖": "La récompense fixe est accordée à l’inscription. La récompense proportionnelle couvre les recharges, les abonnements et les codes échangés ; pour les codes, elle est calculée sur le quota accordé.",
     "停止测试": "Arrêter le test",
     "停止重试": "Arrêter les tentatives",
     "停用": "Désactiver",

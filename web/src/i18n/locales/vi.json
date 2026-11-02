@@ -619,6 +619,7 @@
     "个人邀请返奖比例": "Tỷ lệ thưởng mời cá nhân",
     "固定模式在注册时奖励，比例模式在每次成功充值后按支付金额返奖": "Chế độ cố định thưởng khi đăng ký, chế độ tỷ lệ thưởng sau mỗi lần nạp tiền thành công dựa trên số tiền thanh toán",
     "固定模式在注册时奖励，比例模式在每次成功充值或订阅购买后按支付金额返奖": "Chế độ cố định thưởng khi đăng ký, chế độ tỷ lệ thưởng sau mỗi lần nạp tiền hoặc mua gói đăng ký thành công dựa trên số tiền thanh toán",
+    "固定模式在注册时奖励；比例模式支持充值、订阅购买和兑换码，兑换码按授予额度返奖": "Thưởng cố định khi đăng ký. Thưởng theo tỷ lệ áp dụng cho nạp tiền, mua gói và mã quy đổi; mã quy đổi tính thưởng theo hạn mức được cấp.",
     "停止测试": "Dừng kiểm tra",
     "停止重试": "Dừng thử lại",
     "停用": "Vô hiệu hóa",

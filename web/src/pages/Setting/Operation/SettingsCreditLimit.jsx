@@ -138,7 +138,7 @@ export default function SettingsCreditLimit(props) {
                   field={'InviteRewardMode'}
                   label={t('邀请奖励模式')}
                   extraText={t(
-                    '固定模式在注册时奖励，比例模式在每次成功充值或订阅购买后按支付金额返奖',
+                    '固定模式在注册时奖励；比例模式支持充值、订阅购买和兑换码，兑换码按授予额度返奖',
                   )}
                   onChange={(value) =>
                     setInputs({

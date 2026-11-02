@@ -630,6 +630,7 @@
     "个人邀请返奖比例": "Personal invite reward ratio",
     "固定模式在注册时奖励，比例模式在每次成功充值后按支付金额返奖": "Fixed mode rewards on registration, ratio mode rewards after each successful recharge based on the payment amount",
     "固定模式在注册时奖励，比例模式在每次成功充值或订阅购买后按支付金额返奖": "Fixed mode rewards on registration, ratio mode rewards after each successful recharge or subscription purchase based on the payment amount",
+    "固定模式在注册时奖励；比例模式支持充值、订阅购买和兑换码，兑换码按授予额度返奖": "Fixed rewards apply on registration. Ratio rewards cover top-ups, subscription purchases and redemption codes; code rewards use the granted quota.",
     "停止测试": "Stop Testing",
     "停止重试": "Stop Retry",
     "停用": "Deactivate",

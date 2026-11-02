@@ -1,9 +1,12 @@
 package model
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
@@ -76,4 +79,82 @@ func TestInvitationAmountsExternalDatabase(t *testing.T) {
 	var user User
 	require.NoError(t, db.First(&user, 1).Error)
 	require.Equal(t, 9876, user.Quota)
+	t.Run("redemption_reward_once_under_contention", testRedemptionInviteRewardExternal)
+}
+
+func testRedemptionInviteRewardExternal(t *testing.T) {
+	require.NoError(t, DB.AutoMigrate(&Log{}, &SubscriptionPlan{}))
+	oldMode, oldRatio := common.InviteRewardMode, common.InviteRewardRatio
+	common.InviteRewardMode, common.InviteRewardRatio = "ratio", 0.25
+	t.Cleanup(func() { common.InviteRewardMode, common.InviteRewardRatio = oldMode, oldRatio })
+	require.NoError(t, DB.Create(&User{Id: 101, Username: "reward-owner", AffCode: "reward-owner", Status: common.UserStatusEnabled}).Error)
+	require.NoError(t, DB.Create(&User{Id: 102, Username: "reward-friend", AffCode: "reward-friend", InviterId: 101, Status: common.UserStatusEnabled}).Error)
+	r := &Redemption{Key: "external-reward-race", Quota: 500001, Status: common.RedemptionCodeStatusEnabled}
+	require.NoError(t, DB.Create(r).Error)
+	var wins atomic.Int32
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			if _, err := Redeem(r.Key, 102); err == nil {
+				wins.Add(1)
+			}
+		}()
+	}
+	close(start)
+	wg.Wait()
+	require.EqualValues(t, 1, wins.Load())
+	var owner, friend User
+	require.NoError(t, DB.First(&owner, 101).Error)
+	require.NoError(t, DB.First(&friend, 102).Error)
+	require.Equal(t, 125000, owner.AffQuota)
+	require.Equal(t, 125000, owner.AffHistoryQuota)
+	require.Zero(t, owner.Quota)
+	require.Equal(t, 500001, friend.Quota)
+	var snapshotCount int64
+	require.NoError(t, DB.Model(&InvitationAmountSnapshot{}).Where("source_kind = ? AND source_id = ?", "redemption", r.Id).Count(&snapshotCount).Error)
+	require.EqualValues(t, 1, snapshotCount)
+	t.Run("distinct_codes_same_inviter", testRedemptionDistinctCodesExternal)
+}
+
+func testRedemptionDistinctCodesExternal(t *testing.T) {
+	var wg sync.WaitGroup
+	var wins atomic.Int32
+	jobs := make([]struct {
+		uid int
+		key string
+	}, 8)
+	for i := range jobs {
+		uid := 110 + i
+		key := fmt.Sprintf("external-distinct-%d", i)
+		require.NoError(t, DB.Create(&User{Id: uid, Username: key, AffCode: key, InviterId: 101, Status: common.UserStatusEnabled}).Error)
+		require.NoError(t, DB.Create(&Redemption{Key: key, Quota: 100, Status: common.RedemptionCodeStatusEnabled}).Error)
+		jobs[i] = struct {
+			uid int
+			key string
+		}{uid, key}
+	}
+	for _, job := range jobs {
+		wg.Add(1)
+		go func(uid int, key string) {
+			defer wg.Done()
+			if _, err := Redeem(key, uid); err == nil {
+				wins.Add(1)
+			}
+		}(job.uid, job.key)
+	}
+	wg.Wait()
+	require.EqualValues(t, 8, wins.Load())
+	var owner User
+	require.NoError(t, DB.First(&owner, 101).Error)
+	require.Equal(t, 125200, owner.AffQuota)
+	require.Equal(t, 125200, owner.AffHistoryQuota)
+	for _, job := range jobs {
+		var friend User
+		require.NoError(t, DB.First(&friend, job.uid).Error)
+		require.Equal(t, 100, friend.Quota)
+	}
 }

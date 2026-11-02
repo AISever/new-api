@@ -9,6 +9,7 @@ import (
 	"github.com/QuantumNous/new-api/logger"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -211,6 +212,7 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 		return result, errors.New("无效的 user id")
 	}
 	redemption := &Redemption{}
+	var reward *redemptionInviteReward
 	result = RedemptionRedeemResult{
 		RedeemType: common.RedemptionTypeQuota,
 	}
@@ -223,7 +225,7 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 	reportingConversion, _ := captureInvitationRedemptionRate()
 	common.RandomSleep()
 	err = DB.Transaction(func(tx *gorm.DB) error {
-		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(keyCol+" = ?", key).First(redemption).Error
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where(keyCol+" = ?", key).First(redemption).Error
 		if err != nil {
 			return errors.New("无效的兑换码")
 		}
@@ -235,6 +237,7 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 		}
 		redemption.RedeemType = NormalizeRedemptionType(redemption.RedeemType)
 		result.RedeemType = redemption.RedeemType
+		grantedQuota := int64(redemption.Quota)
 		switch redemption.RedeemType {
 		case common.RedemptionTypeQuota:
 			err = tx.Model(&User{}).Where("id = ?", userId).Update("quota", gorm.Expr("quota + ?", redemption.Quota)).Error
@@ -252,6 +255,7 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 				return err
 			}
 			redemption.RedeemedSubscriptionId = sub.Id
+			grantedQuota = sub.AmountTotal
 			result.Subscription = &RedemptionSubscriptionGrant{
 				SubscriptionId: sub.Id,
 				PlanId:         plan.Id,
@@ -261,6 +265,10 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 			}
 		default:
 			return errors.New("不支持的兑换码类型")
+		}
+		reward, err = grantRedemptionInviteRewardTx(tx, userId, grantedQuota)
+		if err != nil {
+			return err
 		}
 		redemption.RedeemedTime = common.GetTimestamp()
 		redemption.Status = common.RedemptionCodeStatusUsed
@@ -276,6 +284,9 @@ func Redeem(key string, userId int) (result RedemptionRedeemResult, err error) {
 		common.SysError("invitation redemption snapshot unavailable: " + snapshotErr.Error())
 	}
 
+	if reward != nil {
+		RecordLog(reward.inviterID, LogTypeSystem, fmt.Sprintf("邀请兑换返奖 %s，兑换码ID %d，返奖比例 %.4f", logger.LogQuota(reward.quota), redemption.Id, reward.ratio))
+	}
 	switch result.RedeemType {
 	case common.RedemptionTypeSubscription:
 		if result.Subscription != nil {
