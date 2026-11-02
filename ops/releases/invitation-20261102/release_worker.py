@@ -164,7 +164,7 @@ def rollback():
    deadline=time.time()+120
    while time.time()<deadline:
     try:
-     if not sum(x.get('num_requests',0) for x in caddy_get('/reverse_proxy/upstreams')):break
+     if not sum(x.get('num_requests',0) for x in caddy_get('/reverse_proxy/upstreams') if x.get('address')=='172.17.0.1:3000'):break
     except Exception:break
     time.sleep(2)
    time.sleep(13)
@@ -262,7 +262,7 @@ if __name__=='__main__':
  lock=open(S/'release.lock','a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
  signal.signal(signal.SIGTERM,on_term)
  if '--check-only' in sys.argv:
-  guard_other_services();assert canonical(caddy_get())==canonical(CADDY);caddy_load(CADDY);assert canonical(caddy_get())==canonical(CADDY);snapshot();check_fhy(fhy());print('Production release preflight and no-op configuration load passed',flush=True)
+  guard_other_services();assert canonical(caddy_get())==canonical(CADDY);snapshot();check_fhy(fhy());assert visibility_off();print('Read-only production release preflight passed',flush=True)
  elif '--rollback' in sys.argv:
   if (S/'journal.json').exists():J.update(json.loads((S/'journal.json').read_text()))
   J['worker_pid']=os.getpid();rollback()
