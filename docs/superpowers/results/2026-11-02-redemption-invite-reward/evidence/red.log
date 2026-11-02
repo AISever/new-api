@@ -1,0 +1,79 @@
+
+2026/11/02 10:49:03 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.128ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+--- FAIL: TestRedemptionInviteRewardQuotaUsesRatioOnce (1.97s)
+    redemption_reward_test.go:38: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:27
+        	            				/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:38
+        	Error:      	Not equal: 
+        	            	expected: 125007
+        	            	actual  : 7
+        	Test:       	TestRedemptionInviteRewardQuotaUsesRatioOnce
+
+2026/11/02 10:49:05 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.078ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:06 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.097ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+[SYS] 2026/11/02 - 10:49:07 | redemption failed: 该兑换码已被使用 
+--- FAIL: TestRedemptionInviteRewardSubscriptionUsesGrantedQuota (3.48s)
+    --- FAIL: TestRedemptionInviteRewardSubscriptionUsesGrantedQuota/quota_5000000 (2.02s)
+        redemption_reward_test.go:60: 
+            	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:27
+            	            				/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:60
+            	Error:      	Not equal: 
+            	            	expected: 1250007
+            	            	actual  : 7
+            	Test:       	TestRedemptionInviteRewardSubscriptionUsesGrantedQuota/quota_5000000
+
+2026/11/02 10:49:07 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.078ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:09 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.090ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:11 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.077ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:13 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.129ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:14 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.069ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:16 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.091ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:18 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.100ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+--- FAIL: TestRedemptionInviteRewardHonorsExistingSettings (11.67s)
+    --- FAIL: TestRedemptionInviteRewardHonorsExistingSettings/global (0.57s)
+        redemption_reward_test.go:102: 
+            	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:27
+            	            				/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:102
+            	Error:      	Not equal: 
+            	            	expected: 32
+            	            	actual  : 7
+            	Test:       	TestRedemptionInviteRewardHonorsExistingSettings/global
+    --- FAIL: TestRedemptionInviteRewardHonorsExistingSettings/personal (1.64s)
+        redemption_reward_test.go:102: 
+            	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:27
+            	            				/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:102
+            	Error:      	Not equal: 
+            	            	expected: 17
+            	            	actual  : 7
+            	Test:       	TestRedemptionInviteRewardHonorsExistingSettings/personal
+
+2026/11/02 10:49:19 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.095ms] [34;1m[rows:0][0m SELECT * FROM `invitation_amount_snapshots` WHERE source_kind = "redemption" AND source_id = 1 LIMIT 1
+
+2026/11/02 10:49:19 [34;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:117
+[0m[35m[warn] [0mremoving callback `test:redemption_reward_failure` from /home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:117
+--- FAIL: TestRedemptionInviteRewardFailureRollsBackAndRetryIsSafe (0.21s)
+    redemption_reward_test.go:119: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/redemption_reward_test.go:119
+        	Error:      	An error is expected but got nil.
+        	Test:       	TestRedemptionInviteRewardFailureRollsBackAndRetryIsSafe
+FAIL
+FAIL	github.com/QuantumNous/new-api/model	17.369s
+FAIL

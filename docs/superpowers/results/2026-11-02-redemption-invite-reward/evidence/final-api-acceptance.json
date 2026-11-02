@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "version": "codex/invite+b77dd3008+test",
+  "totals_only": true,
+  "one_site_currency": true,
+  "policy_preserved": {
+    "mode": "selected",
+    "user_ids": [
+      2
+    ]
+  },
+  "owner_amounts_visible": true,
+  "checks": [
+    "health/version",
+    "unauthenticated denial",
+    "22 users / 20+2 paging",
+    "only usernames and authorized totals in DTO",
+    "no source breakdown, conversion or historical record details",
+    "incomplete synthetic history returns null rather than a misleading subtotal",
+    "complete synthetic topup/subscription/redemption total $7.67, mirror deduplicated",
+    "username search",
+    "foreign inviter ownership and permissions",
+    "wallet/reward/subscription anchors preserved"
+  ],
+  "production_sql_accessed": false
+}

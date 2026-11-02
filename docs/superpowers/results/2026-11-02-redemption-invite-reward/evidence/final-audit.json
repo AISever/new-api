@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "existing_non_test_containers_unchanged": true,
+  "existing_container_count": 18,
+  "production_version": "codex/sec-v0.13.2-p1+ba844d202+production",
+  "test_version": "codex/invite+b77dd3008+test",
+  "production_database_accessed": false,
+  "production_release_still_paused": true,
+  "production_cutover_started": false
+}

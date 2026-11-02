@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "test_version": "codex/invite+b77dd3008+test",
+  "synthetic_only": true,
+  "production_touched": false,
+  "checks": [
+    "quota code exact reward 125000 from 500001 at 25 percent",
+    "duplicate HTTP redemption cannot credit again",
+    "subscription code uses granted 50000000 quota once, not code quota 999 or catalog price",
+    "per inviter ratio overrides global ratio",
+    "explicit zero ratio disables rewards",
+    "fixed registration reward mode does not add redemption rewards",
+    "original preview settings, wallets, rewards, subscriptions and amount visibility preserved"
+  ],
+  "production_release_still_paused": true
+}

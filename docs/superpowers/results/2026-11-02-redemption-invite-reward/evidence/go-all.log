@@ -1,0 +1,87 @@
+?   	github.com/QuantumNous/new-api	[no test files]
+ok  	github.com/QuantumNous/new-api/common	(cached)
+?   	github.com/QuantumNous/new-api/common/limiter	[no test files]
+?   	github.com/QuantumNous/new-api/constant	[no test files]
+ok  	github.com/QuantumNous/new-api/controller	7.291s
+ok  	github.com/QuantumNous/new-api/dto	(cached)
+?   	github.com/QuantumNous/new-api/i18n	[no test files]
+?   	github.com/QuantumNous/new-api/logger	[no test files]
+ok  	github.com/QuantumNous/new-api/middleware	0.065s
+ok  	github.com/QuantumNous/new-api/model	36.081s
+?   	github.com/QuantumNous/new-api/oauth	[no test files]
+?   	github.com/QuantumNous/new-api/ops/releases/invitation-20261102/migrate	[no test files]
+?   	github.com/QuantumNous/new-api/ops/tests/security-fixture-server	[no test files]
+ok  	github.com/QuantumNous/new-api/ops/tests/securitydb	3.715s
+ok  	github.com/QuantumNous/new-api/pkg/billingexpr	(cached)
+?   	github.com/QuantumNous/new-api/pkg/cachex	[no test files]
+?   	github.com/QuantumNous/new-api/pkg/ionet	[no test files]
+?   	github.com/QuantumNous/new-api/relay	[no test files]
+ok  	github.com/QuantumNous/new-api/relay/channel	0.052s
+?   	github.com/QuantumNous/new-api/relay/channel/ai360	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/ali	[no test files]
+ok  	github.com/QuantumNous/new-api/relay/channel/aws	0.040s
+?   	github.com/QuantumNous/new-api/relay/channel/baidu	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/baidu_v2	[no test files]
+ok  	github.com/QuantumNous/new-api/relay/channel/claude	0.057s
+?   	github.com/QuantumNous/new-api/relay/channel/cloudflare	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/codex	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/cohere	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/coze	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/deepseek	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/dify	[no test files]
+ok  	github.com/QuantumNous/new-api/relay/channel/gemini	0.032s
+?   	github.com/QuantumNous/new-api/relay/channel/jimeng	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/jina	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/lingyiwanwu	[no test files]
+ok  	github.com/QuantumNous/new-api/relay/channel/minimax	0.057s
+?   	github.com/QuantumNous/new-api/relay/channel/mistral	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/mokaai	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/moonshot	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/ollama	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/openai	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/openrouter	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/palm	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/perplexity	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/replicate	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/siliconflow	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/submodel	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/ali	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/doubao	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/gemini	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/hailuo	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/jimeng	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/kling	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/sora	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/suno	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/taskcommon	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/vertex	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/task/vidu	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/tencent	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/vertex	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/volcengine	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/xai	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/xinference	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/xunfei	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/zhipu	[no test files]
+?   	github.com/QuantumNous/new-api/relay/channel/zhipu_4v	[no test files]
+ok  	github.com/QuantumNous/new-api/relay/common	(cached)
+?   	github.com/QuantumNous/new-api/relay/common_handler	[no test files]
+?   	github.com/QuantumNous/new-api/relay/constant	[no test files]
+ok  	github.com/QuantumNous/new-api/relay/helper	19.123s
+?   	github.com/QuantumNous/new-api/relay/reasonmap	[no test files]
+ok  	github.com/QuantumNous/new-api/router	15.778s
+ok  	github.com/QuantumNous/new-api/service	0.411s
+?   	github.com/QuantumNous/new-api/service/openaicompat	[no test files]
+?   	github.com/QuantumNous/new-api/service/passkey	[no test files]
+ok  	github.com/QuantumNous/new-api/setting	(cached)
+?   	github.com/QuantumNous/new-api/setting/billing_setting	[no test files]
+ok  	github.com/QuantumNous/new-api/setting/config	(cached)
+?   	github.com/QuantumNous/new-api/setting/console_setting	[no test files]
+ok  	github.com/QuantumNous/new-api/setting/model_setting	(cached)
+ok  	github.com/QuantumNous/new-api/setting/operation_setting	(cached)
+?   	github.com/QuantumNous/new-api/setting/performance_setting	[no test files]
+?   	github.com/QuantumNous/new-api/setting/ratio_setting	[no test files]
+?   	github.com/QuantumNous/new-api/setting/reasoning	[no test files]
+?   	github.com/QuantumNous/new-api/setting/system_setting	[no test files]
+?   	github.com/QuantumNous/new-api/types	[no test files]
+?   	github.com/QuantumNous/new-api/web/node_modules/flatted/golang/pkg/flatted	[no test files]

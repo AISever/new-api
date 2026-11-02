@@ -1,0 +1,47 @@
+=== RUN   TestInvitationAmountsExternalDatabase
+
+2026/11/02 01:54:47 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[1.167ms] [34;1m[rows:0][0m SELECT * FROM "subscription_orders" WHERE trade_no = 'external-paid' LIMIT 1
+
+2026/11/02 01:54:47 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.593ms] [34;1m[rows:0][0m SELECT * FROM "subscription_orders" WHERE trade_no = 'external-paid' LIMIT 1
+=== RUN   TestInvitationAmountsExternalDatabase/redemption_reward_once_under_contention
+
+2026/11/02 01:54:48 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.518ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 2 LIMIT 1
+[SYS] 2026/11/02 - 01:54:49 | redemption failed: 该兑换码已被使用 
+[SYS] 2026/11/02 - 01:54:49 | redemption failed: 该兑换码已被使用 
+[SYS] 2026/11/02 - 01:54:49 | redemption failed: 该兑换码已被使用 
+[SYS] 2026/11/02 - 01:54:49 | redemption failed: 该兑换码已被使用 
+[SYS] 2026/11/02 - 01:54:50 | redemption failed: 该兑换码已被使用 
+[SYS] 2026/11/02 - 01:54:50 | redemption failed: 该兑换码已被使用 
+[SYS] 2026/11/02 - 01:54:51 | redemption failed: 该兑换码已被使用 
+=== RUN   TestInvitationAmountsExternalDatabase/redemption_reward_once_under_contention/distinct_codes_same_inviter
+
+2026/11/02 01:54:51 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.467ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 6 LIMIT 1
+
+2026/11/02 01:54:52 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.501ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 5 LIMIT 1
+
+2026/11/02 01:54:52 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.482ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 4 LIMIT 1
+
+2026/11/02 01:54:52 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.423ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 9 LIMIT 1
+
+2026/11/02 01:54:53 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.507ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 7 LIMIT 1
+
+2026/11/02 01:54:53 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.290ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 8 LIMIT 1
+
+2026/11/02 01:54:53 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.473ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 10 LIMIT 1
+
+2026/11/02 01:54:53 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:172 [35;1mrecord not found
+[0m[33m[0.422ms] [34;1m[rows:0][0m SELECT * FROM "invitation_amount_snapshots" WHERE source_kind = 'redemption' AND source_id = 3 LIMIT 1
+--- PASS: TestInvitationAmountsExternalDatabase (6.72s)
+    --- PASS: TestInvitationAmountsExternalDatabase/redemption_reward_once_under_contention (5.95s)
+        --- PASS: TestInvitationAmountsExternalDatabase/redemption_reward_once_under_contention/distinct_codes_same_inviter (2.80s)
+PASS

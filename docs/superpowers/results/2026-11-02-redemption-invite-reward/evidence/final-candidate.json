@@ -1,0 +1,9 @@
+{
+  "source": "b77dd30084f2f0fe842647b2d77b86e6542bfb1f",
+  "short": "b77dd3008",
+  "image": "new-api:invitation-b77dd3008-test",
+  "version": "codex/invite+b77dd3008+test",
+  "binary_sha256": "b8fb9f0b495c176ac78e948219ca37949dc22172ebec0935ba4fac265d15489c",
+  "base": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+  "transport": "rsync delta"
+}
