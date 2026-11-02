@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "production_and_18_existing_containers_unchanged": true,
+  "production_version": "codex/sec-v0.13.2-p1+ba844d202+production",
+  "test_version": "codex/invite+e697296fc+test",
+  "production_database_accessed": false
+}

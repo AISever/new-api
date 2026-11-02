@@ -1,0 +1,55 @@
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.095ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "single-usd" LIMIT 1
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.052ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "single-cny" LIMIT 1
+--- FAIL: TestInvitationSingleDisplayTotalFollowsSiteCurrency (0.01s)
+    invitation_amount_test.go:250: 
+        	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:250
+        	Error:      	Should be false
+        	Test:       	TestInvitationSingleDisplayTotalFollowsSiteCurrency
+        	Messages:   	configured conversion is not an estimated payment
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.058ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "confirmed" LIMIT 1
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.066ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "confirmed" LIMIT 1
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.050ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "missing-rate" LIMIT 1
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.053ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "confirmed" LIMIT 1
+--- FAIL: TestInvitationIncompleteTotalIsUnavailable (0.04s)
+    --- FAIL: TestInvitationIncompleteTotalIsUnavailable/payment (0.01s)
+        invitation_amount_test.go:315: 
+            	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:315
+            	Error:      	Expected nil, but got: (*string)(0x361bdf4a2c0)
+            	Test:       	TestInvitationIncompleteTotalIsUnavailable/payment
+            	Messages:   	2.10 is only a subtotal
+    --- FAIL: TestInvitationIncompleteTotalIsUnavailable/exchange (0.01s)
+        invitation_amount_test.go:315: 
+            	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:315
+            	Error:      	Expected nil, but got: (*string)(0x361bdfc53d0)
+            	Test:       	TestInvitationIncompleteTotalIsUnavailable/exchange
+            	Messages:   	2.10 is only a subtotal
+    --- FAIL: TestInvitationIncompleteTotalIsUnavailable/unpriced_redemption (0.01s)
+        invitation_amount_test.go:315: 
+            	Error Trace:	/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount_test.go:315
+            	Error:      	Expected nil, but got: (*string)(0x361be087e60)
+            	Test:       	TestInvitationIncompleteTotalIsUnavailable/unpriced_redemption
+            	Messages:   	2.10 is only a subtotal
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.076ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "fraction-1" LIMIT 1
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.040ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "fraction-2" LIMIT 1
+
+2026/11/02 10:16:28 [31;1m/home/ctyun/.codex/worktrees/new-api-security-maintenance/new-api/model/invitation_amount.go:95 [35;1mrecord not found
+[0m[33m[0.061ms] [34;1m[rows:0][0m SELECT * FROM `subscription_orders` WHERE trade_no = "fraction-3" LIMIT 1
+FAIL
+FAIL	github.com/QuantumNous/new-api/model	0.109s
+FAIL

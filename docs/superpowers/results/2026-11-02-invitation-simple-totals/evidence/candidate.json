@@ -1,0 +1,9 @@
+{
+  "source": "e697296fc20f48505b773bbe2234b61617bfc713",
+  "short": "e697296fc",
+  "image": "new-api:invitation-e697296fc-test",
+  "version": "codex/invite+e697296fc+test",
+  "binary_sha256": "96a57a5114f2186de5a29f932d132c2907d6f31a6d41bffdac926ddd6bfb19c1",
+  "base": "sha256:d07e5682b016202338524f832d8206f2d99ac4b916a1391db92100cdfb9405e1",
+  "transport": "rsync delta"
+}

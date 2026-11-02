@@ -1,0 +1,26 @@
+{
+  "headings": [
+    "用户名",
+    "累计总金额"
+  ],
+  "warningAbsent": true,
+  "completeTotal": true,
+  "incompleteUnavailable": true,
+  "sameRow": {
+    "connected": true,
+    "text": "invitee-22\t—"
+  },
+  "draftPreserved": true,
+  "focusPreserved": true,
+  "pollResponses": [
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:13019/api/user/self/invitees?p=1&page_size=20&keyword="
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:13019/api/user/self/invitees?p=1&page_size=20&keyword="
+    }
+  ],
+  "navigations": 0
+}

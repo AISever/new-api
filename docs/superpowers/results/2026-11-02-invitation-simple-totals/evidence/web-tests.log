@@ -1,0 +1,101 @@
+bun test v1.4.3 (c6da4a4d3)
+
+vite.config.test.mjs:
+(pass) vite config resolves plugins for build mode under Node 22 [641.64ms]
+
+scripts/security-dependencies.test.mjs:
+(pass) braces ranges, alternatives and limits retain their behavior [4.26ms]
+(pass) maximum parser nesting does not exhaust the stack [144.42ms]
+(pass) deep caller supplied AST does not exhaust the JS stack [22.76ms]
+
+scripts/sync-enterprise-docs.test.mjs:
+(pass) parseLlmsIndex extracts section, hierarchy and source ids [2.04ms]
+(pass) rewriteMarkdownContent rewrites upstream origin and internal apifox docs links [1.74ms]
+
+src/helpers/branding.test.js:
+(pass) applyBrandingToDocument uses custom logo as favicon [0.39ms]
+(pass) applyBrandingToDocument keeps default favicon when logo is empty [0.10ms]
+
+src/helpers/docsCenter.test.js:
+(pass) normalizeDocsManifestPath accepts enterprise static manifest paths [0.27ms]
+(pass) normalizeDocsManifestPath rejects remote or unsafe paths [0.13ms]
+(pass) getDocsAvailability prefers local docs when manifest exists [0.21ms]
+(pass) getDocsAvailability keeps legacy docs link when local docs are absent [0.06ms]
+(pass) shouldUseLocalDocs only enables the in-app docs experience for valid manifests [0.05ms]
+
+src/components/topup/utils/invitationRefresh.test.mjs:
+(pass) background request preserves visible rows and does not show the initial loader [0.37ms]
+(pass) unchanged background results reuse the complete state without rendering the table again [0.37ms]
+(pass) a changed total updates only its own row and preserves every unchanged row reference [1.50ms]
+(pass) new and deleted invitees follow server order without replacing unchanged survivors [0.27ms]
+(pass) revocation immediately removes all amounts while retaining the username list [0.19ms]
+(pass) failed refresh hides old financial data but keeps non-sensitive usernames and retry state [0.19ms]
+(pass) account or page changes clear old data and late responses cannot repopulate another scope [1.28ms]
+(pass) closing the dialog clears financial state and permits a clean initial load [0.25ms]
+
+src/components/topup/utils/invitationDetails.test.mjs:
+(pass) unauthorized response discards every money field even if supplied [0.43ms]
+(pass) authorized zero and exact decimal amounts survive without numeric coercion [1.58ms]
+(pass) selected policy is one canonical JSON value and refuses invalid IDs [1.88ms]
+(pass) account changes, later requests and closing invalidate previous sensitive responses [0.18ms]
+(pass) business failures and malformed list payload are errors rather than saved/success state [0.12ms]
+(pass) authorized list retains one total while discarding source breakdown and payment details [0.15ms]
+(pass) one site-currency total is shown without retaining any currency list [0.13ms]
+
+src/components/settings/utils/helpGroupCards.test.mjs:
+(pass) parseHelpGroupCardsOption falls back to defaults when option is empty [0.29ms]
+(pass) stringifyHelpGroupCardsOption serializes cards into formatted json [0.36ms]
+(pass) buildDisplayHelpGroupCards sorts by sort_order and filters disabled cards [0.18ms]
+(pass) readHelpGroupCardsOption reports invalid json instead of silently accepting it [0.91ms]
+(pass) getHelpGroupCardsValidationError catches duplicate ids and missing titles [0.30ms]
+
+src/pages/Setting/Ratio/utils/optionTransformers.test.mjs:
+(pass) parseSimpleMapOption parses numeric map into editable rows [1.56ms]
+(pass) stringifySimpleMapOption serializes editable numeric rows into formatted json [0.43ms]
+(pass) stringifySimpleMapOption preserves wildcard model names [0.08ms]
+(pass) parseGroupRelationOption flattens nested relation map into rows [1.68ms]
+(pass) stringifyGroupRelationOption rebuilds nested relation map from rows [0.43ms]
+(pass) parseSpecialUsableGroupOption expands add remove and direct rules [2.07ms]
+(pass) stringifySpecialUsableGroupOption rebuilds prefixed rule keys [0.35ms]
+(pass) parseOrderedStringListOption preserves array order [0.26ms]
+(pass) stringifyOrderedStringListOption rebuilds formatted array json [0.11ms]
+
+src/pages/Setting/Ratio/utils/editorErrorHelpers.test.mjs:
+(pass) getSubmitBlockingError returns the first non-empty card error [2.09ms]
+
+src/pages/Setting/Ratio/utils/rowValidators.test.mjs:
+(pass) validateUserUsableGroupRows rejects rows with label but missing group key [1.67ms]
+(pass) validateUserUsableGroupRows allows blank label when key exists [0.23ms]
+(pass) validateSpecialUsableGroupRows rejects rows missing target group [1.61ms]
+(pass) validateSpecialUsableGroupRows ignores untouched blank rows [0.20ms]
+
+src/pages/Setting/Ratio/utils/focusTracking.test.mjs:
+(pass) resolveAppendedRowFocus returns appended row id when requested [0.23ms]
+(pass) resolveAppendedRowFocus ignores unchanged row counts [0.72ms]
+
+src/pages/Setting/Ratio/utils/editorMode.test.mjs:
+(pass) ratio editors default to json mode [0.10ms]
+
+src/pages/Setting/Ratio/utils/groupVisibilityLinkage.test.mjs:
+(pass) detects whether a group is visible in user usable groups [0.37ms]
+(pass) enabling visibility appends a missing user usable group row [0.40ms]
+(pass) disabling visibility removes the linked user usable group row [0.25ms]
+(pass) renaming a visible group preserves its display name [0.32ms]
+(pass) renaming to an existing target keeps the existing row and removes the old one [0.15ms]
+
+src/pages/Setting/Ratio/utils/editorLayout.test.mjs:
+(pass) getCompactEditorLayoutMode keeps desktop rows on non-mobile widths [3.92ms]
+(pass) getCompactEditorLayoutMode uses stacked cards for mobile widths [0.37ms]
+(pass) shouldUseSharedInlineHeaders only enables shared headers for inline mobile layout [0.26ms]
+
+src/pages/Setting/Dashboard/utils/announcements.test.mjs:
+(pass) normalizeAnnouncementPublishDate serializes Date values to RFC3339 [1.64ms]
+(pass) normalizeAnnouncementPublishDate accepts ISO date strings from DatePicker state [0.21ms]
+(pass) normalizeAnnouncementPublishDate rejects invalid publishDate values [0.60ms]
+(pass) ensureOptionUpdateSucceeded throws when option save fails [0.22ms]
+(pass) ensureOptionUpdateSucceeded tolerates successful option saves [0.19ms]
+
+ 63 pass
+ 0 fail
+ 11 expect() calls
+Ran 63 tests across 16 files. [1133.00ms]
