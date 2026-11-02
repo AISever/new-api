@@ -9,7 +9,6 @@ import {
   Space,
   Spin,
   Table,
-  Typography,
 } from '@douyinfe/semi-ui';
 import { API } from '../../../helpers';
 import {
@@ -91,19 +90,6 @@ export default function InvitationUsersModal({
     };
   }, [visible, viewerId, scope, page, query, refresh]);
 
-  const money = (value) => (
-    <Space vertical align='start'>
-      <Typography.Text>
-        {invitationMoney(value.total, value.currency_symbol || value.currency)}
-        {value.estimated ? ` (${t('含估算')})` : ''}
-      </Typography.Text>
-      {(value.unknown_count > 0 || value.unpriced_count > 0) && (
-        <Typography.Text type='warning'>
-          {t('部分金额未确认，合计可能不完整')}
-        </Typography.Text>
-      )}
-    </Space>
-  );
   const columns = [
     {
       title: t('用户名'),
@@ -122,7 +108,8 @@ export default function InvitationUsersModal({
         next.record !== previous.record ||
         next.column.title !== previous.column.title,
       dataIndex: 'amounts',
-      render: (a) => (a ? money(a) : '—'),
+      render: (a) =>
+        a ? invitationMoney(a.total, a.currency_symbol || a.currency) : '—',
     });
   return (
     <Modal
@@ -157,11 +144,6 @@ export default function InvitationUsersModal({
           </Button>
           <Button onClick={() => setRefresh((v) => v + 1)}>{t('刷新')}</Button>
         </Space>
-        <Typography.Text type='tertiary'>
-          {t(
-            '仅显示您直接邀请且当前可查看的用户，历史邀请计数可能包含已注销用户',
-          )}
-        </Typography.Text>
         {error && (
           <Banner
             type='danger'
@@ -186,13 +168,6 @@ export default function InvitationUsersModal({
             size='small'
           />
         </Spin>
-        {data?.can_view_amounts && (
-          <Typography.Text type='tertiary'>
-            {t(
-              '合计包含兑换折算；未确认或已清除且无快照的历史记录可能未计入，未扣除退款。',
-            )}
-          </Typography.Text>
-        )}
         {data && (
           <Pagination
             total={data.total}

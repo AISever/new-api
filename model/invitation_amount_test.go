@@ -45,6 +45,7 @@ func TestInvitationAmountsDeduplicateSubscriptionAndPreserveWallet(t *testing.T)
 	require.NotNil(t, a)
 	require.Len(t, a.Currencies, 1)
 	require.Equal(t, "6.3", a.Currencies[0].Total)
+	require.Equal(t, "6.30", *a.Total)
 	require.Equal(t, "2.1", a.Currencies[0].TopUp)
 	require.Equal(t, "3.2", a.Currencies[0].Subscription)
 	require.Equal(t, "1", a.Currencies[0].Redemption)
@@ -246,6 +247,7 @@ func TestInvitationSingleDisplayTotalFollowsSiteCurrency(t *testing.T) {
 		require.Equal(t, tc.currency, got["currency"])
 		require.Equal(t, tc.symbol, got["currency_symbol"])
 		require.Equal(t, tc.total, got["total"])
+		require.False(t, got["estimated"].(bool), "configured conversion is not an estimated payment")
 		require.NotContains(t, got, "currencies")
 	}
 	var user User
@@ -289,4 +291,43 @@ func TestInvitationDisplayDoesNotInventExchangeRatesOrUnknownZero(t *testing.T) 
 	require.Contains(t, got, "total")
 	require.Nil(t, got["total"])
 	require.Equal(t, float64(1), got["unknown_count"])
+}
+
+// A subtotal must never masquerade as a complete cumulative amount once the
+// UI no longer shows completeness annotations.
+func TestInvitationIncompleteTotalIsUnavailable(t *testing.T) {
+	for _, kind := range []string{"payment", "exchange", "unpriced_redemption"} {
+		t.Run(kind, func(t *testing.T) {
+			setupInvitationAmountTest(t)
+			require.NoError(t, DB.Create(&TopUp{Id: 201, UserId: 2, TradeNo: "confirmed", PaymentProvider: PaymentProviderStripe, Status: common.TopUpStatusSuccess}).Error)
+			require.NoError(t, RecordInvitationPayment("confirmed", PaymentProviderStripe, "2.10", "USD"))
+			switch kind {
+			case "payment":
+				require.NoError(t, DB.Create(&TopUp{Id: 202, UserId: 2, TradeNo: "missing-payment", Money: 99, Status: common.TopUpStatusSuccess}).Error)
+			case "exchange":
+				require.NoError(t, DB.Create(&TopUp{Id: 202, UserId: 2, TradeNo: "missing-rate", PaymentProvider: PaymentProviderStripe, Status: common.TopUpStatusSuccess}).Error)
+				require.NoError(t, RecordInvitationPayment("missing-rate", PaymentProviderStripe, "10", "EUR"))
+			case "unpriced_redemption":
+				require.NoError(t, DB.Create(&Redemption{Id: 202, Key: "unpriced", UsedUserId: 2, Status: common.RedemptionCodeStatusUsed, RedeemType: RedemptionTypeSubscription}).Error)
+			}
+			page, err := GetInvitationPage(1, 1, 20, "", true)
+			require.NoError(t, err)
+			require.Nil(t, page.Items[0].Amounts.Total, "2.10 is only a subtotal")
+			require.Equal(t, "2.1", page.Items[0].Amounts.Currencies[len(page.Items[0].Amounts.Currencies)-1].TopUp)
+		})
+	}
+}
+func TestInvitationCompleteTotalRoundsOnceAndEmptyIsZero(t *testing.T) {
+	setupInvitationAmountTest(t)
+	page, err := GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	require.Equal(t, "0.00", *page.Items[0].Amounts.Total)
+	for i := 1; i <= 3; i++ {
+		trade := fmt.Sprintf("fraction-%d", i)
+		require.NoError(t, DB.Create(&TopUp{UserId: 2, TradeNo: trade, PaymentProvider: PaymentProviderStripe, Status: common.TopUpStatusSuccess}).Error)
+		require.NoError(t, RecordInvitationPayment(trade, PaymentProviderStripe, "0.004", "USD"))
+	}
+	page, err = GetInvitationPage(1, 1, 20, "", true)
+	require.NoError(t, err)
+	require.Equal(t, "0.01", *page.Items[0].Amounts.Total)
 }

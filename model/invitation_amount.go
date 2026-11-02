@@ -236,7 +236,6 @@ type invitationAmountRow struct {
 type invitationAccumulator struct {
 	display              *invitationDisplayCurrency
 	displaySum           decimal.Decimal
-	displayCount         int
 	displayEstimated     bool
 	conversions          map[string]map[string]InvitationConversion
 	conversionIncomplete map[string]bool
@@ -278,11 +277,10 @@ func (a *invitationAccumulator) add(kind, amount, currency, symbol, sourceRate s
 	v[index] = v[index].Add(d)
 	a.estimated[currency] = a.estimated[currency] || estimated
 	sourceCurrency, _, _ := strings.Cut(currency, "\x00")
-	value, converted, ok := a.display.convert(d, sourceCurrency, symbol, sourceRate)
+	value, _, ok := a.display.convert(d, sourceCurrency, symbol, sourceRate)
 	if ok {
 		a.displaySum = a.displaySum.Add(value)
-		a.displayCount++
-		a.displayEstimated = a.displayEstimated || estimated || converted
+		a.displayEstimated = a.displayEstimated || estimated
 	} else {
 		a.result.UnknownCount++
 	}
@@ -447,7 +445,8 @@ func AttachInvitationAmounts(items []InvitationUser) error {
 		return err
 	}
 	for _, a := range acc {
-		if a.displayCount > 0 || (a.result.UnknownCount == 0 && a.result.UnpricedCount == 0) {
+		// Publish a cumulative total only when every counted source is priced.
+		if a.result.UnknownCount == 0 && a.result.UnpricedCount == 0 {
 			total := a.displaySum.StringFixed(2)
 			a.result.Total = &total
 		}
