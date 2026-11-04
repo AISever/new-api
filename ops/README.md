@@ -23,6 +23,7 @@
 
 ## 2. 日常操作入口
 
+- 最新代码与运维交接：[2026-11-04 shakeoff 交接文档](handoffs/2026-11-04-shakeoff.md)
 - 最小运维手册：`ops/RUNBOOK.md`
 - 官方稳定版升级清单：`ops/checklists/kkidc-upstream-stable-upgrade.md`
 - `kkidc` 测试发布：`ops/checklists/kkidc-test-release.md`
